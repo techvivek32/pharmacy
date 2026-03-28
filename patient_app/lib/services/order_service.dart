@@ -1,0 +1,99 @@
+import '../models/order_model.dart';
+import '../models/quote_model.dart';
+import 'api_service.dart';
+
+class OrderService {
+  static Future<OrderResult> confirmOrder({
+    required String quoteId,
+    required String paymentMethod,
+  }) async {
+    try {
+      final response = await ApiService.post('/orders/confirm', {
+        'quoteId': quoteId,
+        'paymentMethod': paymentMethod,
+      });
+
+      if (response.success) {
+        final order = Order.fromJson(response.data['order']);
+        return OrderResult(success: true, order: order);
+      } else {
+        return OrderResult(success: false, message: response.message);
+      }
+    } catch (e) {
+      return OrderResult(
+        success: false,
+        message: 'Failed to confirm order',
+      );
+    }
+  }
+
+  static Future<List<Order>> getOrderHistory() async {
+    try {
+      final response = await ApiService.get('/orders/history');
+
+      if (response.success) {
+        final data = response.data;
+        if (data is List) {
+          return data.map((json) => Order.fromJson(json)).toList();
+        }
+      }
+    } catch (e) {
+      print('Error fetching order history: $e');
+      return [];
+    }
+    return [];
+  }
+
+  static Future<OrderResult> trackOrder(String orderId) async {
+    try {
+      final response = await ApiService.get('/orders/$orderId/track');
+
+      if (response.success) {
+        final order = Order.fromJson(response.data['order']);
+        return OrderResult(success: true, order: order);
+      } else {
+        return OrderResult(success: false, message: response.message);
+      }
+    } catch (e) {
+      return OrderResult(
+        success: false,
+        message: 'Failed to track order',
+      );
+    }
+  }
+
+  static Future<List<Quote>> getQuotes(String prescriptionId) async {
+    try {
+      final response = await ApiService.get('/prescriptions/$prescriptionId/quotes');
+
+      if (response.success) {
+        final List<dynamic> data = response.data['quotes'];
+        return data.map((json) => Quote.fromJson(json)).toList();
+      }
+    } catch (e) {
+      return [];
+    }
+    return [];
+  }
+
+  static Future<bool> cancelOrder(String orderId) async {
+    try {
+      final response = await ApiService.post('/orders/$orderId/cancel', {});
+      return response.success;
+    } catch (e) {
+      return false;
+    }
+  }
+}
+
+class OrderResult {
+  final bool success;
+  final String? message;
+  final Order? order;
+
+  OrderResult({
+    required this.success,
+    this.message,
+    this.order,
+  });
+}

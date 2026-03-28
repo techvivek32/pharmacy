@@ -1,0 +1,68 @@
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IPrescription extends Document {
+  patientId: mongoose.Types.ObjectId;
+  imageUrl: string;
+  imagePublicId?: string;
+  status: 'pending' | 'quoted' | 'accepted' | 'rejected' | 'expired';
+  deliveryAddress?: {
+    address: string;
+    location: {
+      type: string;
+      coordinates: [number, number];
+    };
+  };
+  nearbyPharmacies: mongoose.Types.ObjectId[];
+  expiresAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const PrescriptionSchema = new Schema<IPrescription>(
+  {
+    patientId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Patient',
+      required: true,
+    },
+    imageUrl: {
+      type: String,
+      required: true,
+    },
+    imagePublicId: {
+      type: String,
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'quoted', 'accepted', 'rejected', 'expired'],
+      default: 'pending',
+    },
+    deliveryAddress: {
+      address: { type: String },
+      location: {
+        type: { type: String, enum: ['Point'], default: 'Point' },
+        coordinates: { type: [Number] },
+      },
+    },
+    nearbyPharmacies: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Pharmacy',
+      },
+    ],
+    expiresAt: {
+      type: Date,
+      required: true,
+      default: () => new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+PrescriptionSchema.index({ patientId: 1 });
+PrescriptionSchema.index({ status: 1 });
+PrescriptionSchema.index({ expiresAt: 1 });
+
+export default mongoose.models.Prescription || mongoose.model<IPrescription>('Prescription', PrescriptionSchema);

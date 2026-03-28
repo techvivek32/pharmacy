@@ -1,0 +1,148 @@
+import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
+import '../services/api_service.dart';
+import '../models/user_model.dart';
+
+class AuthProvider with ChangeNotifier {
+  User? _user;
+  bool _isLoading = false;
+  String? _error;
+
+  User? get user => _user;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
+  bool get isAuthenticated => _user != null;
+
+  void setUser(User user) {
+    _user = user;
+    notifyListeners();
+  }
+
+  Future<void> checkAuth() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final isLoggedIn = await AuthService.isLoggedIn();
+      if (isLoggedIn) {
+        _user = await AuthService.getCurrentUser();
+      }
+    } catch (e) {
+      _error = e.toString();
+    }
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<bool> login(String email, String password) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      final result = await AuthService.login(email, password);
+      if (result.success) {
+        _user = result.user;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _error = result.message;
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _error = 'Login failed: ${e.toString()}';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> register({
+    required String fullName,
+    required String email,
+    required String phone,
+    required String password,
+    required String pharmacyName,
+    required String licenseNumber,
+    required String address,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      final response = await ApiService.post('/auth/register', {
+        'fullName': fullName,
+        'email': email,
+        'phone': phone,
+        'password': password,
+        'role': 'pharmacy',
+        'pharmacyName': pharmacyName,
+        'licenseNumber': licenseNumber,
+        'address': address,
+        'coordinates': [0.0, 0.0],
+      }, includeAuth: false);
+
+      if (response.success && response.data != null) {
+        await AuthService.saveToken(response.data['token']);
+        await AuthService.saveUserData(response.data['user']);
+        _user = User.fromJson(response.data['user']);
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _error = response.message;
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _error = 'Registration failed: ${e.toString()}';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<void> logout() async {
+    await AuthService.logout();
+    _user = null;
+    _error = null;
+    notifyListeners();
+  }
+
+  Future<bool> updateProfile({required String fullName, required String phone}) async {
+    try {
+      final response = await ApiService.put('/pharmacy/profile', {
+        'fullName': fullName,
+        'phone': phone,
+      });
+      if (response.success && response.data != null) {
+        final userData = response.data['user'];
+        if (userData != null) {
+          await AuthService.saveUserData(userData);
+          _user = User.fromJson(userData);
+          notifyListeners();
+        }
+      }
+      return response.success;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await ApiService.put('/pharmacy/profile', {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      });
+      return response.success;
+    } catch (e) {
+      return false;
+    }
+  }
+}

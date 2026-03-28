@@ -1,0 +1,23 @@
+# Ignore Flutter apps (not for web deployment)
+apps/
+
+# Ignore documentation
+*.md
+!README.md
+
+# Ignore build artifacts
+*.apk
+*.aab
+*.ipa
+
+# Ignore local environment files
+.env.local
+.env.*.local
+
+# Ignore IDE files
+.vscode/
+.idea/
+
+# Ignore batch files
+*.bat
+*.sh

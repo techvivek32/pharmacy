@@ -1,0 +1,3 @@
+@echo off
+echo Sending hot reload command to running app...
+echo r | flutter run -d ZD2232F2B4

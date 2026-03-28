@@ -1,0 +1,110 @@
+import 'package:flutter/material.dart';
+import '../services/order_service.dart';
+import '../models/order_model.dart';
+import '../models/quote_model.dart';
+
+class OrderProvider with ChangeNotifier {
+  List<Order> _orders = [];
+  Order? _currentOrder;
+  List<Quote> _quotes = [];
+  bool _isLoading = false;
+  String? _error;
+
+  List<Order> get orders => _orders;
+  Order? get currentOrder => _currentOrder;
+  List<Quote> get quotes => _quotes;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
+
+  Future<bool> confirmOrder({
+    required String quoteId,
+    required String paymentMethod,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final result = await OrderService.confirmOrder(
+        quoteId: quoteId,
+        paymentMethod: paymentMethod,
+      );
+
+      if (result.success) {
+        _currentOrder = result.order;
+        if (result.order != null) {
+          _orders.insert(0, result.order!);
+        }
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _error = result.message;
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _error = 'Order confirmation failed: ${e.toString()}';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<void> loadOrderHistory() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      _orders = await OrderService.getOrderHistory();
+    } catch (e) {
+      _error = e.toString();
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> fetchOrders() async {
+    await loadOrderHistory();
+  }
+
+  Future<void> trackOrder(String orderId) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final result = await OrderService.trackOrder(orderId);
+      if (result.success) {
+        _currentOrder = result.order;
+      } else {
+        _error = result.message;
+      }
+    } catch (e) {
+      _error = e.toString();
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> loadQuotes(String prescriptionId) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      _quotes = await OrderService.getQuotes(prescriptionId);
+    } catch (e) {
+      _error = e.toString();
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  void clearError() {
+    _error = null;
+    notifyListeners();
+  }
+}
