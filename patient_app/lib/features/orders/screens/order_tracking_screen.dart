@@ -18,8 +18,13 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<OrderProvider>().trackOrder(widget.orderId);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final provider = context.read<OrderProvider>();
+      // If orders list is empty (app restarted), fetch history first
+      if (provider.orders.isEmpty) {
+        await provider.fetchOrders();
+      }
+      provider.trackOrder(widget.orderId);
     });
   }
 

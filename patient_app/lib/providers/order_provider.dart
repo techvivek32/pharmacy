@@ -105,18 +105,25 @@ class OrderProvider with ChangeNotifier {
   }
 
   Future<void> trackOrder(String orderId) async {
-    _isLoading = true;
-    notifyListeners();
+    // If already in list, use it immediately while fetching fresh data
+    final cached = _orders.where((o) => o.id == orderId).firstOrNull;
+    if (cached != null) {
+      _currentOrder = cached;
+      notifyListeners();
+    }
+
+    _isLoading = cached == null; // only show spinner if no cached data
+    if (cached == null) notifyListeners();
 
     try {
       final result = await OrderService.trackOrder(orderId);
-      if (result.success) {
+      if (result.success && result.order != null) {
         _currentOrder = result.order;
-      } else {
+      } else if (cached == null) {
         _error = result.message;
       }
     } catch (e) {
-      _error = e.toString();
+      if (cached == null) _error = e.toString();
     }
 
     _isLoading = false;
