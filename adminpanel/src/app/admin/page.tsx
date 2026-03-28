@@ -38,9 +38,6 @@ export default function Dashboard() {
             
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full overflow-hidden">
-                  <img src="/images/logo.jpeg" alt="Logo" className="w-full h-full object-cover" />
-                </div>
                 <div>
                   <p className="text-sm font-medium text-gray-700">Admin</p>
                   <p className="text-xs text-gray-500">pharmacy@admin.com</p>

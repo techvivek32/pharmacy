@@ -27,11 +27,8 @@ export default function Sidebar({ isOpen }: SidebarProps) {
         isOpen ? 'w-64' : 'w-0'
       } bg-white shadow-lg transition-all duration-300 overflow-hidden`}
     >
-      <div className="flex items-center justify-center h-16 border-b">
-        <div className="flex items-center space-x-2">
-          <span className="text-3xl">💊</span>
-          <span className="text-xl font-bold text-primary-600">OrdoGo</span>
-        </div>
+      <div className="flex items-center justify-center h-20 border-b px-4">
+        <img src="/images/logo-2.png" alt="Logo" className="h-14 w-auto object-contain" />
       </div>
 
       <nav className="mt-6">
