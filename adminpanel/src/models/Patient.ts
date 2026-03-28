@@ -5,6 +5,9 @@ export interface IPatient extends Document {
   addresses: Array<{
     label: string;
     address: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
     location: {
       type: string;
       coordinates: [number, number];
@@ -28,6 +31,9 @@ const PatientSchema = new Schema<IPatient>(
       {
         label: { type: String, required: true },
         address: { type: String, required: true },
+        city: { type: String },
+        state: { type: String },
+        zipCode: { type: String },
         location: {
           type: { type: String, enum: ['Point'], default: 'Point' },
           coordinates: { type: [Number], required: true },

@@ -75,6 +75,21 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
     );
   }
 
+  bool _hasLocationDetails(Map<String, dynamic> address) {
+    final city = address['city']?.toString().trim() ?? '';
+    final state = address['state']?.toString().trim() ?? '';
+    final zip = address['zipCode']?.toString().trim() ?? '';
+    return city.isNotEmpty || state.isNotEmpty || zip.isNotEmpty;
+  }
+
+  String _formatLocationLine(Map<String, dynamic> address) {
+    final city = address['city']?.toString().trim() ?? '';
+    final state = address['state']?.toString().trim() ?? '';
+    final zip = address['zipCode']?.toString().trim() ?? '';
+    final parts = [city, '$state $zip'.trim()].where((p) => p.isNotEmpty).toList();
+    return parts.join(', ');
+  }
+
   Widget _buildAddressCard(Map<String, dynamic> address) {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppTheme.spacing12),
@@ -137,16 +152,17 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
               ),
               const SizedBox(height: AppTheme.spacing12),
               Text(
-                address['address'],
+                address['address'] ?? '',
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
               const SizedBox(height: AppTheme.spacing4),
-              Text(
-                '${address['city']}, ${address['state']} ${address['zipCode']}',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.textSecondary,
-                    ),
-              ),
+              if (_hasLocationDetails(address))
+                Text(
+                  _formatLocationLine(address),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppTheme.textSecondary,
+                      ),
+                ),
               if (address['latitude'] != null && address['longitude'] != null) ...[
                 const SizedBox(height: AppTheme.spacing4),
                 Row(

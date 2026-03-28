@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       return errorResponse('Invalid token', 401);
     }
 
-    const { label, address, city, latitude, longitude, isDefault } = await request.json();
+    const { label, address, city, state, zipCode, latitude, longitude, isDefault } = await request.json();
 
     if (!label || !address || !latitude || !longitude) {
       return errorResponse('Missing required fields');
@@ -76,7 +76,10 @@ export async function POST(request: NextRequest) {
     // Add new address
     patient.addresses.push({
       label,
-      address: city ? `${address}, ${city}` : address,
+      address,
+      city: city || '',
+      state: state || '',
+      zipCode: zipCode || '',
       location: {
         type: 'Point',
         coordinates: [longitude, latitude],

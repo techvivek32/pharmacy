@@ -21,7 +21,7 @@ export async function PUT(
       return errorResponse('Invalid token', 401);
     }
 
-    const { label, address, city, latitude, longitude, isDefault } = await request.json();
+    const { label, address, city, state, zipCode, latitude, longitude, isDefault } = await request.json();
 
     const patient = await Patient.findOne({ userId: decoded.userId });
     if (!patient) {
@@ -45,11 +45,12 @@ export async function PUT(
       });
     }
 
-    // Update address
+    // Update address fields
     if (label) patient.addresses[addressIndex].label = label;
-    if (address) {
-      patient.addresses[addressIndex].address = city ? `${address}, ${city}` : address;
-    }
+    if (address) patient.addresses[addressIndex].address = address;
+    if (city !== undefined) patient.addresses[addressIndex].city = city;
+    if (state !== undefined) patient.addresses[addressIndex].state = state;
+    if (zipCode !== undefined) patient.addresses[addressIndex].zipCode = zipCode;
     if (latitude && longitude) {
       patient.addresses[addressIndex].location = {
         type: 'Point',
