@@ -29,7 +29,7 @@ export default function PrescriptionsPage() {
       const response = await fetch('/api/prescriptions');
       const data = await response.json() as any;
       if (data.success) {
-        setPrescriptions(data.data);
+        setPrescriptions(Array.isArray(data.data) ? data.data : []);
       }
     } catch (error) {
       console.error('Error fetching prescriptions:', error);

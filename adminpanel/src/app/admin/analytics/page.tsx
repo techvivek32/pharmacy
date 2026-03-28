@@ -93,7 +93,7 @@ export default function AnalyticsPage() {
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Total Revenue</p>
                       <h3 className="text-2xl font-bold text-gray-800">
-                        {analytics?.revenue.total.toLocaleString()} MAD
+                        {analytics?.revenue?.total?.toLocaleString() ?? 0} MAD
                       </h3>
                       <p className="text-xs text-green-600 mt-1">↑ 12.5% from last month</p>
                     </div>
@@ -108,7 +108,7 @@ export default function AnalyticsPage() {
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Total Orders</p>
                       <h3 className="text-2xl font-bold text-gray-800">
-                        {analytics?.orders.total || 0}
+                        {analytics?.orders?.total ?? 0}
                       </h3>
                       <p className="text-xs text-green-600 mt-1">↑ 8.3% from last month</p>
                     </div>
@@ -123,8 +123,8 @@ export default function AnalyticsPage() {
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Avg Order Value</p>
                       <h3 className="text-2xl font-bold text-gray-800">
-                        {analytics?.orders.total 
-                          ? Math.round(analytics.revenue.total / analytics.orders.total)
+                        {analytics?.orders?.total 
+                          ? Math.round((analytics.revenue?.total ?? 0) / analytics.orders.total)
                           : 0} MAD
                       </h3>
                       <p className="text-xs text-green-600 mt-1">↑ 5.2% from last month</p>
@@ -140,8 +140,8 @@ export default function AnalyticsPage() {
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Completion Rate</p>
                       <h3 className="text-2xl font-bold text-gray-800">
-                        {analytics?.orders.total
-                          ? Math.round((analytics.orders.completed / analytics.orders.total) * 100)
+                        {analytics?.orders?.total
+                          ? Math.round(((analytics.orders?.completed ?? 0) / analytics.orders.total) * 100)
                           : 0}%
                       </h3>
                       <p className="text-xs text-green-600 mt-1">↑ 3.1% from last month</p>
@@ -162,15 +162,15 @@ export default function AnalyticsPage() {
                       <div className="flex justify-between mb-2">
                         <span className="text-sm text-gray-600">Completed</span>
                         <span className="text-sm font-medium text-gray-800">
-                          {analytics?.orders.completed || 0} orders
+                          {analytics?.orders?.completed ?? 0} orders
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
                           className="bg-green-500 h-2 rounded-full" 
                           style={{ 
-                            width: `${analytics?.orders.total 
-                              ? (analytics.orders.completed / analytics.orders.total) * 100 
+                            width: `${analytics?.orders?.total 
+                              ? ((analytics.orders?.completed ?? 0) / analytics.orders.total) * 100 
                               : 0}%` 
                           }}
                         ></div>
@@ -181,15 +181,15 @@ export default function AnalyticsPage() {
                       <div className="flex justify-between mb-2">
                         <span className="text-sm text-gray-600">Pending</span>
                         <span className="text-sm font-medium text-gray-800">
-                          {analytics?.orders.pending || 0} orders
+                          {analytics?.orders?.pending ?? 0} orders
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
                           className="bg-yellow-500 h-2 rounded-full" 
                           style={{ 
-                            width: `${analytics?.orders.total 
-                              ? (analytics.orders.pending / analytics.orders.total) * 100 
+                            width: `${analytics?.orders?.total 
+                              ? ((analytics.orders?.pending ?? 0) / analytics.orders.total) * 100 
                               : 0}%` 
                           }}
                         ></div>
@@ -200,15 +200,15 @@ export default function AnalyticsPage() {
                       <div className="flex justify-between mb-2">
                         <span className="text-sm text-gray-600">Cancelled</span>
                         <span className="text-sm font-medium text-gray-800">
-                          {analytics?.orders.cancelled || 0} orders
+                          {analytics?.orders?.cancelled ?? 0} orders
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
                           className="bg-red-500 h-2 rounded-full" 
                           style={{ 
-                            width: `${analytics?.orders.total 
-                              ? (analytics.orders.cancelled / analytics.orders.total) * 100 
+                            width: `${analytics?.orders?.total 
+                              ? ((analytics.orders?.cancelled ?? 0) / analytics.orders.total) * 100 
                               : 0}%` 
                           }}
                         ></div>
@@ -226,7 +226,7 @@ export default function AnalyticsPage() {
                         <div>
                           <p className="text-sm text-gray-600">Total Patients</p>
                           <p className="text-xl font-bold text-gray-800">
-                            {analytics?.users.patients || 0}
+                            {analytics?.users?.patients ?? 0}
                           </p>
                         </div>
                       </div>
@@ -238,7 +238,7 @@ export default function AnalyticsPage() {
                         <div>
                           <p className="text-sm text-gray-600">Active Pharmacies</p>
                           <p className="text-xl font-bold text-gray-800">
-                            {analytics?.users.pharmacies || 0}
+                            {analytics?.users?.pharmacies ?? 0}
                           </p>
                         </div>
                       </div>
@@ -250,7 +250,7 @@ export default function AnalyticsPage() {
                         <div>
                           <p className="text-sm text-gray-600">Active Riders</p>
                           <p className="text-xl font-bold text-gray-800">
-                            {analytics?.users.riders || 0}
+                            {analytics?.users?.riders ?? 0}
                           </p>
                         </div>
                       </div>
