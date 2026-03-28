@@ -21,9 +21,10 @@ export async function GET(request: NextRequest) {
 
     const [orders, total] = await Promise.all([
       Order.find(query)
-        .populate('patientId', 'fullName email phone')
+        .populate({ path: 'patientId', populate: { path: 'userId', select: 'fullName email phone profileImage' } })
         .populate('pharmacyId', 'pharmacyName address phone')
         .populate('riderId', 'fullName phone')
+        .populate('prescriptionId', 'imageUrl deliveryAddress')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
