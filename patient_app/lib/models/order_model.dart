@@ -43,10 +43,10 @@ class Order {
       status: json['status'] ?? 'pending',
       paymentMethod: json['paymentMethod'],
       createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'])
+          ? DateTime.parse(json['createdAt']).toLocal()
           : DateTime.now(),
       estimatedDeliveryTime: json['estimatedDeliveryTime'] != null
-          ? DateTime.parse(json['estimatedDeliveryTime'])
+          ? DateTime.parse(json['estimatedDeliveryTime']).toLocal()
           : null,
       items: (json['items'] as List?)
               ?.map((item) => OrderItem.fromJson(item))

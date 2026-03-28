@@ -469,6 +469,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }
 
   String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}  ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    final hour = date.hour > 12 ? date.hour - 12 : date.hour == 0 ? 12 : date.hour;
+    final ampm = date.hour >= 12 ? 'PM' : 'AM';
+    final min = date.minute.toString().padLeft(2, '0');
+    return '${date.day} ${months[date.month - 1]} ${date.year}, $hour:$min $ampm';
   }
 }
