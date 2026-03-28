@@ -1,41 +1,45 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from '@/components/admin/Sidebar';
+
+interface Order {
+  _id: string;
+  patientId: { fullName: string; phone: string };
+  pharmacyId: { pharmacyName: string };
+  riderId?: { fullName: string };
+  totalAmount: number;
+  status: string;
+  createdAt: string;
+}
 
 export default function OrdersPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 1 });
 
-  const orders = [
-    {
-      id: 'ORD-001',
-      patient: 'John Doe',
-      pharmacy: 'City Pharmacy',
-      rider: 'Ahmed Ali',
-      amount: '120 MAD',
-      status: 'delivered',
-      date: '2024-03-08 14:30',
-    },
-    {
-      id: 'ORD-002',
-      patient: 'Jane Smith',
-      pharmacy: 'Health Plus',
-      rider: 'Mohammed Ben',
-      amount: '85 MAD',
-      status: 'in_transit',
-      date: '2024-03-08 15:45',
-    },
-    {
-      id: 'ORD-003',
-      patient: 'Mike Johnson',
-      pharmacy: 'MediCare',
-      rider: 'Youssef',
-      amount: '150 MAD',
-      status: 'preparing',
-      date: '2024-03-08 16:00',
-    },
-  ];
+  useEffect(() => {
+    fetchOrders();
+  }, [selectedStatus, pagination.page]);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const status = selectedStatus !== 'all' ? `&status=${selectedStatus}` : '';
+      const response = await fetch(`/api/orders?page=${pagination.page}&limit=10${status}`);
+      const data = await response.json() as any;
+      if (data.success) {
+        setOrders(Array.isArray(data.data?.orders) ? data.data.orders : []);
+        setPagination(p => ({ ...p, total: data.data?.pagination?.total || 0, pages: data.data?.pagination?.pages || 1 }));
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -111,6 +115,11 @@ export default function OrdersPage() {
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="overflow-x-auto">
+              {loading ? (
+                <div className="p-8 text-center text-gray-500">Loading orders...</div>
+              ) : orders.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">No orders found</div>
+              ) : (
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50">
@@ -126,22 +135,24 @@ export default function OrdersPage() {
                 </thead>
                 <tbody>
                   {orders.map((order) => (
-                    <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <tr key={order._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                       <td className="py-4 px-6">
-                        <span className="font-medium text-gray-800">{order.id}</span>
+                        <span className="font-medium text-gray-800">{order._id.slice(-6).toUpperCase()}</span>
                       </td>
-                      <td className="py-4 px-6 text-gray-600">{order.patient}</td>
-                      <td className="py-4 px-6 text-gray-600">{order.pharmacy}</td>
-                      <td className="py-4 px-6 text-gray-600">{order.rider}</td>
+                      <td className="py-4 px-6 text-gray-600">{order.patientId?.fullName || 'N/A'}</td>
+                      <td className="py-4 px-6 text-gray-600">{order.pharmacyId?.pharmacyName || 'N/A'}</td>
+                      <td className="py-4 px-6 text-gray-600">{order.riderId?.fullName || 'Unassigned'}</td>
                       <td className="py-4 px-6">
-                        <span className="font-medium text-gray-800">{order.amount}</span>
+                        <span className="font-medium text-gray-800">{order.totalAmount} MAD</span>
                       </td>
                       <td className="py-4 px-6">
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                           {getStatusLabel(order.status)}
                         </span>
                       </td>
-                      <td className="py-4 px-6 text-sm text-gray-600">{order.date}</td>
+                      <td className="py-4 px-6 text-sm text-gray-600">
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </td>
                       <td className="py-4 px-6">
                         <button className="text-primary-600 hover:text-primary-700 text-sm font-medium">
                           View Details
@@ -151,21 +162,27 @@ export default function OrdersPage() {
                   ))}
                 </tbody>
               </table>
+              )}
             </div>
 
             <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
               <div className="text-sm text-gray-600">
-                Showing <span className="font-medium">1</span> to <span className="font-medium">3</span> of{' '}
-                <span className="font-medium">100</span> results
+                Total: <span className="font-medium">{pagination.total}</span> orders
               </div>
               <div className="flex space-x-2">
-                <button className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
+                <button
+                  onClick={() => setPagination(p => ({ ...p, page: Math.max(1, p.page - 1) }))}
+                  disabled={pagination.page === 1}
+                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
+                >
                   Previous
                 </button>
-                <button className="px-3 py-1 bg-primary-500 text-white rounded-lg text-sm">1</button>
-                <button className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">2</button>
-                <button className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">3</button>
-                <button className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
+                <span className="px-3 py-1 bg-primary-500 text-white rounded-lg text-sm">{pagination.page}</span>
+                <button
+                  onClick={() => setPagination(p => ({ ...p, page: Math.min(p.pages, p.page + 1) }))}
+                  disabled={pagination.page === pagination.pages}
+                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
+                >
                   Next
                 </button>
               </div>

@@ -39,9 +39,35 @@ export default function AnalyticsPage() {
   const fetchAnalytics = async () => {
     try {
       const response = await fetch('/api/analytics');
-      const data = await response.json() as { success: boolean; data: AnalyticsData };
+      const data = await response.json() as any;
       if (data.success) {
-        setAnalytics(data.data);
+        const d = data.data;
+        const ordersByStatus = d.charts?.ordersByStatus || [];
+        const getCount = (status: string) =>
+          ordersByStatus.find((s: any) => s._id === status)?.count || 0;
+        setAnalytics({
+          revenue: {
+            total: d.overview?.totalRevenue || 0,
+            daily: [],
+            monthly: [],
+          },
+          orders: {
+            total: d.overview?.totalOrders || 0,
+            completed: d.overview?.completedOrders || getCount('delivered'),
+            cancelled: getCount('cancelled'),
+            pending: getCount('pending'),
+          },
+          users: {
+            patients: d.overview?.totalPatients || 0,
+            pharmacies: d.overview?.totalPharmacies || 0,
+            riders: d.overview?.totalRiders || 0,
+          },
+          topPharmacies: (d.topPerformers?.pharmacies || []).map((p: any) => ({
+            name: p.name || 'Unknown',
+            orders: p.orders || 0,
+            revenue: p.revenue || 0,
+          })),
+        });
       }
     } catch (error) {
       console.error('Error fetching analytics:', error);
