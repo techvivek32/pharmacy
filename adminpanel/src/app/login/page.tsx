@@ -42,7 +42,7 @@ export default function LoginPage() {
       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <img src="/images/logo.jpeg" alt="Logo" className="h-16 w-auto rounded-2xl object-contain" />
+            <img src="/images/logo-2.png" alt="Logo" className="h-16 w-auto rounded-2xl object-contain" />
           </div>
           <h1 className="text-2xl font-bold text-gray-800">Pharmacy Admin</h1>
           <p className="text-gray-500 text-sm mt-1">Sign in to access the dashboard</p>
