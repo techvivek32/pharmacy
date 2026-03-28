@@ -18,23 +18,32 @@ export async function GET(request: NextRequest) {
     }
 
     const skip = (page - 1) * limit;
+    const total = await Order.countDocuments(query);
 
-    const [orders, total] = await Promise.all([
-      Order.find(query)
+    let orders: any[] = [];
+    try {
+      orders = await Order.find(query)
         .populate({
           path: 'patientId',
-          populate: { path: 'userId', select: 'fullName email phone profileImage' },
+          model: 'Patient',
+          populate: { path: 'userId', model: 'User', select: 'fullName email phone profileImage' },
         })
         .populate('pharmacyId', 'pharmacyName address phone')
         .populate('riderId', 'fullName phone')
-        .populate('prescriptionId', 'imageUrl deliveryAddress')
+        .populate({ path: 'prescriptionId', select: 'imageUrl deliveryAddress', strictPopulate: false })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .lean()
-        .catch(() => []),
-      Order.countDocuments(query).catch(() => 0),
-    ]);
+        .lean();
+    } catch (populateErr: any) {
+      console.error('Populate error:', populateErr?.message);
+      // Fallback: fetch without populate
+      orders = await Order.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+    }
 
     return successResponse({
       orders,
@@ -42,7 +51,7 @@ export async function GET(request: NextRequest) {
         page,
         limit,
         total,
-        pages: Math.ceil((total as number) / limit),
+        pages: Math.ceil(total / limit),
       },
     });
   } catch (error: any) {

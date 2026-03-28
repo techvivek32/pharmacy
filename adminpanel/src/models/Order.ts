@@ -51,7 +51,6 @@ const OrderSchema = new Schema<IOrder>(
     prescriptionId: {
       type: Schema.Types.ObjectId,
       ref: 'Prescription',
-      required: true,
     },
     quoteId: {
       type: Schema.Types.ObjectId,
@@ -72,10 +71,10 @@ const OrderSchema = new Schema<IOrder>(
     },
     items: [
       {
-        medicineName: { type: String, required: true },
-        quantity: { type: Number, required: true },
-        unitPrice: { type: Number, required: true },
-        totalPrice: { type: Number, required: true },
+        medicineName: { type: String, default: '' },
+        quantity: { type: Number, default: 1 },
+        unitPrice: { type: Number, default: 0 },
+        totalPrice: { type: Number, default: 0 },
       },
     ],
     subtotal: {
