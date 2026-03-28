@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'core/theme/app_theme.dart';
 import 'models/quote_model.dart';
@@ -26,6 +27,7 @@ import 'features/profile/screens/about_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
   
   // Initialize Firebase (optional - comment out if not using)
   // await Firebase.initializeApp();

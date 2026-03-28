@@ -1,9 +1,8 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class AppConstants {
   // API Configuration
-  // Live Vercel backend URL
-  static const String baseUrl = 'https://medi-express-vivekvora3226-2527s-projects.vercel.app/api';
-  static const String androidEmulatorUrl = 'https://medi-express-vivekvora3226-2527s-projects.vercel.app/api';
-  static const String iosSimulatorUrl = 'https://medi-express-vivekvora3226-2527s-projects.vercel.app/api';
+  static String get baseUrl => dotenv.env['API_BASE_URL'] ?? 'https://pharmacy-five-eosin.vercel.app/api';
   
   // Timeouts
   static const Duration connectionTimeout = Duration(seconds: 30);

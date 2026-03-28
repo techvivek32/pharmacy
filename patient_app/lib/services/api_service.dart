@@ -1,17 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import '../core/constants/app_constants.dart';
 
 class ApiService {
   static String get baseUrl {
-    // For web, always use localhost
-    if (kIsWeb) {
-      return 'http://localhost:3000/api';
-    }
-    
-    // For mobile, use the configured URLs
     return AppConstants.baseUrl;
   }
 
