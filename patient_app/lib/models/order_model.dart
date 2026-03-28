@@ -12,6 +12,8 @@ class Order {
   final RiderInfo? rider;
   final String? prescriptionId;
   final Map<String, dynamic>? deliveryAddress;
+  final String? prescriptionImage;
+  final String? pharmacyPhone;
 
   Order({
     required this.id,
@@ -27,6 +29,8 @@ class Order {
     this.rider,
     this.prescriptionId,
     this.deliveryAddress,
+    this.prescriptionImage,
+    this.pharmacyPhone,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -53,6 +57,8 @@ class Order {
       deliveryAddress: json['deliveryAddress'] is Map
           ? Map<String, dynamic>.from(json['deliveryAddress'])
           : null,
+      prescriptionImage: json['prescriptionImage'],
+      pharmacyPhone: json['pharmacyPhone'],
     );
   }
 }

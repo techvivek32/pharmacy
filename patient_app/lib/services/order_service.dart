@@ -69,10 +69,12 @@ class OrderService {
 
   static Future<OrderResult> trackOrder(String orderId) async {
     try {
-      final response = await ApiService.get('/orders/$orderId/track');
+      final response = await ApiService.get('/orders/$orderId');
 
       if (response.success) {
-        final order = Order.fromJson(response.data['order']);
+        final data = response.data;
+        final orderJson = data['order'] ?? data;
+        final order = Order.fromJson(orderJson);
         return OrderResult(success: true, order: order);
       } else {
         return OrderResult(success: false, message: response.message);
@@ -80,7 +82,7 @@ class OrderService {
     } catch (e) {
       return OrderResult(
         success: false,
-        message: 'Failed to track order',
+        message: 'Failed to fetch order',
       );
     }
   }
