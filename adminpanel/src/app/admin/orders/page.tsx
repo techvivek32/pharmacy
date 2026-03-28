@@ -24,7 +24,11 @@ interface Prescription {
 interface Order {
   _id: string;
   orderNumber: string;
-  patientId: Patient;
+  patientId?: any;
+  patientName?: string;
+  patientEmail?: string;
+  patientPhone?: string;
+  patientImage?: string;
   pharmacyId?: { pharmacyName: string; address?: string; phone?: string };
   riderId?: { fullName: string; phone?: string };
   prescriptionId?: Prescription;
@@ -65,7 +69,7 @@ export default function OrdersPage() {
   };
 
   const getPatientName = (order: Order) => {
-    return order.patientId?.userId?.fullName || 'N/A';
+    return order.patientName || order.patientId?.userId?.fullName || 'Unknown';
   };
 
   const getStatusColor = (status: string) => {
@@ -238,9 +242,9 @@ export default function OrdersPage() {
               <div className="bg-gray-50 rounded-xl p-4">
                 <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Patient Information</h3>
                 <div className="flex items-center gap-4">
-                  {selectedOrder.patientId?.userId?.profileImage ? (
+                  {selectedOrder.patientImage ? (
                     <img
-                      src={selectedOrder.patientId.userId.profileImage}
+                      src={selectedOrder.patientImage}
                       alt="Patient"
                       className="w-14 h-14 rounded-full object-cover border-2 border-white shadow"
                     />
@@ -255,13 +259,13 @@ export default function OrdersPage() {
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
-                      {selectedOrder.patientId?.userId?.email || 'N/A'}
+                      {selectedOrder.patientEmail || selectedOrder.patientId?.userId?.email || '—'}
                     </p>
                     <p className="text-sm text-gray-500 flex items-center gap-1">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                       </svg>
-                      {selectedOrder.patientId?.userId?.phone || 'N/A'}
+                      {selectedOrder.patientPhone || selectedOrder.patientId?.userId?.phone || '—'}
                     </p>
                   </div>
                 </div>
