@@ -1,21 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/admin/Sidebar';
 import DashboardStats from '@/components/admin/DashboardStats';
 import RecentOrders from '@/components/admin/RecentOrders';
 import RevenueChart from '@/components/admin/RevenueChart';
 
 export default function Dashboard() {
-  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  const handleLogout = async () => {
-    await fetch('/api/admin/logout', { method: 'POST' });
-    router.push('/login');
-    router.refresh();
-  };
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -40,15 +32,8 @@ export default function Dashboard() {
               <div className="flex items-center space-x-3">
                 <div>
                   <p className="text-sm font-medium text-gray-700">Admin</p>
-                  <p className="text-xs text-gray-500">pharmacy@admin.com</p>
                 </div>
               </div>
-              <button
-                onClick={handleLogout}
-                className="px-3 py-1.5 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
-              >
-                Logout
-              </button>
             </div>
           </div>
         </header>
