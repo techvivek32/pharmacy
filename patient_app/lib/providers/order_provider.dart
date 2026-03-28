@@ -16,6 +16,40 @@ class OrderProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  Future<bool> createOrder({
+    required String prescriptionId,
+    required Map<String, dynamic> deliveryAddress,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final result = await OrderService.createOrder(
+        prescriptionId: prescriptionId,
+        deliveryAddress: deliveryAddress,
+      );
+
+      if (result.success) {
+        _currentOrder = result.order;
+        if (result.order != null) _orders.insert(0, result.order!);
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _error = result.message;
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _error = 'Order creation failed: ${e.toString()}';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<bool> confirmOrder({
     required String quoteId,
     required String paymentMethod,

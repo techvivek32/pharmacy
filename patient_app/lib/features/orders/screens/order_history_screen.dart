@@ -112,7 +112,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                   const Icon(Icons.store, size: 16, color: AppTheme.textSecondary),
                   const SizedBox(width: AppTheme.spacing4),
                   Text(
-                    order.pharmacyName ?? 'Pharmacy',
+                    order.pharmacyName ?? 'Awaiting pharmacy',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],

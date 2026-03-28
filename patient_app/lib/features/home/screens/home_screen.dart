@@ -20,6 +20,11 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadRecentOrders();
+      // Check if we should open Orders tab (e.g. after placing order)
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map && args['tab'] != null) {
+        setState(() => _selectedIndex = args['tab'] as int);
+      }
     });
   }
 
@@ -360,7 +365,10 @@ class _HomeScreenState extends State<HomeScreen> {
             _buildProfileMenuItem(
               icon: Icons.person,
               title: 'Edit Profile',
-              onTap: () => Navigator.pushNamed(context, '/edit-profile'),
+              onTap: () async {
+                await Navigator.pushNamed(context, '/edit-profile');
+                if (mounted) context.read<AuthProvider>().refreshProfile();
+              },
             ),
             _buildProfileMenuItem(
               icon: Icons.location_on,
@@ -396,6 +404,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildProfileHeader(dynamic user) {
+    ImageProvider? imageProvider;
+    final profileImage = user?.profileImage;
+    if (profileImage != null && profileImage.toString().startsWith('http')) {
+      imageProvider = NetworkImage(profileImage);
+    }
+
     return AppCard(
       child: Padding(
         padding: const EdgeInsets.all(AppTheme.spacing20),
@@ -404,12 +418,15 @@ class _HomeScreenState extends State<HomeScreen> {
             CircleAvatar(
               radius: 40,
               backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
-              child: Text(
-                user?.fullName?.substring(0, 1).toUpperCase() ?? 'U',
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      color: AppTheme.primary,
-                    ),
-              ),
+              backgroundImage: imageProvider,
+              child: imageProvider == null
+                  ? Text(
+                      user?.fullName?.substring(0, 1).toUpperCase() ?? 'U',
+                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                            color: AppTheme.primary,
+                          ),
+                    )
+                  : null,
             ),
             const SizedBox(width: AppTheme.spacing16),
             Expanded(

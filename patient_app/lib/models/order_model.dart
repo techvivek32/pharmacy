@@ -1,39 +1,43 @@
 class Order {
   final String id;
   final String orderNumber;
-  final String pharmacyName;
+  final String? pharmacyName;
   final String? riderName;
   final double totalAmount;
   final String status;
-  final String paymentMethod;
+  final String? paymentMethod;
   final DateTime createdAt;
   final DateTime? estimatedDeliveryTime;
   final List<OrderItem> items;
   final RiderInfo? rider;
+  final String? prescriptionId;
+  final Map<String, dynamic>? deliveryAddress;
 
   Order({
     required this.id,
     required this.orderNumber,
-    required this.pharmacyName,
+    this.pharmacyName,
     this.riderName,
     required this.totalAmount,
     required this.status,
-    required this.paymentMethod,
+    this.paymentMethod,
     required this.createdAt,
     this.estimatedDeliveryTime,
     required this.items,
     this.rider,
+    this.prescriptionId,
+    this.deliveryAddress,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
-      id: json['id'] ?? '',
+      id: (json['_id'] ?? json['id'] ?? '').toString(),
       orderNumber: json['orderNumber'] ?? '',
-      pharmacyName: json['pharmacyName'] ?? 'Unknown Pharmacy',
+      pharmacyName: json['pharmacyName'],
       riderName: json['riderName'],
       totalAmount: (json['totalAmount'] ?? 0).toDouble(),
       status: json['status'] ?? 'pending',
-      paymentMethod: json['paymentMethod'] ?? 'cash',
+      paymentMethod: json['paymentMethod'],
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
@@ -45,6 +49,10 @@ class Order {
               .toList() ??
           [],
       rider: json['rider'] != null ? RiderInfo.fromJson(json['rider']) : null,
+      prescriptionId: json['prescription']?['_id'] ?? json['prescriptionId'],
+      deliveryAddress: json['deliveryAddress'] is Map
+          ? Map<String, dynamic>.from(json['deliveryAddress'])
+          : null,
     );
   }
 }

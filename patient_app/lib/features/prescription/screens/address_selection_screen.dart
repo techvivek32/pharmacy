@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../services/address_service.dart';
+import '../../../providers/order_provider.dart';
 import '../../profile/screens/add_address_screen.dart';
 
 class AddressSelectionScreen extends StatefulWidget {
@@ -15,12 +17,15 @@ class AddressSelectionScreen extends StatefulWidget {
 class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
   List<Map<String, dynamic>> _addresses = [];
   bool _isLoading = true;
+  bool _isCreatingOrder = false;
   String? _selectedAddressId;
+  String? _prescriptionId;
 
   @override
-  void initState() {
-    super.initState();
-    _loadAddresses();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _prescriptionId ??= ModalRoute.of(context)?.settings.arguments as String?;
+    if (_addresses.isEmpty && _isLoading) _loadAddresses();
   }
 
   Future<void> _loadAddresses() async {
@@ -70,14 +75,39 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
     }
   }
 
-  void _confirmAddress() {
-    if (_selectedAddressId == null) return;
-    
+  void _confirmAddress() async {
+    if (_selectedAddressId == null || _prescriptionId == null) return;
+
     final selectedAddress = _addresses.firstWhere(
       (addr) => addr['_id'] == _selectedAddressId,
     );
-    
-    Navigator.pop(context, selectedAddress);
+
+    setState(() => _isCreatingOrder = true);
+
+    final success = await context.read<OrderProvider>().createOrder(
+      prescriptionId: _prescriptionId!,
+      deliveryAddress: selectedAddress,
+    );
+
+    if (!mounted) return;
+    setState(() => _isCreatingOrder = false);
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Order placed successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      // Go back to home and switch to Orders tab
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false,
+          arguments: {'tab': 1});
+    } else {
+      final error = context.read<OrderProvider>().error;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error ?? 'Failed to place order')),
+      );
+    }
   }
 
   @override
@@ -276,7 +306,8 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                 Expanded(
                   child: PrimaryButton(
                     text: 'Confirm Address',
-                    onPressed: _selectedAddressId == null ? null : _confirmAddress,
+                    onPressed: (_selectedAddressId == null || _isCreatingOrder) ? null : _confirmAddress,
+                    isLoading: _isCreatingOrder,
                   ),
                 ),
               ],

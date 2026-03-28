@@ -23,18 +23,34 @@ export async function GET(request: NextRequest) {
     }
 
     if (!userId) {
-      // Return empty array instead of error for better UX
       return successResponse([], 'No orders found');
     }
 
-    // Fetch orders for the user
-    const orders = await Order.find({ patientId: userId })
+    // Find patient by userId
+    const Patient = (await import('@/models/Patient')).default;
+    const patient = await Patient.findOne({ userId });
+    if (!patient) {
+      return successResponse([], 'No orders found');
+    }
+
+    // Fetch all orders for the patient
+    const orders = await Order.find({ patientId: patient._id })
       .sort({ createdAt: -1 })
-      .populate('pharmacyId', 'name address')
-      .populate('riderId', 'name phone')
+      .populate('pharmacyId', 'pharmacyName name address')
+      .populate('riderId', 'fullName name phone')
       .lean();
 
-    return successResponse(orders, 'Orders fetched successfully');
+    // Normalize fields for Flutter app
+    const normalized = orders.map((o: any) => ({
+      ...o,
+      id: o._id?.toString(),
+      orderNumber: o.orderNumber || '',
+      pharmacyName: o.pharmacyId?.pharmacyName || o.pharmacyId?.name || null,
+      totalAmount: o.totalAmount || 0,
+      status: o.status || 'pending',
+    }));
+
+    return successResponse(normalized, 'Orders fetched successfully');
   } catch (error: any) {
     console.error('Fetch orders error:', error);
     return errorResponse('Failed to fetch orders', 500);

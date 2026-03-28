@@ -3,6 +3,29 @@ import '../models/quote_model.dart';
 import 'api_service.dart';
 
 class OrderService {
+  static Future<OrderResult> createOrder({
+    required String prescriptionId,
+    required Map<String, dynamic> deliveryAddress,
+  }) async {
+    try {
+      final response = await ApiService.post('/orders/create', {
+        'prescriptionId': prescriptionId,
+        'deliveryAddress': deliveryAddress,
+      });
+
+      if (response.success) {
+        final data = response.data;
+        final orderJson = data['order'] ?? data;
+        final order = Order.fromJson(orderJson);
+        return OrderResult(success: true, order: order);
+      } else {
+        return OrderResult(success: false, message: response.message);
+      }
+    } catch (e) {
+      return OrderResult(success: false, message: 'Failed to create order');
+    }
+  }
+
   static Future<OrderResult> confirmOrder({
     required String quoteId,
     required String paymentMethod,

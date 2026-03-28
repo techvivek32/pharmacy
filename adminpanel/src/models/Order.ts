@@ -3,9 +3,9 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IOrder extends Document {
   orderNumber: string;
   prescriptionId: mongoose.Types.ObjectId;
-  quoteId: mongoose.Types.ObjectId;
+  quoteId?: mongoose.Types.ObjectId;
   patientId: mongoose.Types.ObjectId;
-  pharmacyId: mongoose.Types.ObjectId;
+  pharmacyId?: mongoose.Types.ObjectId;
   riderId?: mongoose.Types.ObjectId;
   items: Array<{
     medicineName: string;
@@ -16,19 +16,19 @@ export interface IOrder extends Document {
   subtotal: number;
   deliveryFee: number;
   totalAmount: number;
-  paymentMethod: 'cash' | 'online';
+  paymentMethod?: 'cash' | 'online';
   paymentStatus: 'pending' | 'paid' | 'failed';
-  status: 'confirmed' | 'preparing' | 'ready' | 'assigned' | 'picked_up' | 'in_transit' | 'delivered' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'assigned' | 'picked_up' | 'in_transit' | 'delivered' | 'cancelled';
   deliveryAddress: {
     address: string;
-    location: {
+    location?: {
       type: string;
       coordinates: [number, number];
     };
   };
-  pharmacyAddress: {
+  pharmacyAddress?: {
     address: string;
-    location: {
+    location?: {
       type: string;
       coordinates: [number, number];
     };
@@ -56,7 +56,6 @@ const OrderSchema = new Schema<IOrder>(
     quoteId: {
       type: Schema.Types.ObjectId,
       ref: 'Quote',
-      required: true,
     },
     patientId: {
       type: Schema.Types.ObjectId,
@@ -66,7 +65,6 @@ const OrderSchema = new Schema<IOrder>(
     pharmacyId: {
       type: Schema.Types.ObjectId,
       ref: 'Pharmacy',
-      required: true,
     },
     riderId: {
       type: Schema.Types.ObjectId,
@@ -82,20 +80,19 @@ const OrderSchema = new Schema<IOrder>(
     ],
     subtotal: {
       type: Number,
-      required: true,
+      default: 0,
     },
     deliveryFee: {
       type: Number,
-      required: true,
+      default: 0,
     },
     totalAmount: {
       type: Number,
-      required: true,
+      default: 0,
     },
     paymentMethod: {
       type: String,
       enum: ['cash', 'online'],
-      required: true,
     },
     paymentStatus: {
       type: String,
@@ -104,21 +101,21 @@ const OrderSchema = new Schema<IOrder>(
     },
     status: {
       type: String,
-      enum: ['confirmed', 'preparing', 'ready', 'assigned', 'picked_up', 'in_transit', 'delivered', 'cancelled'],
-      default: 'confirmed',
+      enum: ['pending', 'confirmed', 'preparing', 'ready', 'assigned', 'picked_up', 'in_transit', 'delivered', 'cancelled'],
+      default: 'pending',
     },
     deliveryAddress: {
       address: { type: String, required: true },
       location: {
         type: { type: String, enum: ['Point'], default: 'Point' },
-        coordinates: { type: [Number], required: true },
+        coordinates: { type: [Number] },
       },
     },
     pharmacyAddress: {
-      address: { type: String, required: true },
+      address: { type: String },
       location: {
         type: { type: String, enum: ['Point'], default: 'Point' },
-        coordinates: { type: [Number], required: true },
+        coordinates: { type: [Number] },
       },
     },
     estimatedDeliveryTime: Date,
