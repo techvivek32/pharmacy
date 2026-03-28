@@ -1,8 +1,11 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class AppConstants {
-  static const String baseUrl = 'https://medi-express-vivekvora3226-2527s-projects.vercel.app/api';
-  
+  static String get baseUrl =>
+      dotenv.env['API_BASE_URL'] ?? 'https://pharmacy-five-eosin.vercel.app/api';
+
   static const String tokenKey = 'auth_token';
   static const String userKey = 'user_data';
-  
+
   static const Duration connectionTimeout = Duration(seconds: 30);
 }
