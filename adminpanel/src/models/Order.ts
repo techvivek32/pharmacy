@@ -105,14 +105,14 @@ const OrderSchema = new Schema<IOrder>(
       default: 'pending',
     },
     deliveryAddress: {
-      address: { type: String, required: true },
+      address: { type: String, default: '' },
       location: {
         type: { type: String, enum: ['Point'], default: 'Point' },
         coordinates: { type: [Number] },
       },
     },
     pharmacyAddress: {
-      address: { type: String },
+      address: { type: String, default: '' },
       location: {
         type: { type: String, enum: ['Point'], default: 'Point' },
         coordinates: { type: [Number] },

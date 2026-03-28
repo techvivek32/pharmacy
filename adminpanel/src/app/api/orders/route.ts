@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { connectDB } from '@/lib/mongodb';
+import connectDB from '@/lib/mongodb';
 import Order from '@/models/Order';
 import { successResponse, errorResponse } from '@/lib/response';
 
@@ -21,15 +21,19 @@ export async function GET(request: NextRequest) {
 
     const [orders, total] = await Promise.all([
       Order.find(query)
-        .populate({ path: 'patientId', populate: { path: 'userId', select: 'fullName email phone profileImage' } })
+        .populate({
+          path: 'patientId',
+          populate: { path: 'userId', select: 'fullName email phone profileImage' },
+        })
         .populate('pharmacyId', 'pharmacyName address phone')
         .populate('riderId', 'fullName phone')
         .populate('prescriptionId', 'imageUrl deliveryAddress')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .lean(),
-      Order.countDocuments(query),
+        .lean()
+        .catch(() => []),
+      Order.countDocuments(query).catch(() => 0),
     ]);
 
     return successResponse({
@@ -38,11 +42,11 @@ export async function GET(request: NextRequest) {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit),
+        pages: Math.ceil((total as number) / limit),
       },
     });
   } catch (error: any) {
-    console.error('Get orders error:', error);
-    return errorResponse('Failed to fetch orders', 500);
+    console.error('Get orders error:', error?.message || error);
+    return errorResponse(`Failed to fetch orders: ${error?.message || 'Unknown error'}`, 500);
   }
 }
