@@ -64,5 +64,7 @@ const PrescriptionSchema = new Schema<IPrescription>(
 PrescriptionSchema.index({ patientId: 1 });
 PrescriptionSchema.index({ status: 1 });
 PrescriptionSchema.index({ expiresAt: 1 });
+PrescriptionSchema.index({ nearbyPharmacies: 1 });
+PrescriptionSchema.index({ 'deliveryAddress.location': '2dsphere' });
 
 export default mongoose.models.Prescription || mongoose.model<IPrescription>('Prescription', PrescriptionSchema);

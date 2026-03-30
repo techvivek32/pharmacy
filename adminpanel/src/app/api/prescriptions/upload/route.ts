@@ -5,7 +5,6 @@ import Pharmacy from '@/models/Pharmacy';
 import Patient from '@/models/Patient';
 import { authenticateRequest } from '@/lib/auth';
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response';
-import { sendNotificationToPharmacies } from '@/services/notification';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,64 +22,66 @@ export async function POST(request: NextRequest) {
       return errorResponse('Image URL is required');
     }
 
-    // Get patient
     const patient = await Patient.findOne({ userId: auth.userId });
     if (!patient) {
       return errorResponse('Patient profile not found', 404);
     }
 
-    // Create prescription data
     const prescriptionData: any = {
       patientId: patient._id,
       imageUrl,
       status: 'pending',
     };
 
-    if (imagePublicId) {
-      prescriptionData.imagePublicId = imagePublicId;
-    }
+    if (imagePublicId) prescriptionData.imagePublicId = imagePublicId;
 
-    // Add delivery address if provided
-    if (address && coordinates) {
+    let nearbyPharmaciesCount = 0;
+
+    if (address && coordinates && coordinates.length === 2) {
       prescriptionData.deliveryAddress = {
         address,
         location: {
           type: 'Point',
-          coordinates,
+          coordinates, // [longitude, latitude]
         },
       };
 
-      // Find nearby pharmacies within 5km
-      const nearbyPharmacies = await Pharmacy.find({
+      // Find the single nearest approved pharmacy within 100km
+      let nearestPharmacy = await Pharmacy.findOne({
         location: {
           $near: {
-            $geometry: {
-              type: 'Point',
-              coordinates: coordinates, // [longitude, latitude]
-            },
-            $maxDistance: 5000, // 5km in meters
+            $geometry: { type: 'Point', coordinates },
+            $maxDistance: 100000, // 100km
           },
         },
-        isOpen: true,
-      }).limit(20);
+        approvalStatus: 'approved',
+      }).lean();
 
-      if (nearbyPharmacies.length > 0) {
-        prescriptionData.nearbyPharmacies = nearbyPharmacies.map((p) => p._id);
+      // Fallback: if none within 100km, get the absolute nearest
+      if (!nearestPharmacy) {
+        nearestPharmacy = await Pharmacy.findOne({
+          approvalStatus: 'approved',
+          location: {
+            $near: {
+              $geometry: { type: 'Point', coordinates },
+            },
+          },
+        }).lean();
+      }
 
-        // Send notifications to nearby pharmacies
-        await sendNotificationToPharmacies(
-          nearbyPharmacies.map((p) => p.userId.toString()),
-          'New Prescription Request',
-          'A patient nearby needs medicine delivery',
-          {
-            prescriptionId: prescriptionData._id?.toString(),
-            type: 'prescription_request',
-          }
-        );
+      if (nearestPharmacy) {
+        prescriptionData.nearbyPharmacies = [(nearestPharmacy as any)._id];
+        nearbyPharmaciesCount = 1;
+      }
+    } else {
+      // No coordinates — assign to the first approved pharmacy
+      const pharmacy = await Pharmacy.findOne({ approvalStatus: 'approved' }).lean();
+      if (pharmacy) {
+        prescriptionData.nearbyPharmacies = [(pharmacy as any)._id];
+        nearbyPharmaciesCount = 1;
       }
     }
 
-    // Create prescription
     const prescription = await Prescription.create(prescriptionData);
 
     return successResponse(
@@ -89,7 +90,8 @@ export async function POST(request: NextRequest) {
           _id: prescription._id,
           imageUrl: prescription.imageUrl,
           status: prescription.status,
-          nearbyPharmaciesCount: prescriptionData.nearbyPharmacies?.length || 0,
+          nearbyPharmaciesCount,
+          assignedToPharmacy: nearbyPharmaciesCount === 1,
         },
       },
       'Prescription uploaded successfully',
