@@ -45,7 +45,7 @@ export default function PharmacyDetailPage() {
       <Sidebar isOpen={sidebarOpen} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white shadow-sm">
-          <div className="flex items-center justify-between px-6 py-4">
+          <div className="flex items-center px-6 py-4">
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-500 hover:text-gray-700">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -60,12 +60,6 @@ export default function PharmacyDetailPage() {
               {loading ? 'Loading...' : data?.pharmacy?.name || 'Pharmacy Details'}
             </h1>
           </div>
-          <button
-            onClick={() => router.push('/admin/pharmacy-requests')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-          >
-            🔔 Requests
-          </button>
         </header>
 
         <main className="flex-1 overflow-y-auto p-6">
