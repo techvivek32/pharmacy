@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/input_field.dart';
 import '../../../services/api_service.dart';
 import 'otp_verification_screen.dart';
+import 'map_picker_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -24,6 +26,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _licenseController = TextEditingController();
   final _addressController = TextEditingController();
 
+  double _lat = 0.0;
+  double _lng = 0.0;
+  bool _locationSelected = false;
+  bool _isSendingOtp = false;
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -36,7 +43,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  bool _isSendingOtp = false;
+  Future<void> _openMapPicker() async {
+    final result = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MapPickerScreen(
+          initialLocation: _locationSelected ? LatLng(_lat, _lng) : null,
+        ),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _addressController.text = result['address'] as String;
+        _lat = result['lat'] as double;
+        _lng = result['lng'] as double;
+        _locationSelected = true;
+      });
+    }
+  }
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
@@ -69,27 +94,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 'pharmacyName': _pharmacyNameController.text.trim(),
                 'licenseNumber': _licenseController.text.trim(),
                 'address': _addressController.text.trim(),
-                'coordinates': [0.0, 0.0],
+                'coordinates': [_lng, _lat],
               },
             ),
           ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message),
-            backgroundColor: AppTheme.error,
-          ),
+          SnackBar(content: Text(response.message), backgroundColor: AppTheme.error),
         );
       }
     } catch (e) {
       setState(() => _isSendingOtp = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to send OTP'),
-            backgroundColor: AppTheme.error,
-          ),
+          const SnackBar(content: Text('Failed to send OTP'), backgroundColor: AppTheme.error),
         );
       }
     }
@@ -117,7 +136,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: AppTheme.spacing32),
 
               // Personal Info
-              Text('Personal Info', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.textSecondary)),
+              Text('Personal Info',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.textSecondary)),
               const SizedBox(height: AppTheme.spacing12),
               InputField(
                 controller: _nameController,
@@ -152,7 +172,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: AppTheme.spacing24),
 
               // Pharmacy Info
-              Text('Pharmacy Info', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.textSecondary)),
+              Text('Pharmacy Info',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.textSecondary)),
               const SizedBox(height: AppTheme.spacing12),
               InputField(
                 controller: _pharmacyNameController,
@@ -168,12 +189,56 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 validator: (v) => v!.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: AppTheme.spacing12),
-              InputField(
-                controller: _addressController,
-                label: 'Pharmacy Address',
-                prefixIcon: Icons.location_on,
-                validator: (v) => v!.isEmpty ? 'Required' : null,
+
+              // Address with map picker
+              GestureDetector(
+                onTap: _openMapPicker,
+                child: AbsorbPointer(
+                  child: InputField(
+                    controller: _addressController,
+                    label: 'Pharmacy Address',
+                    prefixIcon: Icons.location_on,
+                    validator: (v) => v!.isEmpty ? 'Please select location on map' : null,
+                  ),
+                ),
               ),
+              const SizedBox(height: AppTheme.spacing8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _openMapPicker,
+                  icon: Icon(
+                    _locationSelected ? Icons.edit_location_alt : Icons.map,
+                    color: AppTheme.primary,
+                  ),
+                  label: Text(
+                    _locationSelected ? 'Change Location on Map' : 'Select Location on Map',
+                    style: const TextStyle(color: AppTheme.primary),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(
+                      color: _locationSelected ? Colors.green : AppTheme.primary,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              if (_locationSelected)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle, color: Colors.green, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Location selected (${_lat.toStringAsFixed(4)}, ${_lng.toStringAsFixed(4)})',
+                        style: const TextStyle(fontSize: 12, color: Colors.green),
+                      ),
+                    ],
+                  ),
+                ),
+
               const SizedBox(height: AppTheme.spacing32),
 
               Consumer<AuthProvider>(
