@@ -95,6 +95,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
 
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 600), () {
+      setState(() => _isDragging = false);
       _fetchAddress(center);
     });
   }

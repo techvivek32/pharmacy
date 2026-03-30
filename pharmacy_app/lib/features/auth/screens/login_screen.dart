@@ -4,7 +4,10 @@ import '../../../providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/input_field.dart';
+import '../../../services/api_service.dart';
 import 'register_screen.dart';
+import 'pending_approval_screen.dart';
+import 'rejected_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -26,23 +29,66 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
-    if (_formKey.currentState!.validate()) {
-      final success = await context.read<AuthProvider>().login(
-            _emailController.text,
-            _passwordController.text,
-          );
+    if (!_formKey.currentState!.validate()) return;
 
-      if (success && mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.read<AuthProvider>().error ?? 'Login failed'),
-            backgroundColor: AppTheme.error,
-          ),
+    final success = await context.read<AuthProvider>().login(
+          _emailController.text.trim(),
+          _passwordController.text,
         );
-      }
+
+    if (!mounted) return;
+
+    if (!success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.read<AuthProvider>().error ?? 'Login failed'),
+          backgroundColor: AppTheme.error,
+        ),
+      );
+      return;
     }
+
+    final user = context.read<AuthProvider>().user;
+
+    // For pharmacy accounts check approval status before going home
+    if (user?.role == 'pharmacy') {
+      try {
+        final res = await ApiService.get('/pharmacy/approval-status');
+        if (!mounted) return;
+
+        if (res.success) {
+          final status = res.data?['approvalStatus'];
+          final note = res.data?['adminNote'] ?? '';
+
+          if (status == 'approved') {
+            Navigator.pushReplacementNamed(context, '/home');
+          } else if (status == 'rejected') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => RejectedScreen(adminNote: note)),
+            );
+          } else {
+            // pending
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => const PendingApprovalScreen()),
+            );
+          }
+          return;
+        }
+      } catch (_) {}
+
+      // fallback — show pending if status check fails
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const PendingApprovalScreen()),
+      );
+      return;
+    }
+
+    Navigator.pushReplacementNamed(context, '/home');
   }
 
   @override
@@ -58,7 +104,8 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const SizedBox(height: AppTheme.spacing48),
                 Center(
-                  child: Image.asset('assets/images/logo.png', width: 120, height: 80),
+                  child: Image.asset('assets/images/logo.png',
+                      width: 120, height: 80),
                 ),
                 const SizedBox(height: AppTheme.spacing16),
                 Text(
@@ -77,12 +124,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   hint: 'Enter your email',
                   prefixIcon: Icons.email,
                   keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    return null;
-                  },
+                  validator: (value) =>
+                      value == null || value.isEmpty ? 'Please enter your email' : null,
                 ),
                 const SizedBox(height: AppTheme.spacing16),
                 InputField(
@@ -91,22 +134,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   hint: 'Enter your password',
                   prefixIcon: Icons.lock,
                   isPassword: true,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    return null;
-                  },
+                  validator: (value) =>
+                      value == null || value.isEmpty ? 'Please enter your password' : null,
                 ),
                 const SizedBox(height: AppTheme.spacing32),
                 Consumer<AuthProvider>(
-                  builder: (context, authProvider, _) {
-                    return PrimaryButton(
-                      text: 'Login',
-                      onPressed: authProvider.isLoading ? null : _login,
-                      isLoading: authProvider.isLoading,
-                    );
-                  },
+                  builder: (context, authProvider, _) => PrimaryButton(
+                    text: 'Login',
+                    onPressed: authProvider.isLoading ? null : _login,
+                    isLoading: authProvider.isLoading,
+                  ),
                 ),
                 const SizedBox(height: AppTheme.spacing16),
                 Center(
