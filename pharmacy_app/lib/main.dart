@@ -7,6 +7,7 @@ import 'providers/auth_provider.dart';
 import 'providers/prescription_provider.dart';
 import 'features/auth/screens/splash_screen.dart';
 import 'features/auth/screens/login_screen.dart';
+import 'features/auth/screens/register_screen.dart';
 import 'features/home/screens/home_screen.dart';
 import 'features/requests/screens/prescription_detail_screen.dart';
 import 'features/requests/screens/quote_builder_screen.dart';
@@ -35,6 +36,7 @@ class MyApp extends StatelessWidget {
         routes: {
           '/': (context) => const SplashScreen(),
           '/login': (context) => const LoginScreen(),
+          '/register': (context) => const RegisterScreen(),
           '/home': (context) => const HomeScreen(),
         },
         onGenerateRoute: (settings) {

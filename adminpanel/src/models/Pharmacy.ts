@@ -17,6 +17,8 @@ export interface IPharmacy extends Document {
   rating: number;
   totalOrders: number;
   acceptanceRate: number;
+  approvalStatus: 'pending' | 'approved' | 'rejected';
+  adminNote?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -72,6 +74,15 @@ const PharmacySchema = new Schema<IPharmacy>(
       default: 100,
       min: 0,
       max: 100,
+    },
+    approvalStatus: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+    },
+    adminNote: {
+      type: String,
+      default: '',
     },
   },
   {

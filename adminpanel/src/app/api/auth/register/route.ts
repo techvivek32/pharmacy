@@ -54,9 +54,12 @@ export async function POST(request: NextRequest) {
         address: roleData.address,
         location: {
           type: 'Point',
-          coordinates: roleData.coordinates, // [longitude, latitude]
+          coordinates: roleData.coordinates,
         },
+        approvalStatus: 'pending',
       });
+      // Mark user inactive until admin approves
+      await User.findByIdAndUpdate(user._id, { isActive: false });
     } else if (role === 'rider') {
       await Rider.create({
         userId: user._id,

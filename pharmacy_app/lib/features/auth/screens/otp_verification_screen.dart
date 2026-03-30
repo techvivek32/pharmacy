@@ -6,8 +6,7 @@ import '../../../core/widgets/primary_button.dart';
 import '../../../services/api_service.dart';
 import '../../../services/auth_service.dart';
 import '../../../models/user_model.dart';
-import 'package:provider/provider.dart';
-import '../../../providers/auth_provider.dart';
+import 'pending_approval_screen.dart';
 
 class OTPVerificationScreen extends StatefulWidget {
   final String email;
@@ -63,7 +62,6 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Step 1: Verify OTP
       final verifyRes = await ApiService.post(
         '/auth/verify-otp',
         {'email': widget.email, 'otp': _otpController.text.trim()},
@@ -76,7 +74,6 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         return;
       }
 
-      // Step 2: Register
       final registerRes = await ApiService.post(
         '/auth/register',
         widget.registrationData,
@@ -86,11 +83,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       if (registerRes.success && registerRes.data != null) {
         await AuthService.saveToken(registerRes.data['token']);
         await AuthService.saveUserData(registerRes.data['user']);
-        final user = User.fromJson(registerRes.data['user']);
-        if (mounted) {
-          context.read<AuthProvider>().setUser(user);
-          Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
-        }
+        if (mounted) _showPendingApprovalDialog();
       } else {
         _showError(registerRes.message);
       }
@@ -99,6 +92,83 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     }
 
     setState(() => _isLoading = false);
+  }
+
+  void _showPendingApprovalDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.all(28),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.hourglass_top_rounded,
+                  size: 40, color: Colors.orange),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Registration Submitted!',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Your pharmacy registration is under review by our admin team.',
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade600, height: 1.5),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.access_time, color: Colors.blue.shade600, size: 18),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Approval takes 24 to 48 hours.',
+                      style: TextStyle(fontSize: 13, color: Colors.blue.shade700),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (_) => const PendingApprovalScreen()),
+                    (_) => false,
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('OK, Got it'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _resendOTP() async {

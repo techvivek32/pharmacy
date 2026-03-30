@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../services/api_service.dart';
+import '../../../services/auth_service.dart';
+import 'pending_approval_screen.dart';
+import 'rejected_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -18,15 +22,53 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkAuth() async {
-    await context.read<AuthProvider>().checkAuth();
-    
-    if (mounted) {
-      final isAuthenticated = context.read<AuthProvider>().isAuthenticated;
-      Navigator.pushReplacementNamed(
-        context,
-        isAuthenticated ? '/home' : '/login',
-      );
+    await Future.delayed(const Duration(milliseconds: 800));
+    if (!mounted) return;
+
+    final isLoggedIn = await AuthService.isLoggedIn();
+    if (!isLoggedIn) {
+      Navigator.pushReplacementNamed(context, '/login');
+      return;
     }
+
+    final user = await AuthService.getCurrentUser();
+    if (user == null) {
+      Navigator.pushReplacementNamed(context, '/login');
+      return;
+    }
+
+    // For pharmacy role, check approval status
+    if (user.role == 'pharmacy') {
+      try {
+        final res = await ApiService.get('/pharmacy/approval-status');
+        if (!mounted) return;
+        if (res.success) {
+          final status = res.data?['approvalStatus'];
+          final note = res.data?['adminNote'] ?? '';
+          if (status == 'approved') {
+            Navigator.pushReplacementNamed(context, '/home');
+          } else if (status == 'rejected') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => RejectedScreen(adminNote: note)),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const PendingApprovalScreen()),
+            );
+          }
+          return;
+        }
+      } catch (_) {}
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const PendingApprovalScreen()),
+      );
+      return;
+    }
+
+    Navigator.pushReplacementNamed(context, '/home');
   }
 
   @override

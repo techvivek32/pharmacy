@@ -1,8 +1,10 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
+import 'package:http/http.dart' as http;
 
 class MapPickerScreen extends StatefulWidget {
   final LatLng? initialLocation;
@@ -15,21 +17,86 @@ class MapPickerScreen extends StatefulWidget {
 
 class _MapPickerScreenState extends State<MapPickerScreen> {
   final MapController _mapController = MapController();
+
   LatLng _centerLocation = const LatLng(31.7917, -7.0926);
-  String _address = 'Move map to select location';
+  String _address = 'Move the map to select location';
   bool _loadingAddress = false;
   bool _loadingLocation = false;
+  bool _isDragging = false;
   bool _mapReady = false;
+
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
     if (widget.initialLocation != null) {
       _centerLocation = widget.initialLocation!;
-      _getAddressFromLatLng(_centerLocation);
+      _fetchAddress(_centerLocation);
     } else {
       _getCurrentLocation();
     }
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  // Use Nominatim (OpenStreetMap) — accurate, no region bias
+  Future<void> _fetchAddress(LatLng loc) async {
+    if (!mounted) return;
+    setState(() => _loadingAddress = true);
+    try {
+      final url = Uri.parse(
+        'https://nominatim.openstreetmap.org/reverse'
+        '?lat=${loc.latitude}&lon=${loc.longitude}'
+        '&format=json&addressdetails=1',
+      );
+      final res = await http.get(url, headers: {
+        'Accept-Language': 'en',
+        'User-Agent': 'PharmacyApp/1.0',
+      }).timeout(const Duration(seconds: 8));
+
+      if (!mounted) return;
+
+      if (res.statusCode == 200) {
+        final data = json.decode(res.body);
+        final display = data['display_name'] as String? ?? '';
+        // Shorten: take first 3 comma-separated parts
+        final parts = display.split(',').take(4).map((s) => s.trim()).join(', ');
+        setState(() => _address = parts.isNotEmpty ? parts : display);
+      } else {
+        setState(() => _address =
+            '${loc.latitude.toStringAsFixed(5)}, ${loc.longitude.toStringAsFixed(5)}');
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _address =
+            '${loc.latitude.toStringAsFixed(5)}, ${loc.longitude.toStringAsFixed(5)}');
+      }
+    } finally {
+      if (mounted) setState(() => _loadingAddress = false);
+    }
+  }
+
+  // Debounce: only fetch address 600ms after user stops dragging
+  void _onPositionChanged(MapPosition position, bool hasGesture) {
+    final center = position.center;
+    if (center == null) return;
+
+    setState(() {
+      _centerLocation = center;
+      _isDragging = hasGesture;
+    });
+
+    if (!hasGesture) return;
+
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 600), () {
+      _fetchAddress(center);
+    });
   }
 
   Future<void> _getCurrentLocation() async {
@@ -47,38 +114,11 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
       final loc = LatLng(position.latitude, position.longitude);
       setState(() => _centerLocation = loc);
       if (_mapReady) _mapController.move(loc, 16);
-      await _getAddressFromLatLng(loc);
+      _fetchAddress(loc);
     } catch (_) {
     } finally {
       if (mounted) setState(() => _loadingLocation = false);
     }
-  }
-
-  Future<void> _getAddressFromLatLng(LatLng loc) async {
-    setState(() => _loadingAddress = true);
-    try {
-      final placemarks = await placemarkFromCoordinates(loc.latitude, loc.longitude);
-      if (placemarks.isNotEmpty) {
-        final p = placemarks.first;
-        final parts = [p.street, p.subLocality, p.locality, p.administrativeArea]
-            .where((s) => s != null && s.isNotEmpty)
-            .toList();
-        setState(() => _address = parts.join(', '));
-      }
-    } catch (_) {
-      setState(() => _address =
-          '${loc.latitude.toStringAsFixed(5)}, ${loc.longitude.toStringAsFixed(5)}');
-    } finally {
-      if (mounted) setState(() => _loadingAddress = false);
-    }
-  }
-
-  void _onPositionChanged(MapPosition position, bool hasGesture) {
-    if (!hasGesture) return;
-    final center = position.center;
-    if (center == null) return;
-    setState(() => _centerLocation = center);
-    _getAddressFromLatLng(center);
   }
 
   void _confirm() {
@@ -106,41 +146,76 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
       ),
       body: Stack(
         children: [
-          // Map — CartoDB Positron: clean, no country borders
+          // Single clean tile layer — CartoDB Voyager (no country borders)
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
               initialCenter: _centerLocation,
               initialZoom: 14,
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+              ),
               onMapReady: () => setState(() => _mapReady = true),
               onPositionChanged: _onPositionChanged,
             ),
             children: [
               TileLayer(
                 urlTemplate:
-                    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png',
+                    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
                 subdomains: const ['a', 'b', 'c', 'd'],
                 userAgentPackageName: 'com.mediexpress.pharmacy_app',
-                retinaMode: true,
-              ),
-              // Road/place labels only (no borders)
-              TileLayer(
-                urlTemplate:
-                    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png',
-                subdomains: const ['a', 'b', 'c', 'd'],
-                userAgentPackageName: 'com.mediexpress.pharmacy_app',
-                retinaMode: true,
+                maxZoom: 20,
+                tileBuilder: (context, tileWidget, tile) => tileWidget,
               ),
             ],
           ),
 
-          // Fixed center pin — never moves
-          const Center(
+          // Fixed center pin with shadow — tip points to exact center
+          Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.location_pin, color: Colors.red, size: 52),
-                SizedBox(height: 26), // offset so pin tip = center
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  transform: Matrix4.translationValues(
+                      0, _isDragging ? -10 : 0, 0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.red.withOpacity(0.3),
+                              blurRadius: 8,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.location_pin,
+                          color: Colors.red,
+                          size: 48,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Shadow dot on map when dragging
+                AnimatedOpacity(
+                  duration: const Duration(milliseconds: 150),
+                  opacity: _isDragging ? 1.0 : 0.0,
+                  child: Container(
+                    width: 8,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.black26,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
               ],
             ),
           ),
@@ -170,21 +245,27 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  _loadingAddress
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2))
-                      : Text(
-                          _address,
-                          style: const TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.w500),
-                        ),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: _loadingAddress
+                        ? const SizedBox(
+                            key: ValueKey('loading'),
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(
+                            _address,
+                            key: ValueKey(_address),
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w500),
+                          ),
+                  ),
                   const SizedBox(height: 14),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _confirm,
+                      onPressed: _isDragging ? null : _confirm,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
@@ -199,12 +280,12 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
             ),
           ),
 
-          // My location button
+          // My location FAB
           Positioned(
             bottom: 175,
             right: 16,
             child: FloatingActionButton.small(
-              onPressed: _getCurrentLocation,
+              onPressed: _loadingLocation ? null : _getCurrentLocation,
               backgroundColor: Colors.white,
               elevation: 4,
               child: _loadingLocation
