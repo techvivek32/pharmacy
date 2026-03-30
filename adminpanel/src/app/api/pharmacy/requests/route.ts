@@ -24,10 +24,10 @@ export async function GET(request: NextRequest) {
       return errorResponse('Pharmacy profile not found', 404);
     }
 
-    // Show pending and quoted prescriptions assigned to this pharmacy
+    // Show pending, quoted and confirmed prescriptions assigned to this pharmacy
     const prescriptions = await Prescription.find({
       nearbyPharmacies: pharmacy._id,
-      status: { $in: ['pending', 'quoted'] },
+      status: { $in: ['pending', 'quoted', 'accepted'] },
     })
       .sort({ createdAt: -1 })
       .limit(50)

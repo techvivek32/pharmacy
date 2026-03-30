@@ -65,6 +65,11 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 children: [
                   _buildStatusBanner(order),
                   const SizedBox(height: AppTheme.spacing16),
+                  // Pending quote actions
+                  if (order.isPendingQuote) ...[
+                    _buildPendingQuoteActions(order),
+                    const SizedBox(height: AppTheme.spacing16),
+                  ],
                   _buildOrderInfo(order),
                   const SizedBox(height: AppTheme.spacing16),
                   _buildDeliveryAddress(order),
@@ -73,20 +78,27 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     _buildPrescriptionImage(order.prescriptionImage!),
                     const SizedBox(height: AppTheme.spacing16),
                   ],
-                  _buildStatusTimeline(order),
-                  const SizedBox(height: AppTheme.spacing16),
+                  // Quote details (medicines + pricing)
                   if (order.items.isNotEmpty) ...[
-                    _buildItemsList(order),
+                    _buildQuoteDetails(order),
                     const SizedBox(height: AppTheme.spacing16),
                   ],
-                  _buildAmountSummary(order),
-                  const SizedBox(height: AppTheme.spacing16),
-                  if (order.rider != null) ...[
-                    _buildRiderInfo(order.rider!),
-                    const SizedBox(height: AppTheme.spacing16),
-                  ],
+                  // Pharmacy info
                   if (order.pharmacyName != null) ...[
                     _buildPharmacyInfo(order),
+                    const SizedBox(height: AppTheme.spacing16),
+                  ],
+                  // Order status timeline (only for confirmed orders)
+                  if (!order.isPendingQuote) ...[
+                    _buildStatusTimeline(order),
+                    const SizedBox(height: AppTheme.spacing16),
+                  ],
+                  if (!order.isPendingQuote) ...[
+                    _buildAmountSummary(order),
+                    const SizedBox(height: AppTheme.spacing16),
+                  ],
+                  if (order.rider != null) ...[
+                    _buildRiderInfo(order.rider!),
                     const SizedBox(height: AppTheme.spacing16),
                   ],
                 ],
@@ -99,31 +111,223 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }
 
   Widget _buildStatusBanner(Order order) {
+    final isPending = order.isPendingQuote;
+    final color = isPending ? Colors.orange : _statusColor(order.status);
+    final icon = isPending ? Icons.local_pharmacy : _statusIcon(order.status);
+    final label = isPending ? 'Quote Received!' : _statusLabel(order.status);
+    final sub = isPending
+        ? 'From ${order.pharmacyName ?? 'Pharmacy'} — Tap to confirm or cancel'
+        : (order.orderNumber.isNotEmpty ? order.orderNumber : 'Order #${order.id.substring(order.id.length > 6 ? order.id.length - 6 : 0).toUpperCase()}');
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppTheme.spacing20),
       decoration: BoxDecoration(
-        color: _statusColor(order.status),
+        color: color,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
       ),
       child: Column(
         children: [
-          Icon(_statusIcon(order.status), color: Colors.white, size: 40),
+          Icon(icon, color: Colors.white, size: 40),
           const SizedBox(height: AppTheme.spacing8),
-          Text(
-            _statusLabel(order.status),
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
+          Text(label,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
           const SizedBox(height: AppTheme.spacing4),
-          Text(
-            order.orderNumber.isNotEmpty ? order.orderNumber : 'Order #${order.id.substring(order.id.length > 6 ? order.id.length - 6 : 0).toUpperCase()}',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.85),
-                ),
+          Text(sub,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.85)),
+              textAlign: TextAlign.center),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPendingQuoteActions(Order order) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => _cancelQuote(order),
+            icon: const Icon(Icons.close, size: 18),
+            label: const Text('Cancel'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.red,
+              side: const BorderSide(color: Colors.red),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
           ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () => _confirmQuote(order),
+            icon: const Icon(Icons.check, size: 18),
+            label: const Text('Confirm Order'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _confirmQuote(Order order) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Confirm Order'),
+        content: Text(
+            'Confirm order from ${order.pharmacyName} for ${order.totalAmount.toStringAsFixed(2)} MAD?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Back')),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Confirm')),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+
+    _showLoading('Confirming order...');
+    try {
+      final provider = context.read<OrderProvider>();
+      // Use the ApiService directly
+      final res = await provider.confirmQuote(quoteId: order.quoteId!, paymentMethod: 'cash');
+      if (mounted) Navigator.pop(context);
+      if (res && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Order confirmed! 🎉'), backgroundColor: Colors.green),
+        );
+        await provider.fetchOrders();
+        if (mounted) Navigator.pop(context);
+      }
+    } catch (_) {
+      if (mounted) Navigator.pop(context);
+    }
+  }
+
+  Future<void> _cancelQuote(Order order) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Cancel Quote'),
+        content: const Text("Cancel this quote? We'll send your request to the next nearest pharmacy."),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Keep')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Cancel Quote', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+
+    _showLoading('Cancelling...');
+    try {
+      final provider = context.read<OrderProvider>();
+      final res = await provider.cancelQuote(quoteId: order.quoteId!);
+      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(res ? 'Quote cancelled. Request sent to next pharmacy!' : 'Quote cancelled.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        await provider.fetchOrders();
+        if (mounted) Navigator.pop(context);
+      }
+    } catch (_) {
+      if (mounted) Navigator.pop(context);
+    }
+  }
+
+  void _showLoading(String msg) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        content: Row(children: [
+          const CircularProgressIndicator(),
+          const SizedBox(width: 16),
+          Text(msg),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildQuoteDetails(Order order) {
+    return AppCard(
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.spacing16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Quote Details',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: AppTheme.spacing12),
+            ...order.items.map((item) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppTheme.spacing8),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                        ),
+                        child: const Icon(Icons.medication, size: 16, color: AppTheme.primary),
+                      ),
+                      const SizedBox(width: AppTheme.spacing12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(item.medicineName, style: Theme.of(context).textTheme.bodyMedium),
+                            Text('Qty: ${item.quantity} × ${item.unitPrice.toStringAsFixed(2)} MAD',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary)),
+                          ],
+                        ),
+                      ),
+                      Text('${item.totalPrice.toStringAsFixed(2)} MAD',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                )),
+            const Divider(height: 20),
+            _summaryRow('Subtotal', order.subtotal),
+            _summaryRow('Delivery Fee', order.deliveryFee),
+            const Divider(height: 12),
+            _summaryRow('Total', order.totalAmount, isTotal: true),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _summaryRow(String label, double amount, {bool isTotal = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label,
+              style: TextStyle(
+                  fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+                  fontSize: isTotal ? 15 : 13,
+                  color: isTotal ? Colors.black : AppTheme.textSecondary)),
+          Text('${amount.toStringAsFixed(2)} MAD',
+              style: TextStyle(
+                  fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+                  fontSize: isTotal ? 15 : 13,
+                  color: isTotal ? AppTheme.primary : AppTheme.textSecondary)),
         ],
       ),
     );
@@ -343,20 +547,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Payment Summary', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text('Payment Summary',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: AppTheme.spacing12),
+            if (order.subtotal > 0) _summaryRow('Subtotal', order.subtotal),
+            if (order.deliveryFee > 0) _summaryRow('Delivery Fee', order.deliveryFee),
             const Divider(),
             const SizedBox(height: AppTheme.spacing8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Total', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                Text(
-                  '${order.totalAmount.toStringAsFixed(2)} MAD',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.primary, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
+            _summaryRow('Total', order.totalAmount, isTotal: true),
           ],
         ),
       ),

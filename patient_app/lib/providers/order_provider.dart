@@ -105,14 +105,16 @@ class OrderProvider with ChangeNotifier {
   }
 
   Future<void> trackOrder(String orderId) async {
-    // If already in list, use it immediately while fetching fresh data
     final cached = _orders.where((o) => o.id == orderId).firstOrNull;
     if (cached != null) {
       _currentOrder = cached;
       notifyListeners();
     }
 
-    _isLoading = cached == null; // only show spinner if no cached data
+    // Pending quotes don't have a real order endpoint — use cached only
+    if (cached?.isPendingQuote == true) return;
+
+    _isLoading = cached == null;
     if (cached == null) notifyListeners();
 
     try {
@@ -147,5 +149,21 @@ class OrderProvider with ChangeNotifier {
   void clearError() {
     _error = null;
     notifyListeners();
+  }
+
+  Future<bool> confirmQuote({required String quoteId, required String paymentMethod}) async {
+    try {
+      return await OrderService.confirmQuote(quoteId, paymentMethod);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> cancelQuote({required String quoteId}) async {
+    try {
+      return await OrderService.cancelQuote(quoteId);
+    } catch (_) {
+      return false;
+    }
   }
 }

@@ -17,6 +17,7 @@ import 'features/orders/screens/quote_details_screen.dart';
 import 'features/orders/screens/payment_selection_screen.dart';
 import 'features/orders/screens/order_tracking_screen.dart';
 import 'features/orders/screens/order_history_screen.dart';
+import 'features/orders/screens/my_quotes_screen.dart';
 import 'features/profile/screens/profile_screen.dart';
 import 'features/profile/screens/edit_profile_screen.dart';
 import 'features/profile/screens/saved_addresses_screen.dart';
@@ -60,6 +61,7 @@ class MyApp extends StatelessWidget {
           '/address-selection': (context) => const AddressSelectionScreen(),
           '/payment-selection': (context) => const PaymentSelectionScreen(),
           '/order-history': (context) => const OrderHistoryScreen(),
+          '/my-quotes': (context) => const MyQuotesScreen(),
           '/profile': (context) => const ProfileScreen(),
           '/edit-profile': (context) => const EditProfileScreen(),
           '/saved-addresses': (context) => const SavedAddressesScreen(),

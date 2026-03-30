@@ -4,6 +4,7 @@ import '../../../providers/auth_provider.dart';
 import '../../../providers/order_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../services/api_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,18 +15,29 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  int _quotesCount = 0;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadRecentOrders();
-      // Check if we should open Orders tab (e.g. after placing order)
+      _loadQuotesCount();
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is Map && args['tab'] != null) {
         setState(() => _selectedIndex = args['tab'] as int);
       }
     });
+  }
+
+  Future<void> _loadQuotesCount() async {
+    try {
+      final res = await ApiService.get('/patient/quotes');
+      if (res.success && mounted) {
+        final quotes = res.data?['quotes'] as List? ?? [];
+        setState(() => _quotesCount = quotes.length);
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadRecentOrders() async {
@@ -157,6 +169,17 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Expanded(
               child: _buildActionCard(
+                icon: Icons.receipt_long,
+                title: 'My Quotes',
+                badge: _quotesCount,
+                onTap: () {
+                  Navigator.pushNamed(context, '/my-quotes').then((_) => _loadQuotesCount());
+                },
+              ),
+            ),
+            const SizedBox(width: AppTheme.spacing12),
+            Expanded(
+              child: _buildActionCard(
                 icon: Icons.history,
                 title: 'Order History',
                 onTap: () => Navigator.pushNamed(context, '/order-history'),
@@ -180,6 +203,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required IconData icon,
     required String title,
     required VoidCallback onTap,
+    int badge = 0,
   }) {
     return AppCard(
       child: InkWell(
@@ -189,7 +213,31 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.all(AppTheme.spacing16),
           child: Column(
             children: [
-              Icon(icon, color: AppTheme.primary, size: 32),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(icon, color: AppTheme.primary, size: 32),
+                  if (badge > 0)
+                    Positioned(
+                      top: -6,
+                      right: -10,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '$badge',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
               const SizedBox(height: AppTheme.spacing8),
               Text(
                 title,

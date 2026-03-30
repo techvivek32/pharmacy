@@ -247,7 +247,7 @@ class _PrescriptionRequestsScreenState
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () => Navigator.push(
+                      onPressed: request['status'] == 'accepted' ? null : () => Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) =>
@@ -255,15 +255,19 @@ class _PrescriptionRequestsScreenState
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        backgroundColor: request['status'] == 'accepted'
+                            ? Colors.green
+                            : null,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),
                       ),
                       child: Text(
-                        request['existingQuote'] != null
-                            ? 'View & Edit Quote'
-                            : 'View & Send Quote',
+                        request['status'] == 'accepted'
+                            ? '✓ Order Confirmed by Patient'
+                            : request['existingQuote'] != null
+                                ? 'View & Edit Quote'
+                                : 'View & Send Quote',
                       ),
                     ),
                   ),

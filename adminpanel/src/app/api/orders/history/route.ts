@@ -1,56 +1,116 @@
 import { NextRequest } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Order from '@/models/Order';
+import Quote from '@/models/Quote';
+import Prescription from '@/models/Prescription';
+import Patient from '@/models/Patient';
+import Pharmacy from '@/models/Pharmacy';
+import User from '@/models/User';
 import { successResponse, errorResponse } from '@/lib/response';
 import jwt from 'jsonwebtoken';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
 
-    // Get userId from JWT token
     const authHeader = request.headers.get('authorization');
     let userId = request.nextUrl.searchParams.get('userId');
 
-    if (authHeader && authHeader.startsWith('Bearer ')) {
+    if (authHeader?.startsWith('Bearer ')) {
       try {
         const token = authHeader.substring(7);
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
         userId = decoded.userId || decoded.id;
-      } catch (error) {
-        console.log('Token verification failed, using query param');
-      }
+      } catch (_) {}
     }
 
-    if (!userId) {
-      return successResponse([], 'No orders found');
-    }
+    if (!userId) return successResponse([], 'No orders found');
 
-    // Find patient by userId
-    const Patient = (await import('@/models/Patient')).default;
-    const patient = await Patient.findOne({ userId });
-    if (!patient) {
-      return successResponse([], 'No orders found');
-    }
+    const patient = await Patient.findOne({ userId }).lean() as any;
+    if (!patient) return successResponse([], 'No orders found');
 
-    // Fetch all orders for the patient
+    // Fetch confirmed orders
     const orders = await Order.find({ patientId: patient._id })
       .sort({ createdAt: -1 })
-      .populate('pharmacyId', 'pharmacyName name address')
-      .populate('riderId', 'fullName name phone')
-      .lean();
+      .populate('pharmacyId', 'pharmacyName address phone')
+      .populate('riderId', 'fullName phone')
+      .populate('quoteId')
+      .populate({ path: 'prescriptionId', select: 'imageUrl deliveryAddress' })
+      .lean() as any[];
 
-    // Normalize fields for Flutter app
-    const normalized = orders.map((o: any) => ({
+    // Fetch pending quotes (pharmacy sent quote but patient hasn't confirmed yet)
+    const pendingQuotes = await Quote.find({
+      patientId: patient._id,
+      status: 'pending',
+    }).sort({ createdAt: -1 }).lean() as any[];
+
+    // Enrich pending quotes with pharmacy info
+    const enrichedQuotes = await Promise.all(
+      pendingQuotes.map(async (q: any) => {
+        let pharmacyName = 'Unknown Pharmacy';
+        let pharmacyPhone = '';
+        let pharmacyAddress = '';
+        try {
+          const pharmacy = await Pharmacy.findById(q.pharmacyId).lean() as any;
+          if (pharmacy) {
+            pharmacyName = pharmacy.pharmacyName || 'Unknown Pharmacy';
+            pharmacyAddress = pharmacy.address || '';
+            const pUser = await User.findById(pharmacy.userId).select('phone').lean() as any;
+            pharmacyPhone = pUser?.phone || '';
+          }
+        } catch (_) {}
+
+        // Get prescription image
+        let prescriptionImage = null;
+        try {
+          const presc = await Prescription.findById(q.prescriptionId).select('imageUrl').lean() as any;
+          prescriptionImage = presc?.imageUrl || null;
+        } catch (_) {}
+
+        return {
+          _isPendingQuote: true,
+          id: q._id?.toString(),
+          quoteId: q._id?.toString(),
+          prescriptionId: q.prescriptionId?.toString(),
+          prescriptionImage,
+          pharmacyName,
+          pharmacyPhone,
+          pharmacyAddress,
+          items: q.items || [],
+          subtotal: q.subtotal || 0,
+          deliveryFee: q.deliveryFee || 0,
+          totalAmount: q.totalAmount || 0,
+          status: 'quote_pending',
+          orderNumber: 'Pending Quote',
+          createdAt: q.createdAt,
+          expiresAt: q.expiresAt,
+        };
+      })
+    );
+
+    // Normalize confirmed orders
+    const normalizedOrders = orders.map((o: any) => ({
       ...o,
+      _isPendingQuote: false,
       id: o._id?.toString(),
       orderNumber: o.orderNumber || '',
-      pharmacyName: o.pharmacyId?.pharmacyName || o.pharmacyId?.name || null,
+      pharmacyName: o.pharmacyId?.pharmacyName || null,
+      pharmacyPhone: o.pharmacyId?.phone || null,
+      pharmacyAddress: o.pharmacyId?.address || null,
+      prescriptionImage: o.prescriptionId?.imageUrl || null,
       totalAmount: o.totalAmount || 0,
       status: o.status || 'pending',
+      quoteItems: o.quoteId?.items || o.items || [],
+      subtotal: o.quoteId?.subtotal || o.subtotal || 0,
+      deliveryFee: o.quoteId?.deliveryFee || o.deliveryFee || 0,
     }));
 
-    return successResponse(normalized, 'Orders fetched successfully');
+    // Merge: pending quotes first, then confirmed orders
+    const combined = [...enrichedQuotes, ...normalizedOrders];
+
+    return successResponse(combined, 'Orders fetched successfully');
   } catch (error: any) {
     console.error('Fetch orders error:', error);
     return errorResponse('Failed to fetch orders', 500);

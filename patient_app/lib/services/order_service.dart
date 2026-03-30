@@ -109,6 +109,27 @@ class OrderService {
       return false;
     }
   }
+
+  static Future<bool> confirmQuote(String quoteId, String paymentMethod) async {
+    try {
+      final response = await ApiService.post(
+        '/patient/quotes/$quoteId/confirm',
+        {'paymentMethod': paymentMethod},
+      );
+      return response.success;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<bool> cancelQuote(String quoteId) async {
+    try {
+      final response = await ApiService.post('/patient/quotes/$quoteId/cancel', {});
+      return response.success;
+    } catch (_) {
+      return false;
+    }
+  }
 }
 
 class OrderResult {
