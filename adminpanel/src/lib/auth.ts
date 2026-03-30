@@ -19,7 +19,7 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 
 export function generateToken(payload: JWTPayload): string {
   const options: jwt.SignOptions = {
-    expiresIn: '7d',
+    expiresIn: '30d',
   };
   return jwt.sign(payload, JWT_SECRET, options);
 }

@@ -17,14 +17,20 @@ class PrescriptionProvider with ChangeNotifier {
 
     try {
       final result = await PrescriptionService.getPrescriptionRequests();
-      
+
       if (result.success) {
-        _prescriptions = (result.data['prescriptions'] as List?) ?? [];
+        final data = result.data;
+        if (data != null && data['prescriptions'] is List) {
+          _prescriptions = List<dynamic>.from(data['prescriptions']);
+        } else {
+          _prescriptions = [];
+        }
       } else {
         _error = result.message;
+        // Keep old data visible on error instead of clearing
       }
     } catch (e) {
-      _error = 'Failed to load prescriptions: ${e.toString()}';
+      _error = 'Connection error. Pull down to retry.';
     }
 
     _isLoading = false;

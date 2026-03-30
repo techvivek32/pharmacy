@@ -15,8 +15,35 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Restore user data and fetch on start
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await context.read<AuthProvider>().checkAuth();
+      if (mounted) {
+        context.read<PrescriptionProvider>().fetchPrescriptionRequests();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Re-fetch data when app comes back to foreground
+    if (state == AppLifecycleState.resumed) {
+      context.read<PrescriptionProvider>().fetchPrescriptionRequests();
+    }
+  }
 
   final List<Widget> _screens = const [
     _DashboardTab(),
@@ -57,9 +84,6 @@ class _DashboardTabState extends State<_DashboardTab> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PrescriptionProvider>().fetchPrescriptionRequests();
-    });
   }
 
   @override

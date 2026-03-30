@@ -25,6 +25,15 @@ class AuthProvider with ChangeNotifier {
       final isLoggedIn = await AuthService.isLoggedIn();
       if (isLoggedIn) {
         _user = await AuthService.getCurrentUser();
+        // If user data missing from prefs but token exists, keep logged in
+        _user ??= User(
+          id: '',
+          fullName: 'Pharmacy',
+          email: '',
+          phone: '',
+          role: 'pharmacy',
+          isVerified: true,
+        );
       }
     } catch (e) {
       _error = e.toString();

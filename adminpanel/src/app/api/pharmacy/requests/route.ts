@@ -2,6 +2,8 @@ import { NextRequest } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Prescription from '@/models/Prescription';
 import Pharmacy from '@/models/Pharmacy';
+import Patient from '@/models/Patient';
+import User from '@/models/User';
 import { authenticateRequest } from '@/lib/auth';
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response';
 
@@ -16,52 +18,77 @@ export async function GET(request: NextRequest) {
 
     await connectDB();
 
-    const pharmacy = await Pharmacy.findOne({ userId: auth.userId });
+    const pharmacy = await Pharmacy.findOne({ userId: auth.userId }).lean() as any;
     if (!pharmacy) {
       return errorResponse('Pharmacy profile not found', 404);
     }
 
-    // Get prescriptions assigned to this pharmacy
+    // Show pending and quoted prescriptions assigned to this pharmacy
     const prescriptions = await Prescription.find({
       nearbyPharmacies: pharmacy._id,
-      status: 'pending',
+      status: { $in: ['pending', 'quoted'] },
     })
-      .populate({
-        path: 'patientId',
-        populate: { path: 'userId', select: 'fullName phone email' },
-      })
       .sort({ createdAt: -1 })
       .limit(50)
-      .lean();
+      .lean() as any[];
 
-    const formattedPrescriptions = prescriptions.map((p: any) => {
-      const deliveryAddress = p.deliveryAddress?.address || 'Address not provided';
-      const deliveryCoords = p.deliveryAddress?.location?.coordinates;
+    // Fetch patient user info separately to avoid nested populate crashes
+    const formatted = await Promise.all(
+      prescriptions.map(async (p: any) => {
+        let patientName = 'Unknown Patient';
+        let patientPhone = '';
+        let patientEmail = '';
 
-      let distance = null;
-      if (deliveryCoords && pharmacy.location?.coordinates) {
-        distance = calculateDistance(
-          pharmacy.location.coordinates,
-          deliveryCoords
-        );
-      }
+        try {
+          if (p.patientId) {
+            const patient = await Patient.findById(p.patientId).lean() as any;
+            if (patient?.userId) {
+              const user = await User.findById(patient.userId)
+                .select('fullName phone email')
+                .lean() as any;
+              if (user) {
+                patientName = user.fullName || 'Unknown Patient';
+                patientPhone = user.phone || '';
+                patientEmail = user.email || '';
+              }
+            }
+          }
+        } catch (_) {
+          // keep defaults if patient lookup fails
+        }
 
-      return {
-        id: p._id,
-        imageUrl: p.imageUrl,
-        patientName: p.patientId?.userId?.fullName || 'Unknown Patient',
-        patientPhone: p.patientId?.userId?.phone || '',
-        patientEmail: p.patientId?.userId?.email || '',
-        deliveryAddress,
-        deliveryCoordinates: deliveryCoords || null,
-        distance,
-        status: p.status,
-        createdAt: p.createdAt,
-        expiresAt: p.expiresAt,
-      };
-    });
+        const deliveryAddress = p.deliveryAddress?.address || 'Address not provided';
+        const deliveryCoords = p.deliveryAddress?.location?.coordinates;
 
-    return successResponse({ prescriptions: formattedPrescriptions });
+        let distance = null;
+        try {
+          if (
+            deliveryCoords &&
+            Array.isArray(deliveryCoords) &&
+            deliveryCoords.length === 2 &&
+            pharmacy.location?.coordinates?.length === 2
+          ) {
+            distance = calculateDistance(pharmacy.location.coordinates, deliveryCoords);
+          }
+        } catch (_) {}
+
+        return {
+          id: p._id,
+          imageUrl: p.imageUrl || '',
+          patientName,
+          patientPhone,
+          patientEmail,
+          deliveryAddress,
+          deliveryCoordinates: deliveryCoords || null,
+          distance,
+          status: p.status,
+          createdAt: p.createdAt,
+          expiresAt: p.expiresAt,
+        };
+      })
+    );
+
+    return successResponse({ prescriptions: formatted });
   } catch (error: any) {
     console.error('Get requests error:', error);
     return errorResponse('Failed to fetch requests', 500);
