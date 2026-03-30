@@ -4,6 +4,7 @@ import Prescription from '@/models/Prescription';
 import Pharmacy from '@/models/Pharmacy';
 import Patient from '@/models/Patient';
 import User from '@/models/User';
+import Quote from '@/models/Quote';
 import { authenticateRequest } from '@/lib/auth';
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response';
 
@@ -72,6 +73,24 @@ export async function GET(request: NextRequest) {
           }
         } catch (_) {}
 
+        let existingQuote = null;
+        try {
+          const q = await Quote.findOne({
+            prescriptionId: p._id,
+            pharmacyId: pharmacy._id,
+          }).lean() as any;
+          if (q) {
+            existingQuote = {
+              id: q._id,
+              items: q.items,
+              subtotal: q.subtotal,
+              deliveryFee: q.deliveryFee,
+              totalAmount: q.totalAmount,
+              status: q.status,
+            };
+          }
+        } catch (_) {}
+
         return {
           id: p._id,
           imageUrl: p.imageUrl || '',
@@ -82,6 +101,7 @@ export async function GET(request: NextRequest) {
           deliveryCoordinates: deliveryCoords || null,
           distance,
           status: p.status,
+          existingQuote,
           createdAt: p.createdAt,
           expiresAt: p.expiresAt,
         };

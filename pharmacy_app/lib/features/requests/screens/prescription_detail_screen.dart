@@ -31,6 +31,9 @@ class PrescriptionDetailScreen extends StatelessWidget {
         ? DateTime.tryParse(_get('createdAt'))
         : null;
 
+    final existingQuote = prescription is Map ? prescription['existingQuote'] : null;
+    final hasQuote = existingQuote != null;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Prescription Details')),
       body: SingleChildScrollView(
@@ -127,10 +130,9 @@ class PrescriptionDetailScreen extends StatelessWidget {
 
                   const SizedBox(height: AppTheme.spacing24),
 
-                  // Quote button
                   PrimaryButton(
-                    text: 'Send Quote to Patient',
-                    icon: Icons.send,
+                    text: hasQuote ? 'Edit Quote' : 'Send Quote to Patient',
+                    icon: hasQuote ? Icons.edit : Icons.send,
                     onPressed: () => Navigator.pushNamed(
                       context,
                       '/quote-builder',

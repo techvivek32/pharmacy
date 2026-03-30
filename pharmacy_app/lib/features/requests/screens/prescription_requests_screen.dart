@@ -260,7 +260,11 @@ class _PrescriptionRequestsScreenState
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),
                       ),
-                      child: const Text('View & Send Quote'),
+                      child: Text(
+                        request['existingQuote'] != null
+                            ? 'View & Edit Quote'
+                            : 'View & Send Quote',
+                      ),
                     ),
                   ),
                 ],
