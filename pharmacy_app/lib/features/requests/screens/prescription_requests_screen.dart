@@ -103,10 +103,6 @@ class _PrescriptionRequestsScreenState
 
   Widget _buildRequestCard(BuildContext context, dynamic request) {
     final imageUrl = request['imageUrl']?.toString() ?? '';
-    final patientName = request['patientName']?.toString() ?? 'Unknown';
-    final patientPhone = request['patientPhone']?.toString() ?? '';
-    final deliveryAddress = request['deliveryAddress']?.toString() ?? '';
-    final distance = request['distance'];
     final createdAt = request['createdAt'] != null
         ? DateTime.tryParse(request['createdAt'].toString()) ?? DateTime.now()
         : DateTime.now();
@@ -152,93 +148,24 @@ class _PrescriptionRequestsScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Patient info row
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundColor: AppTheme.primary.withOpacity(0.1),
-                        child: Text(
-                          patientName.isNotEmpty
-                              ? patientName[0].toUpperCase()
-                              : 'P',
-                          style: const TextStyle(
-                              color: AppTheme.primary,
-                              fontWeight: FontWeight.bold),
-                        ),
+                  // Time badge
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: AppTheme.warning.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      const SizedBox(width: AppTheme.spacing12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(patientName,
-                                style: Theme.of(context).textTheme.titleMedium),
-                            if (patientPhone.isNotEmpty)
-                              Text(patientPhone,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.copyWith(
-                                          color: AppTheme.textSecondary)),
-                          ],
-                        ),
+                      child: Text(
+                        _getTimeAgo(createdAt),
+                        style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.warning),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: AppTheme.warning.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          _getTimeAgo(createdAt),
-                          style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.warning),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: AppTheme.spacing12),
-                  const Divider(height: 1),
-                  const SizedBox(height: AppTheme.spacing12),
-
-                  // Address
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.location_on,
-                          size: 16, color: AppTheme.error),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          deliveryAddress,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (distance != null)
-                        Container(
-                          margin: const EdgeInsets.only(left: 8),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            '$distance km',
-                            style: const TextStyle(
-                                fontSize: 12,
-                                color: AppTheme.primary,
-                                fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                    ],
+                    ),
                   ),
 
                   const SizedBox(height: AppTheme.spacing12),

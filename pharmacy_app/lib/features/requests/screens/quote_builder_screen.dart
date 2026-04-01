@@ -17,7 +17,6 @@ class QuoteBuilderScreen extends StatefulWidget {
 
 class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
   final List<Map<String, dynamic>> _items = [];
-  final _deliveryFeeController = TextEditingController(text: '10');
   final List<TextEditingController> _nameControllers = [];
   final List<TextEditingController> _qtyControllers = [];
   final List<TextEditingController> _priceControllers = [];
@@ -33,7 +32,6 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
 
   @override
   void dispose() {
-    _deliveryFeeController.dispose();
     for (final c in _nameControllers) c.dispose();
     for (final c in _qtyControllers) c.dispose();
     for (final c in _priceControllers) c.dispose();
@@ -48,9 +46,6 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
     if (existingQuote != null) {
       _isEdit = true;
       final items = existingQuote['items'] as List? ?? [];
-      final deliveryFee = existingQuote['deliveryFee'];
-      _deliveryFeeController.text = (deliveryFee ?? 10).toString();
-
       for (final item in items) {
         _addItemWithValues(
           name: item['medicineName']?.toString() ?? '',
@@ -114,8 +109,7 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
   double get _subtotal =>
       _items.fold(0, (sum, item) => sum + (item['totalPrice'] as num).toDouble());
 
-  double get _total =>
-      _subtotal + (double.tryParse(_deliveryFeeController.text) ?? 0);
+  double get _total => _subtotal;
 
   Future<void> _submit() async {
     if (_items.isEmpty) {
@@ -144,7 +138,7 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
     final success = await context.read<PrescriptionProvider>().sendQuote(
           prescriptionId: prescriptionId,
           items: List<Map<String, dynamic>>.from(_items),
-          deliveryFee: double.tryParse(_deliveryFeeController.text) ?? 10,
+          deliveryFee: 0,
         );
 
     setState(() => _isLoading = false);
@@ -220,14 +214,6 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
 
             const SizedBox(height: AppTheme.spacing24),
 
-            InputField(
-              controller: _deliveryFeeController,
-              label: 'Delivery Fee (MAD)',
-              keyboardType: TextInputType.number,
-              onChanged: (_) => setState(() {}),
-            ),
-
-            const SizedBox(height: AppTheme.spacing24),
             _buildSummary(),
             const SizedBox(height: AppTheme.spacing24),
 
@@ -318,11 +304,6 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
         padding: const EdgeInsets.all(AppTheme.spacing16),
         child: Column(
           children: [
-            _summaryRow('Subtotal', _subtotal),
-            _summaryRow(
-                'Delivery Fee',
-                double.tryParse(_deliveryFeeController.text) ?? 0),
-            const Divider(height: AppTheme.spacing24),
             _summaryRow('Total', _total, isTotal: true),
           ],
         ),

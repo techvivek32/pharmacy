@@ -20,17 +20,6 @@ class PrescriptionDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imageUrl = _get('imageUrl');
-    final patientName = _get('patientName').isNotEmpty ? _get('patientName') : 'Unknown Patient';
-    final patientPhone = _get('patientPhone');
-    final patientEmail = _get('patientEmail');
-    final deliveryAddress = _get('deliveryAddress').isNotEmpty
-        ? _get('deliveryAddress')
-        : 'Address not provided';
-    final distance = prescription is Map ? prescription['distance'] : null;
-    final createdAt = _get('createdAt').isNotEmpty
-        ? DateTime.tryParse(_get('createdAt'))
-        : null;
-
     final existingQuote = prescription is Map ? prescription['existingQuote'] : null;
     final hasQuote = existingQuote != null;
 
@@ -91,43 +80,6 @@ class PrescriptionDetailScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Patient info card
-                  _buildSectionCard(
-                    context,
-                    title: 'Patient Information',
-                    icon: Icons.person_outline,
-                    children: [
-                      _buildInfoRow(context, Icons.person, 'Name', patientName),
-                      if (patientPhone.isNotEmpty)
-                        _buildInfoRow(context, Icons.phone, 'Phone', patientPhone),
-                      if (patientEmail.isNotEmpty)
-                        _buildInfoRow(context, Icons.email, 'Email', patientEmail),
-                    ],
-                  ),
-
-                  const SizedBox(height: AppTheme.spacing16),
-
-                  // Delivery info card
-                  _buildSectionCard(
-                    context,
-                    title: 'Delivery Information',
-                    icon: Icons.local_shipping_outlined,
-                    children: [
-                      _buildInfoRow(
-                          context, Icons.location_on, 'Address', deliveryAddress),
-                      if (distance != null)
-                        _buildInfoRow(context, Icons.straighten, 'Distance',
-                            '$distance km from your pharmacy'),
-                      if (createdAt != null)
-                        _buildInfoRow(
-                          context,
-                          Icons.access_time,
-                          'Requested',
-                          _formatDateTime(createdAt),
-                        ),
-                    ],
-                  ),
-
                   const SizedBox(height: AppTheme.spacing24),
 
                   PrimaryButton(
