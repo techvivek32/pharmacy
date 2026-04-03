@@ -3,6 +3,7 @@ import connectDB from '@/lib/mongodb';
 import Quote from '@/models/Quote';
 import Prescription from '@/models/Prescription';
 import Pharmacy from '@/models/Pharmacy';
+import Settings from '@/models/Settings';
 import { authenticateRequest } from '@/lib/auth';
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response';
 import { sendNotificationToUser } from '@/services/notification';
@@ -36,6 +37,8 @@ export async function GET(request: NextRequest) {
         id: quote._id,
         items: quote.items,
         subtotal: quote.subtotal,
+        commissionRate: quote.commissionRate,
+        commissionAmount: quote.commissionAmount,
         deliveryFee: quote.deliveryFee,
         totalAmount: quote.totalAmount,
         status: quote.status,
@@ -56,7 +59,7 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     const body = await request.json();
-    const { prescriptionId, items, deliveryFee = 10 } = body;
+    const { prescriptionId, items } = body;
 
     if (!prescriptionId || !items || items.length === 0) {
       return errorResponse('Prescription ID and items are required');
@@ -72,8 +75,14 @@ export async function POST(request: NextRequest) {
       return errorResponse('Prescription is no longer available');
     }
 
+    // Fetch admin settings for delivery fee and commission
+    const settings = await Settings.findOne().lean() as any;
+    const deliveryFee = settings?.deliveryFee ?? 20;
+    const commissionRate = settings?.commissionRate ?? 0;
+
     const subtotal = items.reduce((sum: number, item: any) => sum + item.totalPrice, 0);
-    const totalAmount = subtotal + deliveryFee;
+    const commissionAmount = parseFloat(((subtotal * commissionRate) / 100).toFixed(2));
+    const totalAmount = parseFloat((subtotal + commissionAmount + deliveryFee).toFixed(2));
 
     // Check if quote already exists from this pharmacy
     const existingQuote = await Quote.findOne({
@@ -85,9 +94,10 @@ export async function POST(request: NextRequest) {
     let isEdit = false;
 
     if (existingQuote) {
-      // Update existing quote
       existingQuote.items = items;
       existingQuote.subtotal = subtotal;
+      existingQuote.commissionRate = commissionRate;
+      existingQuote.commissionAmount = commissionAmount;
       existingQuote.deliveryFee = deliveryFee;
       existingQuote.totalAmount = totalAmount;
       existingQuote.status = 'pending';
@@ -95,19 +105,19 @@ export async function POST(request: NextRequest) {
       quote = existingQuote;
       isEdit = true;
     } else {
-      // Create new quote
       quote = await Quote.create({
         prescriptionId: prescription._id,
         pharmacyId: pharmacy._id,
         patientId: prescription.patientId,
         items,
         subtotal,
+        commissionRate,
+        commissionAmount,
         deliveryFee,
         totalAmount,
         status: 'pending',
       });
 
-      // Update prescription status to quoted
       prescription.status = 'quoted';
       await prescription.save();
     }
@@ -128,6 +138,8 @@ export async function POST(request: NextRequest) {
           id: quote._id,
           items: quote.items,
           subtotal: quote.subtotal,
+          commissionRate: quote.commissionRate,
+          commissionAmount: quote.commissionAmount,
           deliveryFee: quote.deliveryFee,
           totalAmount: quote.totalAmount,
         },

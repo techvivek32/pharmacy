@@ -83,6 +83,11 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     _buildQuoteDetails(order),
                     const SizedBox(height: AppTheme.spacing16),
                   ],
+                  // Pharmacy info
+                  if (order.pharmacyName != null) ...[
+                    _buildPharmacyInfo(order),
+                    const SizedBox(height: AppTheme.spacing16),
+                  ],
                   // Order status timeline (only for confirmed orders)
                   if (!order.isPendingQuote) ...[
                     _buildStatusTimeline(order),
@@ -111,9 +116,11 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     final color = isPending ? Colors.orange : isSearching ? AppTheme.primary : _statusColor(order.status);
     final icon = isPending ? Icons.local_pharmacy : isSearching ? Icons.search : _statusIcon(order.status);
     final label = isPending ? 'Quote Received!' : isSearching ? 'Searching for Pharmacy...' : _statusLabel(order.status);
-    final sub = isPending || isSearching
-        ? ''
-        : (order.orderNumber.isNotEmpty ? order.orderNumber : 'Order #${order.id.substring(order.id.length > 6 ? order.id.length - 6 : 0).toUpperCase()}');
+    final sub = isPending
+        ? 'From ${order.pharmacyName ?? 'Pharmacy'} — Total: ${order.totalAmount.toStringAsFixed(2)} MAD'
+        : isSearching
+            ? 'Looking for the nearest pharmacy...'
+            : (order.orderNumber.isNotEmpty ? order.orderNumber : 'Order #${order.id.substring(order.id.length > 6 ? order.id.length - 6 : 0).toUpperCase()}');
 
     return Container(
       width: double.infinity,
@@ -299,6 +306,11 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 )),
             const Divider(height: 20),
             _summaryRow('Subtotal', order.subtotal),
+            if (order.commissionAmount > 0)
+              _summaryRow(
+                'Service Fee (${order.commissionRate.toStringAsFixed(0)}%)',
+                order.commissionAmount,
+              ),
             _summaryRow('Delivery Fee', order.deliveryFee),
             const Divider(height: 12),
             _summaryRow('Total', order.totalAmount, isTotal: true),
@@ -495,6 +507,46 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     );
   }
 
+  Widget _buildPharmacyInfo(Order order) {
+    return AppCard(
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.spacing16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Pharmacy', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: AppTheme.spacing12),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(AppTheme.spacing8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.local_pharmacy, color: AppTheme.primary, size: 20),
+                ),
+                const SizedBox(width: AppTheme.spacing12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(order.pharmacyName!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                      if (order.pharmacyPhone != null && order.pharmacyPhone!.isNotEmpty)
+                        Text(order.pharmacyPhone!, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary)),
+                      if (order.pharmacyAddress != null && order.pharmacyAddress!.isNotEmpty)
+                        Text(order.pharmacyAddress!, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildItemsList(Order order) {
     return AppCard(
       child: Padding(
@@ -547,6 +599,11 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: AppTheme.spacing12),
             if (order.subtotal > 0) _summaryRow('Subtotal', order.subtotal),
+            if (order.commissionAmount > 0)
+              _summaryRow(
+                'Service Fee (${order.commissionRate.toStringAsFixed(0)}%)',
+                order.commissionAmount,
+              ),
             if (order.deliveryFee > 0) _summaryRow('Delivery Fee', order.deliveryFee),
             const Divider(),
             const SizedBox(height: AppTheme.spacing8),

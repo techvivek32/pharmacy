@@ -7,6 +7,8 @@ class Order {
   final String? riderName;
   final double totalAmount;
   final double subtotal;
+  final double commissionRate;
+  final double commissionAmount;
   final double deliveryFee;
   final String status;
   final String? paymentMethod;
@@ -30,6 +32,8 @@ class Order {
     this.riderName,
     required this.totalAmount,
     this.subtotal = 0,
+    this.commissionRate = 0,
+    this.commissionAmount = 0,
     this.deliveryFee = 0,
     required this.status,
     this.paymentMethod,
@@ -55,6 +59,8 @@ class Order {
       riderName: json['riderName'],
       totalAmount: (json['totalAmount'] ?? 0).toDouble(),
       subtotal: (json['subtotal'] ?? 0).toDouble(),
+      commissionRate: (json['commissionRate'] ?? 0).toDouble(),
+      commissionAmount: (json['commissionAmount'] ?? 0).toDouble(),
       deliveryFee: (json['deliveryFee'] ?? 0).toDouble(),
       status: json['status'] ?? 'pending',
       paymentMethod: json['paymentMethod'],

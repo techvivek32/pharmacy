@@ -13,6 +13,8 @@ export interface IQuote extends Document {
   patientId: mongoose.Types.ObjectId;
   items: IQuoteItem[];
   subtotal: number;
+  commissionRate: number;
+  commissionAmount: number;
   deliveryFee: number;
   totalAmount: number;
   status: 'pending' | 'accepted' | 'rejected' | 'expired';
@@ -50,10 +52,18 @@ const QuoteSchema = new Schema<IQuote>(
       type: Number,
       required: true,
     },
+    commissionRate: {
+      type: Number,
+      default: 0,
+    },
+    commissionAmount: {
+      type: Number,
+      default: 0,
+    },
     deliveryFee: {
       type: Number,
       required: true,
-      default: 10,
+      default: 0,
     },
     totalAmount: {
       type: Number,

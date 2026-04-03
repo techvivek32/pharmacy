@@ -1,42 +1,39 @@
 import { NextRequest } from 'next/server';
+import connectDB from '@/lib/mongodb';
+import Settings from '@/models/Settings';
 import { successResponse, errorResponse } from '@/lib/response';
 
-// This is a placeholder for app settings
-// In production, you would store these in a database
-const defaultSettings = {
-  app: {
-    name: 'MediExpress',
-    version: '1.0.0',
-    maintenanceMode: false,
-  },
-  delivery: {
-    defaultFee: 10,
-    maxDistance: 50, // km
-    estimatedTime: 30, // minutes
-  },
-  prescription: {
-    expiryTime: 24, // hours
-    maxFileSize: 10, // MB
-    allowedFormats: ['jpg', 'jpeg', 'png', 'pdf'],
-  },
-  quote: {
-    expiryTime: 30, // minutes
-    maxItems: 50,
-  },
-  notifications: {
-    enabled: true,
-    emailNotifications: true,
-    pushNotifications: true,
-  },
-  payment: {
-    methods: ['cash', 'card', 'mobile'],
-    currency: 'MAD',
-  },
+const defaults = {
+  deliveryFee: 20,
+  commissionRate: 15,
+  minOrderAmount: 50,
+  maxDeliveryRadius: 10,
+  supportEmail: 'support@ordogo.com',
+  supportPhone: '+212 600 000 000',
+  maintenanceMode: false,
 };
 
-export async function GET(request: NextRequest) {
+async function getSettings() {
+  await connectDB();
+  let settings = await Settings.findOne().lean() as any;
+  if (!settings) {
+    settings = await Settings.create(defaults);
+  }
+  return settings;
+}
+
+export async function GET() {
   try {
-    return successResponse(defaultSettings);
+    const settings = await getSettings();
+    return successResponse({
+      deliveryFee: settings.deliveryFee,
+      commissionRate: settings.commissionRate,
+      minOrderAmount: settings.minOrderAmount,
+      maxDeliveryRadius: settings.maxDeliveryRadius,
+      supportEmail: settings.supportEmail,
+      supportPhone: settings.supportPhone,
+      maintenanceMode: settings.maintenanceMode,
+    });
   } catch (error: any) {
     console.error('Get settings error:', error);
     return errorResponse('Failed to fetch settings', 500);
@@ -45,15 +42,24 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    await connectDB();
     const body = await request.json();
-    
-    // In production, you would update these in a database
-    // For now, just return success
-    
+
+    const settings = await Settings.findOneAndUpdate(
+      {},
+      { $set: body },
+      { new: true, upsert: true }
+    ).lean() as any;
+
     return successResponse({
-      message: 'Settings updated successfully',
-      settings: { ...defaultSettings, ...body },
-    });
+      deliveryFee: settings.deliveryFee,
+      commissionRate: settings.commissionRate,
+      minOrderAmount: settings.minOrderAmount,
+      maxDeliveryRadius: settings.maxDeliveryRadius,
+      supportEmail: settings.supportEmail,
+      supportPhone: settings.supportPhone,
+      maintenanceMode: settings.maintenanceMode,
+    }, 'Settings updated successfully');
   } catch (error: any) {
     console.error('Update settings error:', error);
     return errorResponse('Failed to update settings', 500);

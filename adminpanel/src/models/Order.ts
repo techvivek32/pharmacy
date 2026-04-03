@@ -14,6 +14,8 @@ export interface IOrder extends Document {
     totalPrice: number;
   }>;
   subtotal: number;
+  commissionRate: number;
+  commissionAmount: number;
   deliveryFee: number;
   totalAmount: number;
   paymentMethod?: 'cash' | 'online';
@@ -78,6 +80,14 @@ const OrderSchema = new Schema<IOrder>(
       },
     ],
     subtotal: {
+      type: Number,
+      default: 0,
+    },
+    commissionRate: {
+      type: Number,
+      default: 0,
+    },
+    commissionAmount: {
       type: Number,
       default: 0,
     },

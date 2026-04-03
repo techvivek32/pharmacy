@@ -102,6 +102,8 @@ export async function GET(request: NextRequest) {
           pharmacyAddress,
           items: q.items || [],
           subtotal: q.subtotal || 0,
+          commissionRate: q.commissionRate || 0,
+          commissionAmount: q.commissionAmount || 0,
           deliveryFee: q.deliveryFee || 0,
           totalAmount: q.totalAmount || 0,
           status: 'quote_pending',
@@ -126,6 +128,8 @@ export async function GET(request: NextRequest) {
       status: o.status || 'pending',
       quoteItems: o.quoteId?.items || o.items || [],
       subtotal: o.quoteId?.subtotal || o.subtotal || 0,
+      commissionRate: o.quoteId?.commissionRate || o.commissionRate || 0,
+      commissionAmount: o.quoteId?.commissionAmount || o.commissionAmount || 0,
       deliveryFee: o.quoteId?.deliveryFee || o.deliveryFee || 0,
     }));
 

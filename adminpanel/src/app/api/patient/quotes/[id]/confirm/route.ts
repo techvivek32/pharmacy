@@ -37,6 +37,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       pharmacyId: quote.pharmacyId,
       items: quote.items,
       subtotal: quote.subtotal,
+      commissionRate: quote.commissionRate,
+      commissionAmount: quote.commissionAmount,
       deliveryFee: quote.deliveryFee,
       totalAmount: quote.totalAmount,
       paymentMethod,
