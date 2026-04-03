@@ -107,6 +107,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 ],
               ),
               const SizedBox(height: AppTheme.spacing12),
+              if (order.status != 'searching')
               Row(
                 children: [
                   const Icon(Icons.store, size: 16, color: AppTheme.textSecondary),
@@ -180,6 +181,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         return AppTheme.info;
       case 'cancelled':
         return AppTheme.error;
+      case 'searching':
+        return AppTheme.primary;
+      case 'quote_pending':
+        return Colors.orange;
       default:
         return AppTheme.warning;
     }
@@ -197,6 +202,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         return 'Confirmed';
       case 'cancelled':
         return 'Cancelled';
+      case 'searching':
+        return 'Searching Pharmacy';
+      case 'quote_pending':
+        return 'Quote Received';
       default:
         return 'Pending';
     }
