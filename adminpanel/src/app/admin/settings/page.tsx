@@ -34,9 +34,10 @@ export default function SettingsPage() {
   const fetchSettings = async () => {
     try {
       const response = await fetch('/api/settings');
+      if (!response.ok) return;
       const data = await response.json() as any;
-      if (data.success) {
-        setSettings(data.data);
+      if (data.success && data.data) {
+        setSettings(prev => ({ ...prev, ...data.data }));
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -53,9 +54,12 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
       });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json() as any;
       if (data.success) {
         alert('Settings saved successfully!');
+      } else {
+        alert(data.message || 'Failed to save settings');
       }
     } catch (error) {
       console.error('Error saving settings:', error);

@@ -3,6 +3,8 @@ import connectDB from '@/lib/mongodb';
 import Settings from '@/models/Settings';
 import { successResponse, errorResponse } from '@/lib/response';
 
+export const dynamic = 'force-dynamic';
+
 const defaults = {
   deliveryFee: 20,
   commissionRate: 15,
