@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     const hasValidCoords = Array.isArray(rawCoords) && rawCoords.length === 2 &&
       rawCoords.every((c: any) => typeof c === 'number') &&
       (rawCoords[0] !== 0 || rawCoords[1] !== 0);
-    const coordinates: [number, number] = hasValidCoords ? rawCoords : [0, 0];
+    const coordinates: [number, number] = hasValidCoords ? [rawCoords[0], rawCoords[1]] : [0, 0];
 
     // Update prescription delivery address
     if (hasValidCoords) {
