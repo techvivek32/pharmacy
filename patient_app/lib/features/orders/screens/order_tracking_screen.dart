@@ -83,11 +83,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     _buildQuoteDetails(order),
                     const SizedBox(height: AppTheme.spacing16),
                   ],
-                  // Pharmacy info
-                  if (order.pharmacyName != null) ...[
-                    _buildPharmacyInfo(order),
-                    const SizedBox(height: AppTheme.spacing16),
-                  ],
                   // Order status timeline (only for confirmed orders)
                   if (!order.isPendingQuote) ...[
                     _buildStatusTimeline(order),
@@ -117,7 +112,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     final icon = isPending ? Icons.local_pharmacy : isSearching ? Icons.search : _statusIcon(order.status);
     final label = isPending ? 'Quote Received!' : isSearching ? 'Searching for Pharmacy...' : _statusLabel(order.status);
     final sub = isPending
-        ? 'From ${order.pharmacyName ?? 'Pharmacy'} — Total: ${order.totalAmount.toStringAsFixed(2)} MAD'
+        ? 'Total: ${order.totalAmount.toStringAsFixed(2)} MAD'
         : isSearching
             ? 'Looking for the nearest pharmacy...'
             : (order.orderNumber.isNotEmpty ? order.orderNumber : 'Order #${order.id.substring(order.id.length > 6 ? order.id.length - 6 : 0).toUpperCase()}');
@@ -187,7 +182,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Confirm Order'),
         content: Text(
-            'Confirm order from ${order.pharmacyName} for ${order.totalAmount.toStringAsFixed(2)} MAD?'),
+            'Confirm this order for ${order.totalAmount.toStringAsFixed(2)} MAD?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Back')),
           ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Confirm')),
@@ -501,46 +496,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 ],
               );
             }),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPharmacyInfo(Order order) {
-    return AppCard(
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacing16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Pharmacy', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: AppTheme.spacing12),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(AppTheme.spacing8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primary.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.local_pharmacy, color: AppTheme.primary, size: 20),
-                ),
-                const SizedBox(width: AppTheme.spacing12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(order.pharmacyName!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
-                      if (order.pharmacyPhone != null && order.pharmacyPhone!.isNotEmpty)
-                        Text(order.pharmacyPhone!, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary)),
-                      if (order.pharmacyAddress != null && order.pharmacyAddress!.isNotEmpty)
-                        Text(order.pharmacyAddress!, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
       ),
