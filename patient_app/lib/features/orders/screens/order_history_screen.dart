@@ -106,18 +106,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                   _buildStatusChip(order.status),
                 ],
               ),
-              const SizedBox(height: AppTheme.spacing12),
-              if (order.status != 'searching')
-              Row(
-                children: [
-                  const Icon(Icons.store, size: 16, color: AppTheme.textSecondary),
-                  const SizedBox(width: AppTheme.spacing4),
-                  Text(
-                    order.pharmacyName ?? 'Awaiting pharmacy',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
-              ),
               const SizedBox(height: AppTheme.spacing8),
               Row(
                 children: [
