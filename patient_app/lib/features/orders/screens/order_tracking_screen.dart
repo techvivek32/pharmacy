@@ -83,11 +83,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     _buildQuoteDetails(order),
                     const SizedBox(height: AppTheme.spacing16),
                   ],
-                  // Pharmacy info
-                  if (order.pharmacyName != null) ...[
-                    _buildPharmacyInfo(order),
-                    const SizedBox(height: AppTheme.spacing16),
-                  ],
                   // Order status timeline (only for confirmed orders)
                   if (!order.isPendingQuote) ...[
                     _buildStatusTimeline(order),
@@ -112,11 +107,12 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   Widget _buildStatusBanner(Order order) {
     final isPending = order.isPendingQuote;
-    final color = isPending ? Colors.orange : _statusColor(order.status);
-    final icon = isPending ? Icons.local_pharmacy : _statusIcon(order.status);
-    final label = isPending ? 'Quote Received!' : _statusLabel(order.status);
-    final sub = isPending
-        ? 'From ${order.pharmacyName ?? 'Pharmacy'} — Tap to confirm or cancel'
+    final isSearching = order.status == 'searching';
+    final color = isPending ? Colors.orange : isSearching ? AppTheme.primary : _statusColor(order.status);
+    final icon = isPending ? Icons.local_pharmacy : isSearching ? Icons.search : _statusIcon(order.status);
+    final label = isPending ? 'Quote Received!' : isSearching ? 'Searching for Pharmacy...' : _statusLabel(order.status);
+    final sub = isPending || isSearching
+        ? ''
         : (order.orderNumber.isNotEmpty ? order.orderNumber : 'Order #${order.id.substring(order.id.length > 6 ? order.id.length - 6 : 0).toUpperCase()}');
 
     return Container(
@@ -592,24 +588,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 ),
               ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPharmacyInfo(Order order) {
-    return AppCard(
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacing16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Pharmacy', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: AppTheme.spacing12),
-            _infoRow(Icons.local_pharmacy, 'Name', order.pharmacyName!),
-            if (order.pharmacyPhone != null)
-              _infoRow(Icons.phone, 'Phone', order.pharmacyPhone!),
           ],
         ),
       ),

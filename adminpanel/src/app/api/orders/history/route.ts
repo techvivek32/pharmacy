@@ -40,6 +40,28 @@ export async function GET(request: NextRequest) {
       .populate({ path: 'prescriptionId', select: 'imageUrl deliveryAddress' })
       .lean() as any[];
 
+    // Fetch pending prescriptions (order created, searching for pharmacy)
+    const pendingPrescriptions = await Prescription.find({
+      patientId: patient._id,
+      status: 'pending',
+    }).sort({ createdAt: -1 }).lean() as any[];
+
+    const enrichedPrescriptions = pendingPrescriptions.map((p: any) => ({
+      _isPendingQuote: false,
+      id: p._id?.toString(),
+      prescriptionId: p._id?.toString(),
+      prescriptionImage: p.imageUrl || null,
+      pharmacyName: null,
+      items: [],
+      subtotal: 0,
+      deliveryFee: 0,
+      totalAmount: 0,
+      status: 'searching',
+      orderNumber: `REQ-${p._id.toString().slice(-6).toUpperCase()}`,
+      createdAt: p.createdAt,
+      deliveryAddress: p.deliveryAddress || null,
+    }));
+
     // Fetch pending quotes (pharmacy sent quote but patient hasn't confirmed yet)
     const pendingQuotes = await Quote.find({
       patientId: patient._id,
@@ -107,8 +129,8 @@ export async function GET(request: NextRequest) {
       deliveryFee: o.quoteId?.deliveryFee || o.deliveryFee || 0,
     }));
 
-    // Merge: pending quotes first, then confirmed orders
-    const combined = [...enrichedQuotes, ...normalizedOrders];
+    // Merge: searching prescriptions + pending quotes + confirmed orders
+    const combined = [...enrichedPrescriptions, ...enrichedQuotes, ...normalizedOrders];
 
     return successResponse(combined, 'Orders fetched successfully');
   } catch (error: any) {
