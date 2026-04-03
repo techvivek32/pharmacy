@@ -32,19 +32,26 @@ export async function POST(request: NextRequest) {
     if (!prescription) return errorResponse('Prescription not found', 404);
 
     const addressText = deliveryAddress.address || deliveryAddress.label || 'Delivery address';
-    const coordinates: [number, number] = deliveryAddress.coordinates ||
-      deliveryAddress.location?.coordinates || [0, 0];
+    const rawCoords = deliveryAddress.coordinates || deliveryAddress.location?.coordinates;
+    const hasValidCoords = Array.isArray(rawCoords) && rawCoords.length === 2 &&
+      rawCoords.every((c: any) => typeof c === 'number') &&
+      (rawCoords[0] !== 0 || rawCoords[1] !== 0);
+    const coordinates: [number, number] = hasValidCoords ? rawCoords : [0, 0];
 
     // Update prescription delivery address
-    prescription.deliveryAddress = {
-      address: addressText,
-      location: { type: 'Point', coordinates },
-    };
+    if (hasValidCoords) {
+      prescription.deliveryAddress = {
+        address: addressText,
+        location: { type: 'Point', coordinates },
+      };
+    } else {
+      prescription.set('deliveryAddress', { address: addressText }, { strict: false });
+    }
 
     // Find single nearest approved pharmacy within 100km
     let nearestPharmacy = null;
 
-    if (coordinates[0] !== 0 || coordinates[1] !== 0) {
+    if (hasValidCoords) {
       nearestPharmacy = await Pharmacy.findOne({
         location: {
           $near: {

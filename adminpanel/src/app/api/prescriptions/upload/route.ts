@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     let nearbyPharmaciesCount = 0;
 
-    if (address && coordinates && coordinates.length === 2) {
+    if (address && Array.isArray(coordinates) && coordinates.length === 2 && coordinates.every((c: any) => typeof c === 'number')) {
       prescriptionData.deliveryAddress = {
         address,
         location: {

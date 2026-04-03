@@ -40,7 +40,7 @@ const PrescriptionSchema = new Schema<IPrescription>(
     deliveryAddress: {
       address: { type: String },
       location: {
-        type: { type: String, enum: ['Point'], default: 'Point' },
+        type: { type: String, enum: ['Point'] },
         coordinates: { type: [Number] },
       },
     },
@@ -65,6 +65,6 @@ PrescriptionSchema.index({ patientId: 1 });
 PrescriptionSchema.index({ status: 1 });
 PrescriptionSchema.index({ expiresAt: 1 });
 PrescriptionSchema.index({ nearbyPharmacies: 1 });
-PrescriptionSchema.index({ 'deliveryAddress.location': '2dsphere' });
+PrescriptionSchema.index({ 'deliveryAddress.location': '2dsphere' }, { sparse: true });
 
 export default mongoose.models.Prescription || mongoose.model<IPrescription>('Prescription', PrescriptionSchema);
