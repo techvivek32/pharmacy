@@ -75,10 +75,27 @@ export async function POST(request: NextRequest) {
       return errorResponse('Prescription is no longer available');
     }
 
-    // Fetch admin settings for delivery fee and commission
+    // Fetch admin settings for delivery fee per km and commission
     const settings = await Settings.findOne().lean() as any;
-    const deliveryFee = settings?.deliveryFee ?? 20;
+    const deliveryFeePerKm = settings?.deliveryFee ?? 20;
     const commissionRate = settings?.commissionRate ?? 0;
+
+    // Calculate distance-based delivery fee
+    let deliveryFee = deliveryFeePerKm; // fallback: 1km minimum
+    try {
+      const pharmacyDoc = await Pharmacy.findOne({ userId: auth.userId }).lean() as any;
+      const deliveryCoords = prescription.deliveryAddress?.location?.coordinates;
+      const pharmacyCoords = pharmacyDoc?.location?.coordinates;
+
+      if (
+        deliveryCoords && Array.isArray(deliveryCoords) && deliveryCoords.length === 2 &&
+        pharmacyCoords && Array.isArray(pharmacyCoords) && pharmacyCoords.length === 2
+      ) {
+        const distance = calculateDistance(pharmacyCoords, deliveryCoords);
+        deliveryFee = parseFloat((distance * deliveryFeePerKm).toFixed(2));
+        if (deliveryFee < deliveryFeePerKm) deliveryFee = deliveryFeePerKm; // minimum 1km charge
+      }
+    } catch (_) {}
 
     const subtotal = items.reduce((sum: number, item: any) => sum + item.totalPrice, 0);
     const commissionAmount = parseFloat(((subtotal * commissionRate) / 100).toFixed(2));
@@ -152,4 +169,21 @@ export async function POST(request: NextRequest) {
     console.error('Send quote error:', error);
     return errorResponse('Failed to send quote', 500);
   }
+}
+
+function calculateDistance(coords1: number[], coords2: number[]): number {
+  const R = 6371;
+  const dLat = toRad(coords2[1] - coords1[1]);
+  const dLon = toRad(coords2[0] - coords1[0]);
+  const lat1 = toRad(coords1[1]);
+  const lat2 = toRad(coords2[1]);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 10) / 10;
+}
+
+function toRad(value: number): number {
+  return (value * Math.PI) / 180;
 }
