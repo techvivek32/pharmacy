@@ -13,6 +13,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
   bool _isLoading = true;
   List<dynamic> _orders = [];
   String? _error;
+  final Set<String> _expandedIds = {};
 
   @override
   void initState() {
@@ -66,7 +67,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           Text('No Orders Yet',
                               style: Theme.of(context).textTheme.titleLarge),
                           const SizedBox(height: 8),
-                          Text('Completed orders will appear here',
+                          Text('Confirmed orders will appear here',
                               style: Theme.of(context).textTheme.bodyMedium),
                         ],
                       ),
@@ -88,70 +89,126 @@ class _OrdersScreenState extends State<OrdersScreen> {
   Widget _buildOrderCard(BuildContext context, dynamic order) {
     final status = order['status'] ?? 'confirmed';
     final color = _statusColor(status);
+    final orderId = order['id']?.toString() ?? order['_id']?.toString() ?? '$status$status';
+    final items = (order['items'] as List?) ?? [];
+    final isExpanded = _expandedIds.contains(orderId);
+
+    // Show only the pharmacy's quote subtotal (medicines only, no tax/delivery)
+    final subtotal = (order['subtotal'] ?? 0).toDouble();
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacing16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '#${order['orderNumber'] ?? order['id'].toString().substring(0, 8)}',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    status.toString().toUpperCase(),
-                    style: TextStyle(
-                        fontSize: 11, fontWeight: FontWeight.w600, color: color),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppTheme.spacing8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${(order['items'] as List?)?.length ?? 0} items',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                Text(
-                  '${order['totalAmount'] ?? 0} MAD',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(color: AppTheme.primary),
-                ),
-              ],
-            ),
-            if (order['deliveryAddress'] != null) ...[
-              const SizedBox(height: AppTheme.spacing4),
+      child: InkWell(
+        onTap: () => setState(() {
+          if (isExpanded) {
+            _expandedIds.remove(orderId);
+          } else {
+            _expandedIds.add(orderId);
+          }
+        }),
+        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+        child: Padding(
+          padding: const EdgeInsets.all(AppTheme.spacing16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header row
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Icon(Icons.location_on_outlined,
-                      size: 14, color: AppTheme.textSecondary),
-                  const SizedBox(width: 4),
-                  Expanded(
+                  Text(
+                    '#${order['orderNumber'] ?? orderId.substring(0, 8)}',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                     child: Text(
-                      order['deliveryAddress'],
-                      style: Theme.of(context).textTheme.bodySmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      status.toString().toUpperCase(),
+                      style: TextStyle(
+                          fontSize: 11, fontWeight: FontWeight.w600, color: color),
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: AppTheme.spacing8),
+              // Items count + subtotal + expand arrow
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '${items.length} item${items.length == 1 ? '' : 's'}',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  Row(
+                    children: [
+                      Text(
+                        '${subtotal.toStringAsFixed(2)} MAD',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(color: AppTheme.primary),
+                      ),
+                      const SizedBox(width: AppTheme.spacing8),
+                      AnimatedRotation(
+                        turns: isExpanded ? 0.5 : 0,
+                        duration: const Duration(milliseconds: 200),
+                        child: const Icon(Icons.keyboard_arrow_down,
+                            size: 20, color: AppTheme.textSecondary),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              // Expandable medicines list
+              AnimatedCrossFade(
+                firstChild: const SizedBox.shrink(),
+                secondChild: items.isEmpty
+                    ? const SizedBox.shrink()
+                    : Column(
+                        children: [
+                          const Divider(height: 20),
+                          ...items.map((item) => Padding(
+                                padding: const EdgeInsets.only(bottom: AppTheme.spacing8),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.primary.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                                      ),
+                                      child: const Icon(Icons.medication,
+                                          size: 14, color: AppTheme.primary),
+                                    ),
+                                    const SizedBox(width: AppTheme.spacing8),
+                                    Expanded(
+                                      child: Text(
+                                        item['medicineName'] ?? 'Unknown',
+                                        style: Theme.of(context).textTheme.bodyMedium,
+                                      ),
+                                    ),
+                                    Text(
+                                      'x${item['quantity'] ?? 1}',
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                            color: AppTheme.textSecondary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              )),
+                        ],
+                      ),
+                crossFadeState: isExpanded
+                    ? CrossFadeState.showSecond
+                    : CrossFadeState.showFirst,
+                duration: const Duration(milliseconds: 200),
+              ),
             ],
-          ],
+          ),
         ),
       ),
     );

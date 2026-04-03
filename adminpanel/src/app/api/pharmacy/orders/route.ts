@@ -26,10 +26,10 @@ export async function GET(request: NextRequest) {
       id: o._id,
       orderNumber: o.orderNumber,
       status: o.status,
+      subtotal: o.subtotal,
       totalAmount: o.totalAmount,
       paymentMethod: o.paymentMethod,
       paymentStatus: o.paymentStatus,
-      deliveryAddress: o.deliveryAddress?.address,
       items: o.items,
       createdAt: o.createdAt,
     }));

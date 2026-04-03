@@ -117,12 +117,21 @@ class _DashboardTabState extends State<_DashboardTab> {
                         color: AppTheme.warning,
                       ),
                     ),
-                    const SizedBox(width: AppTheme.spacing12),
-                    const Expanded(
+                    const SizedBox(width: AppTheme.spacing8),
+                    Expanded(
+                      child: _StatCard(
+                        icon: Icons.check_circle_outline,
+                        title: 'Confirmed',
+                        value: '${provider.confirmedCount}',
+                        color: AppTheme.info,
+                      ),
+                    ),
+                    const SizedBox(width: AppTheme.spacing8),
+                    Expanded(
                       child: _StatCard(
                         icon: Icons.check_circle,
                         title: 'Completed',
-                        value: '0',
+                        value: '${provider.completedCount}',
                         color: AppTheme.success,
                       ),
                     ),
@@ -180,17 +189,19 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppCard(
       child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacing16),
+        padding: const EdgeInsets.symmetric(vertical: AppTheme.spacing12, horizontal: AppTheme.spacing8),
         child: Column(
           children: [
-            Icon(icon, color: color, size: 32),
-            const SizedBox(height: AppTheme.spacing8),
+            Icon(icon, color: color, size: 26),
+            const SizedBox(height: AppTheme.spacing4),
             Text(value,
                 style: Theme.of(context)
                     .textTheme
-                    .displaySmall
-                    ?.copyWith(color: color)),
-            Text(title, style: Theme.of(context).textTheme.bodyMedium),
+                    .headlineSmall
+                    ?.copyWith(color: color, fontWeight: FontWeight.bold)),
+            Text(title,
+                style: Theme.of(context).textTheme.bodySmall,
+                textAlign: TextAlign.center),
           ],
         ),
       ),

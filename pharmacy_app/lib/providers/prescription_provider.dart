@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import '../services/prescription_service.dart';
+import '../services/api_service.dart';
 
 class PrescriptionProvider with ChangeNotifier {
   List<dynamic> _prescriptions = [];
   bool _isLoading = false;
   String? _error;
+  int _confirmedCount = 0;
+  int _completedCount = 0;
 
   List<dynamic> get prescriptions => _prescriptions;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  int get confirmedCount => _confirmedCount;
+  int get completedCount => _completedCount;
 
   Future<void> fetchPrescriptionRequests() async {
     _isLoading = true;
@@ -21,13 +26,22 @@ class PrescriptionProvider with ChangeNotifier {
       if (result.success) {
         final data = result.data;
         if (data != null && data['prescriptions'] is List) {
-          _prescriptions = List<dynamic>.from(data['prescriptions']);
+          final all = List<dynamic>.from(data['prescriptions']);
+          // Only show pending/quoted in the requests list — accepted means patient confirmed
+          _prescriptions = all.where((p) => p['status'] != 'accepted').toList();
         } else {
           _prescriptions = [];
         }
       } else {
         _error = result.message;
-        // Keep old data visible on error instead of clearing
+      }
+
+      // Fetch order counts
+      final ordersResponse = await ApiService.get('/pharmacy/orders');
+      if (ordersResponse.success) {
+        final orders = (ordersResponse.data['orders'] as List?) ?? [];
+        _confirmedCount = orders.where((o) => o['status'] == 'confirmed' || o['status'] == 'preparing' || o['status'] == 'ready').length;
+        _completedCount = orders.where((o) => o['status'] == 'delivered').length;
       }
     } catch (e) {
       _error = 'Connection error. Pull down to retry.';
