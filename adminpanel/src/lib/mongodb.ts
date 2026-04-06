@@ -31,7 +31,14 @@ async function connectDB() {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((m) => {
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then(async (m) => {
+      // Drop old email unique index if it exists — allows same email across different roles
+      try {
+        await m.connection.collection('users').dropIndex('email_1');
+        console.log('Dropped old email_1 index');
+      } catch (_) {
+        // Index doesn't exist or already dropped — safe to ignore
+      }
       return m;
     });
   }

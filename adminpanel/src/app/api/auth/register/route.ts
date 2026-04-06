@@ -95,6 +95,12 @@ export async function POST(request: NextRequest) {
     );
   } catch (error: any) {
     console.error('Registration error:', error);
+    // MongoDB duplicate key error
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern || {})[0];
+      if (field === 'phone') return errorResponse('Account already exists with this phone number');
+      return errorResponse('Account already exists with this email');
+    }
     return errorResponse('Registration failed', 500);
   }
 }
