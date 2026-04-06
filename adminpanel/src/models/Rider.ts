@@ -27,7 +27,6 @@ const RiderSchema = new Schema<IRider>(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      unique: true,
     },
     vehicleType: {
       type: String,
@@ -86,7 +85,7 @@ const RiderSchema = new Schema<IRider>(
 );
 
 RiderSchema.index({ currentLocation: '2dsphere' }, { sparse: true });
-RiderSchema.index({ userId: 1 });
+RiderSchema.index({ userId: 1 }, { unique: true });
 RiderSchema.index({ isAvailable: 1, isOnline: 1 });
 
 export default mongoose.models.Rider || mongoose.model<IRider>('Rider', RiderSchema);
