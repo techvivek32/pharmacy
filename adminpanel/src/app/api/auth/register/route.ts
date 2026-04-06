@@ -21,10 +21,16 @@ export async function POST(request: NextRequest) {
       return errorResponse('All fields are required');
     }
 
-    // Check if user exists
-    const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
+    // Check if user exists with same email AND same role
+    const existingUser = await User.findOne({ email, role });
     if (existingUser) {
-      return errorResponse('User already exists with this email or phone');
+      return errorResponse('Account already exists with this email');
+    }
+
+    // Check phone uniqueness across all roles
+    const existingPhone = await User.findOne({ phone });
+    if (existingPhone) {
+      return errorResponse('Account already exists with this phone number');
     }
 
     // Hash password

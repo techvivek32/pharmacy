@@ -25,7 +25,6 @@ const UserSchema = new Schema<IUser>(
     email: {
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
       trim: true,
     },
@@ -67,8 +66,8 @@ const UserSchema = new Schema<IUser>(
   }
 );
 
-UserSchema.index({ email: 1 });
-UserSchema.index({ phone: 1 });
+UserSchema.index({ email: 1, role: 1 }, { unique: true });
+UserSchema.index({ phone: 1 }, { unique: true });
 UserSchema.index({ role: 1 });
 
 export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);

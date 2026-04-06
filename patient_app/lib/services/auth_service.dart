@@ -12,6 +12,7 @@ class AuthService {
         {
           'email': email,
           'password': password,
+          'role': 'patient',
         },
         includeAuth: false,
       );

@@ -11,14 +11,14 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     const body = await request.json();
-    const { email, password, fcmToken } = body;
+    const { email, password, role, fcmToken } = body;
 
     if (!email || !password) {
       return errorResponse('Email and password are required');
     }
 
-    // Find user with password
-    const user = await User.findOne({ email }).select('+password');
+    // Find user by email + role (same email can exist for different roles)
+    const user = await User.findOne({ email, role: role || { $exists: true } }).select('+password');
     if (!user) {
       return errorResponse('Invalid credentials', 401);
     }
