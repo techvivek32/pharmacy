@@ -5,18 +5,18 @@ import { uploadToCloudinary } from '@/lib/cloudinary';
 export async function POST(request: NextRequest) {
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
-    if (!token) {
-      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
-    }
-
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return NextResponse.json({ success: false, message: 'Invalid token' }, { status: 401 });
-    }
+    const isAuthenticated = token ? !!verifyToken(token) : false;
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const type = formData.get('type') as string; // 'image' or 'video'
+    const type = formData.get('type') as string;
+    const folder = formData.get('folder') as string;
+
+    // Allow unauthenticated uploads only for registration documents
+    const isRegistrationUpload = folder === 'rider-licenses' || folder === 'registration';
+    if (!isAuthenticated && !isRegistrationUpload) {
+      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+    }
     
     if (!file) {
       return NextResponse.json({ success: false, message: 'No file provided' }, { status: 400 });
@@ -26,18 +26,18 @@ export async function POST(request: NextRequest) {
     let allowedTypes: string[];
     let allowedExtensions: string[];
     let maxSize: number;
-    let folder: string;
+    let uploadFolder: string;
 
     if (type === 'video') {
       allowedTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm', 'video/avi'];
       allowedExtensions = ['mp4', 'mov', 'avi', 'webm'];
-      maxSize = 50 * 1024 * 1024; // 50MB for videos
-      folder = 'mediexpress/videos';
+      maxSize = 50 * 1024 * 1024;
+      uploadFolder = folder || 'mediexpress/videos';
     } else {
       allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/pjpeg'];
       allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
-      maxSize = 10 * 1024 * 1024; // 10MB for images
-      folder = 'mediexpress/images';
+      maxSize = 10 * 1024 * 1024;
+      uploadFolder = folder || 'mediexpress/images';
     }
 
     const fileExtension = file.name.toLowerCase().split('.').pop();
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     // Upload to Cloudinary with appropriate settings
     const uploadOptions = {
-      folder,
+      folder: uploadFolder,
       resource_type: type === 'video' ? 'video' as const : 'image' as const,
       transformation: type === 'video' ? {
         quality: 'auto',

@@ -36,7 +36,7 @@ const RiderSchema = new Schema<IRider>(
     },
     vehicleNumber: {
       type: String,
-      required: true,
+      default: '',
     },
     licenseNumber: {
       type: String,

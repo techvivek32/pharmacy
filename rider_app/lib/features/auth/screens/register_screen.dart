@@ -1,9 +1,13 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/input_field.dart';
 import '../../../core/widgets/primary_button.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../services/api_service.dart';
 import 'otp_verification_screen.dart';
 
@@ -74,30 +78,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<String?> _uploadLicenseImage() async {
     if (_licenseImage == null) return null;
     try {
-      final bytes = await _licenseImage!.readAsBytes();
-      final base64 = _encodeBase64(bytes);
-      final res = await ApiService.post('/upload/media', {
-        'file': base64,
-        'folder': 'rider-licenses',
-      });
-      if (res.success) return res.data['url'];
+      final ext = _licenseImage!.path.toLowerCase().split('.').last;
+      final mimeType = ext == 'png' ? 'image/png' : ext == 'webp' ? 'image/webp' : 'image/jpeg';
+      final subtype = ext == 'png' ? 'png' : ext == 'webp' ? 'webp' : 'jpeg';
+
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('${AppConstants.baseUrl}/upload/media'),
+      );
+      request.fields['type'] = 'image';
+      request.fields['folder'] = 'rider-licenses';
+      request.files.add(await http.MultipartFile.fromPath(
+        'file',
+        _licenseImage!.path,
+        contentType: MediaType('image', subtype),
+      ));
+
+      final response = await request.send();
+      final body = json.decode(await response.stream.bytesToString());
+      if (response.statusCode == 200 && body['success'] == true) {
+        return body['data']['url'];
+      }
     } catch (_) {}
     return null;
-  }
-
-  String _encodeBase64(List<int> bytes) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-    final result = StringBuffer();
-    for (var i = 0; i < bytes.length; i += 3) {
-      final b0 = bytes[i];
-      final b1 = i + 1 < bytes.length ? bytes[i + 1] : 0;
-      final b2 = i + 2 < bytes.length ? bytes[i + 2] : 0;
-      result.write(chars[(b0 >> 2) & 0x3F]);
-      result.write(chars[((b0 << 4) | (b1 >> 4)) & 0x3F]);
-      result.write(i + 1 < bytes.length ? chars[((b1 << 2) | (b2 >> 6)) & 0x3F] : '=');
-      result.write(i + 2 < bytes.length ? chars[b2 & 0x3F] : '=');
-    }
-    return result.toString();
   }
 
   Future<void> _register() async {
