@@ -36,9 +36,14 @@ async function connectDB() {
       try {
         await m.connection.collection('users').dropIndex('email_1');
         console.log('Dropped old email_1 index');
-      } catch (_) {
-        // Index doesn't exist or already dropped — safe to ignore
-      }
+      } catch (_) {}
+      // Drop old non-sparse 2dsphere indexes
+      try {
+        await m.connection.collection('prescriptions').dropIndex('deliveryAddress.location_2dsphere');
+      } catch (_) {}
+      try {
+        await m.connection.collection('riders').dropIndex('currentLocation_2dsphere');
+      } catch (_) {}
       return m;
     });
   }

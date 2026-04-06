@@ -54,7 +54,7 @@ const RiderSchema = new Schema<IRider>(
       type: String,
     },
     currentLocation: {
-      type: { type: String, enum: ['Point'], default: 'Point' },
+      type: { type: String, enum: ['Point'] },
       coordinates: { type: [Number] },
     },
     isAvailable: {
@@ -85,7 +85,7 @@ const RiderSchema = new Schema<IRider>(
   }
 );
 
-RiderSchema.index({ currentLocation: '2dsphere' });
+RiderSchema.index({ currentLocation: '2dsphere' }, { sparse: true });
 RiderSchema.index({ userId: 1 });
 RiderSchema.index({ isAvailable: 1, isOnline: 1 });
 
