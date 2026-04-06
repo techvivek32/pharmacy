@@ -53,7 +53,7 @@ class AppTheme {
       ),
       scaffoldBackgroundColor: background,
       textTheme: GoogleFonts.interTextTheme(),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
