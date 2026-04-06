@@ -69,10 +69,13 @@ export async function POST(request: NextRequest) {
     } else if (role === 'rider') {
       await Rider.create({
         userId: user._id,
-        vehicleType: roleData.vehicleType,
-        vehicleNumber: roleData.vehicleNumber,
-        licenseNumber: roleData.licenseNumber,
+        vehicleType: roleData.vehicleType || 'bike',
+        vehicleNumber: roleData.vehicleNumber || '',
+        licenseNumber: roleData.licenseNumber || '',
+        licenseImageUrl: roleData.licenseImageUrl || '',
+        approvalStatus: 'pending',
       });
+      await User.findByIdAndUpdate(user._id, { isActive: false });
     }
 
     // Generate token

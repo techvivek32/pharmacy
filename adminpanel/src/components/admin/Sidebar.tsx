@@ -20,6 +20,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
   const menuItems = [
     { name: 'Dashboard', icon: '📊', path: '/admin' },
     { name: 'Pharmacy Requests', icon: '🔔', path: '/admin/pharmacy-requests' },
+    { name: 'Rider Requests', icon: '🏍️', path: '/admin/rider-requests' },
     { name: 'Orders', icon: '📦', path: '/admin/orders' },
     { name: 'Patients', icon: '👥', path: '/admin/patients' },
     { name: 'Pharmacies', icon: '🏥', path: '/admin/pharmacies' },

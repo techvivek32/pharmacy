@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../services/api_service.dart';
+import 'pending_approval_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -19,13 +21,31 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _checkAuth() async {
     await context.read<AuthProvider>().checkAuth();
-    
-    if (mounted) {
-      final isAuthenticated = context.read<AuthProvider>().isAuthenticated;
-      Navigator.pushReplacementNamed(
-        context,
-        isAuthenticated ? '/home' : '/login',
-      );
+
+    if (!mounted) return;
+    final isAuthenticated = context.read<AuthProvider>().isAuthenticated;
+
+    if (!isAuthenticated) {
+      Navigator.pushReplacementNamed(context, '/login');
+      return;
+    }
+
+    // Check if rider is approved
+    final res = await ApiService.get('/rider/approval-status');
+    if (!mounted) return;
+
+    if (res.success) {
+      final status = res.data?['approvalStatus'];
+      if (status == 'approved') {
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const PendingApprovalScreen()),
+        );
+      }
+    } else {
+      Navigator.pushReplacementNamed(context, '/home');
     }
   }
 

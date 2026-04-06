@@ -8,7 +8,7 @@ class AuthService {
   static Future<AuthResult> login(String email, String password) async {
     final response = await ApiService.post(
       '/auth/login',
-      {'email': email, 'password': password},
+      {'email': email, 'password': password, 'role': 'rider'},
       includeAuth: false,
     );
 

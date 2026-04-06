@@ -4,6 +4,7 @@ import '../../../providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/input_field.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -106,6 +107,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       isLoading: authProvider.isLoading,
                     );
                   },
+                ),
+                const SizedBox(height: AppTheme.spacing16),
+                Center(
+                  child: TextButton(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                    ),
+                    child: const Text("Don't have an account? Register"),
+                  ),
                 ),
               ],
             ),

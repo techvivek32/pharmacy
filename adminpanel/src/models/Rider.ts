@@ -5,6 +5,9 @@ export interface IRider extends Document {
   vehicleType: 'bike' | 'scooter' | 'car';
   vehicleNumber: string;
   licenseNumber: string;
+  licenseImageUrl?: string;
+  approvalStatus: 'pending' | 'approved' | 'rejected';
+  adminNote?: string;
   currentLocation?: {
     type: string;
     coordinates: [number, number];
@@ -38,6 +41,17 @@ const RiderSchema = new Schema<IRider>(
     licenseNumber: {
       type: String,
       required: true,
+    },
+    licenseImageUrl: {
+      type: String,
+    },
+    approvalStatus: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+    },
+    adminNote: {
+      type: String,
     },
     currentLocation: {
       type: { type: String, enum: ['Point'], default: 'Point' },
