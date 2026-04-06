@@ -10,7 +10,8 @@ interface Settings {
   maxDeliveryRadius: number;
   supportEmail: string;
   supportPhone: string;
-  maintenanceMode: boolean;
+  razorpayKeyId: string;
+  razorpayKeySecret: string;
 }
 
 export default function SettingsPage() {
@@ -22,7 +23,8 @@ export default function SettingsPage() {
     maxDeliveryRadius: 10,
     supportEmail: 'support@ordogo.com',
     supportPhone: '+212 600 000 000',
-    maintenanceMode: false,
+    razorpayKeyId: '',
+    razorpayKeySecret: '',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -188,26 +190,35 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* System Settings */}
+              {/* Razorpay Settings */}
               <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">System Settings</h2>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div>
-                      <h3 className="font-medium text-gray-800">Maintenance Mode</h3>
-                      <p className="text-sm text-gray-600">
-                        Enable this to put the system in maintenance mode
-                      </p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings.maintenanceMode}
-                        onChange={(e) => setSettings({ ...settings, maintenanceMode: e.target.checked })}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                <h2 className="text-lg font-semibold text-gray-800 mb-1">Razorpay Payment Gateway</h2>
+                <p className="text-sm text-gray-500 mb-4">Configure your Razorpay API keys for payment processing.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Key ID
                     </label>
+                    <input
+                      type="text"
+                      value={settings.razorpayKeyId}
+                      onChange={(e) => setSettings({ ...settings, razorpayKeyId: e.target.value })}
+                      placeholder="rzp_live_xxxxxxxxxxxx"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Key Secret
+                    </label>
+                    <input
+                      type="password"
+                      value={settings.razorpayKeySecret}
+                      onChange={(e) => setSettings({ ...settings, razorpayKeySecret: e.target.value })}
+                      placeholder="Enter new secret to update"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono text-sm"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">Leave unchanged to keep existing secret.</p>
                   </div>
                 </div>
               </div>

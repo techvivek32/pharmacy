@@ -12,7 +12,8 @@ const defaults = {
   maxDeliveryRadius: 10,
   supportEmail: 'support@ordogo.com',
   supportPhone: '+212 600 000 000',
-  maintenanceMode: false,
+  razorpayKeyId: '',
+  razorpayKeySecret: '',
 };
 
 async function getSettings() {
@@ -34,7 +35,9 @@ export async function GET() {
       maxDeliveryRadius: settings.maxDeliveryRadius,
       supportEmail: settings.supportEmail,
       supportPhone: settings.supportPhone,
-      maintenanceMode: settings.maintenanceMode,
+      razorpayKeyId: settings.razorpayKeyId || '',
+      // secret masked for display, full value only used server-side
+      razorpayKeySecret: settings.razorpayKeySecret ? '••••••••••••••••••••' : '',
     });
   } catch (error: any) {
     console.error('Get settings error:', error);
@@ -46,6 +49,11 @@ export async function PUT(request: NextRequest) {
   try {
     await connectDB();
     const body = await request.json();
+
+    // Don't overwrite secret if masked placeholder was sent back
+    if (body.razorpayKeySecret?.includes('•')) {
+      delete body.razorpayKeySecret;
+    }
 
     const settings = await Settings.findOneAndUpdate(
       {},
@@ -60,7 +68,8 @@ export async function PUT(request: NextRequest) {
       maxDeliveryRadius: settings.maxDeliveryRadius,
       supportEmail: settings.supportEmail,
       supportPhone: settings.supportPhone,
-      maintenanceMode: settings.maintenanceMode,
+      razorpayKeyId: settings.razorpayKeyId || '',
+      razorpayKeySecret: settings.razorpayKeySecret ? '••••••••••••••••••••' : '',
     }, 'Settings updated successfully');
   } catch (error: any) {
     console.error('Update settings error:', error);

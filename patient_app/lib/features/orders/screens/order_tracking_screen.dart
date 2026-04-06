@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../providers/order_provider.dart';
 import '../../../models/order_model.dart';
+import '../../../services/api_service.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
   final String orderId;
@@ -15,17 +17,67 @@ class OrderTrackingScreen extends StatefulWidget {
 }
 
 class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
+  late Razorpay _razorpay;
+  Order? _pendingOrder;
+
   @override
   void initState() {
     super.initState();
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _onPaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _onPaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _onExternalWallet);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final provider = context.read<OrderProvider>();
-      // If orders list is empty (app restarted), fetch history first
       if (provider.orders.isEmpty) {
         await provider.fetchOrders();
       }
       provider.trackOrder(widget.orderId);
     });
+  }
+
+  @override
+  void dispose() {
+    _razorpay.clear();
+    super.dispose();
+  }
+
+  void _onPaymentSuccess(PaymentSuccessResponse response) async {
+    if (_pendingOrder == null || !mounted) return;
+    _showLoading('Confirming order...');
+    try {
+      final provider = context.read<OrderProvider>();
+      final res = await provider.confirmQuote(
+        quoteId: _pendingOrder!.quoteId!,
+        paymentMethod: 'online',
+      );
+      if (mounted) Navigator.pop(context);
+      if (res && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Payment successful! Order confirmed 🎉'), backgroundColor: Colors.green),
+        );
+        await provider.fetchOrders();
+        if (mounted) Navigator.pop(context);
+      }
+    } catch (_) {
+      if (mounted) Navigator.pop(context);
+    }
+    _pendingOrder = null;
+  }
+
+  void _onPaymentError(PaymentFailureResponse response) {
+    _pendingOrder = null;
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Payment failed: ${response.message ?? 'Try again'}'),
+        backgroundColor: AppTheme.error,
+      ),
+    );
+  }
+
+  void _onExternalWallet(ExternalWalletResponse response) {
+    _pendingOrder = null;
   }
 
   @override
@@ -181,31 +233,58 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Confirm Order'),
-        content: Text(
-            'Confirm this order for ${order.totalAmount.toStringAsFixed(2)} MAD?'),
+        content: Text('Confirm this order for ${order.totalAmount.toStringAsFixed(2)} MAD?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Back')),
-          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Confirm')),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Pay Now')),
         ],
       ),
     );
     if (confirm != true || !mounted) return;
 
-    _showLoading('Confirming order...');
-    try {
-      final provider = context.read<OrderProvider>();
-      // Use the ApiService directly
-      final res = await provider.confirmQuote(quoteId: order.quoteId!, paymentMethod: 'cash');
-      if (mounted) Navigator.pop(context);
-      if (res && mounted) {
+    // Fetch Razorpay key from admin settings
+    final keyResponse = await ApiService.get('/settings/razorpay');
+    final razorpayKeyId = keyResponse.success
+        ? (keyResponse.data['keyId'] ?? '')
+        : '';
+
+    if (razorpayKeyId.isEmpty) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Order confirmed! 🎉'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Payment not configured. Please contact support.'),
+            backgroundColor: AppTheme.error,
+          ),
         );
-        await provider.fetchOrders();
-        if (mounted) Navigator.pop(context);
       }
-    } catch (_) {
-      if (mounted) Navigator.pop(context);
+      return;
+    }
+
+    _pendingOrder = order;
+    final amountInSmallestUnit = (order.totalAmount * 100).toInt();
+
+    final options = {
+      'key': razorpayKeyId,
+      'amount': amountInSmallestUnit,
+      'currency': 'INR',
+      'name': 'OrdoGo',
+      'description': 'Medicine Order Payment',
+      'prefill': {
+        'contact': '',
+        'email': '',
+      },
+      'theme': {'color': '#2E7D32'},
+    };
+
+    try {
+      _razorpay.open(options);
+    } catch (e) {
+      _pendingOrder = null;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open payment: $e'), backgroundColor: AppTheme.error),
+        );
+      }
     }
   }
 

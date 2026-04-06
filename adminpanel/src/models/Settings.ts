@@ -7,7 +7,8 @@ export interface ISettings extends Document {
   maxDeliveryRadius: number;
   supportEmail: string;
   supportPhone: string;
-  maintenanceMode: boolean;
+  razorpayKeyId: string;
+  razorpayKeySecret: string;
 }
 
 const SettingsSchema = new Schema<ISettings>(
@@ -18,7 +19,8 @@ const SettingsSchema = new Schema<ISettings>(
     maxDeliveryRadius: { type: Number, default: 10 },
     supportEmail: { type: String, default: 'support@ordogo.com' },
     supportPhone: { type: String, default: '+212 600 000 000' },
-    maintenanceMode: { type: Boolean, default: false },
+    razorpayKeyId: { type: String, default: '' },
+    razorpayKeySecret: { type: String, default: '' },
   },
   { timestamps: true }
 );
