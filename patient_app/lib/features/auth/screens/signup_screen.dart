@@ -40,7 +40,7 @@ class _SignupScreenState extends State<SignupScreen> {
       // Send OTP to email
       final response = await ApiService.post(
         '/auth/send-otp',
-        {'email': _emailController.text.trim()},
+        {'email': _emailController.text.trim(), 'role': 'patient'},
         includeAuth: false,
       );
 

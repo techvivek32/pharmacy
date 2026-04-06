@@ -71,7 +71,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       final response = await ApiService.post(
         '/auth/send-otp',
-        {'email': _emailController.text.trim()},
+        {'email': _emailController.text.trim(), 'role': 'pharmacy'},
         includeAuth: false,
       );
 

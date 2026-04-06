@@ -9,14 +9,14 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
-    const { email } = await request.json();
+    const { email, role } = await request.json();
 
     if (!email) {
       return errorResponse('Email is required');
     }
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    // Check if user already exists with same email AND role
+    const existingUser = await User.findOne({ email, ...(role ? { role } : {}) });
     if (existingUser) {
       return errorResponse('User already exists with this email');
     }
