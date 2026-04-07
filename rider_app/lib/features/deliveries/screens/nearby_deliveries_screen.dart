@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_card.dart';
 
 class NearbyDeliveriesScreen extends StatefulWidget {
   const NearbyDeliveriesScreen({super.key});
@@ -151,10 +152,9 @@ class _NearbyDeliveriesScreenState extends State<NearbyDeliveriesScreen> {
   }
 
   Widget _buildDeliveryCard(Map<String, dynamic> delivery) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacing16),
-        child: Column(
+    return AppCard(
+      padding: const EdgeInsets.all(AppTheme.spacing16),
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -223,7 +223,6 @@ class _NearbyDeliveriesScreenState extends State<NearbyDeliveriesScreen> {
             ),
           ],
         ),
-      ),
     );
   }
 

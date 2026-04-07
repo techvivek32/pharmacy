@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_card.dart';
 
 class OrdersScreen extends StatelessWidget {
   const OrdersScreen({super.key});
@@ -70,10 +71,9 @@ class OrdersScreen extends StatelessWidget {
               separatorBuilder: (_, __) => const SizedBox(height: AppTheme.spacing12),
               itemBuilder: (context, index) {
                 final order = _orders[index];
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppTheme.spacing16),
-                    child: Column(
+                return AppCard(
+                  padding: const EdgeInsets.all(AppTheme.spacing16),
+                  child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
@@ -117,7 +117,6 @@ class OrdersScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                  ),
                 );
               },
             ),

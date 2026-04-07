@@ -23,24 +23,20 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final br = borderRadius ?? BorderRadius.circular(AppTheme.radiusLarge);
     final card = Container(
       margin: margin,
       decoration: BoxDecoration(
         color: color ?? AppTheme.surface,
-        borderRadius: borderRadius ?? BorderRadius.circular(AppTheme.radiusLarge),
-        border: Border.all(
-          color: AppTheme.divider.withValues(alpha: 0.5),
-          width: 1,
-        ),
-        boxShadow: elevation != null
-            ? [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: elevation!,
-                  offset: Offset(0, elevation! / 2),
-                ),
-              ]
-            : null,
+        borderRadius: br,
+        border: Border.all(color: AppTheme.cardBorder, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.secondary.withValues(alpha: 0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Padding(
         padding: padding ?? const EdgeInsets.all(AppTheme.spacing16),
@@ -51,7 +47,7 @@ class AppCard extends StatelessWidget {
     if (onTap != null) {
       return InkWell(
         onTap: onTap,
-        borderRadius: borderRadius ?? BorderRadius.circular(AppTheme.radiusLarge),
+        borderRadius: br,
         child: card,
       );
     }
@@ -89,26 +85,16 @@ class InfoCard extends StatelessWidget {
               color: backgroundColor ?? AppTheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
             ),
-            child: Icon(
-              icon,
-              color: iconColor ?? AppTheme.primary,
-              size: 24,
-            ),
+            child: Icon(icon, color: iconColor ?? AppTheme.primary, size: 24),
           ),
           const SizedBox(width: AppTheme.spacing16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
+                Text(title, style: Theme.of(context).textTheme.bodyMedium),
                 const SizedBox(height: AppTheme.spacing4),
-                Text(
-                  value,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
+                Text(value, style: Theme.of(context).textTheme.titleLarge),
               ],
             ),
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_card.dart';
 
 class OrderHistoryScreen extends StatelessWidget {
   const OrderHistoryScreen({super.key});
@@ -50,7 +51,7 @@ class OrderHistoryScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 final item = _history[index];
                 final isDelivered = item['status'] == 'delivered';
-                return Card(
+                return AppCard(
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: (isDelivered ? AppTheme.success : AppTheme.error).withOpacity(0.1),
