@@ -29,8 +29,8 @@ export async function POST(request: NextRequest) {
       return errorResponse('Invalid credentials', 401);
     }
 
-    // Check if user is active — allow pharmacy to login even if inactive (pending approval)
-    if (!user.isActive && user.role !== 'pharmacy') {
+    // Check if user is active — allow pharmacy/rider to login even if inactive (pending/rejected approval)
+    if (!user.isActive && user.role !== 'pharmacy' && user.role !== 'rider') {
       return errorResponse('Account is deactivated', 403);
     }
 

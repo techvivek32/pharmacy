@@ -4,6 +4,7 @@ import '../../../providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/input_field.dart';
+import '../../../services/api_service.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -32,9 +33,26 @@ class _LoginScreenState extends State<LoginScreen> {
             _passwordController.text,
           );
 
-      if (success && mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
-      } else if (mounted) {
+      if (!mounted) return;
+
+      if (success) {
+        // Check approval status before navigating
+        final res = await ApiService.get('/rider/approval-status');
+        if (!mounted) return;
+        if (res.success) {
+          final status = res.data?['approvalStatus'];
+          final note = res.data?['adminNote'] ?? '';
+          if (status == 'approved') {
+            Navigator.pushReplacementNamed(context, '/home');
+          } else if (status == 'rejected') {
+            Navigator.pushReplacementNamed(context, '/rejected', arguments: note);
+          } else {
+            Navigator.pushReplacementNamed(context, '/pending-approval');
+          }
+        } else {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(context.read<AuthProvider>().error ?? 'Login failed'),
