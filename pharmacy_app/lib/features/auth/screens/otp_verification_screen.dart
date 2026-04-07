@@ -176,7 +176,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     setState(() => _isLoading = true);
     final res = await ApiService.post(
       '/auth/send-otp',
-      {'email': widget.email},
+      {'email': widget.email, 'role': widget.registrationData['role']},
       includeAuth: false,
     );
     setState(() => _isLoading = false);
