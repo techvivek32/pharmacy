@@ -8,6 +8,8 @@ import 'providers/prescription_provider.dart';
 import 'features/auth/screens/splash_screen.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/register_screen.dart';
+import 'features/auth/screens/pending_approval_screen.dart';
+import 'features/auth/screens/rejected_screen.dart';
 import 'features/home/screens/home_screen.dart';
 import 'features/requests/screens/prescription_detail_screen.dart';
 import 'features/requests/screens/quote_builder_screen.dart';
@@ -36,10 +38,20 @@ class MyApp extends StatelessWidget {
         routes: {
           '/': (context) => const SplashScreen(),
           '/login': (context) => const LoginScreen(),
-          '/register': (context) => const RegisterScreen(),
+          '/register': (context) {
+            final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+            return RegisterScreen(prefillData: args);
+          },
           '/home': (context) => const HomeScreen(),
+          '/pending-approval': (context) => const PendingApprovalScreen(),
         },
         onGenerateRoute: (settings) {
+          if (settings.name == '/rejected') {
+            final note = settings.arguments as String? ?? '';
+            return MaterialPageRoute(
+              builder: (_) => RejectedScreen(adminNote: note),
+            );
+          }
           if (settings.name == '/prescription-detail') {
             return MaterialPageRoute(
               builder: (_) => PrescriptionDetailScreen(prescription: settings.arguments),

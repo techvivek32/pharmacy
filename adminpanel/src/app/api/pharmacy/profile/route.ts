@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
         pharmacyName: pharmacy.pharmacyName,
         licenseNumber: pharmacy.licenseNumber,
         address: pharmacy.address,
+        location: pharmacy.location,
         isOpen: pharmacy.isOpen,
         rating: pharmacy.rating,
         totalOrders: pharmacy.totalOrders,

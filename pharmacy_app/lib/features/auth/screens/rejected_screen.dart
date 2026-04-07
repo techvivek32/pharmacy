@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/api_service.dart';
 
 class RejectedScreen extends StatelessWidget {
   final String adminNote;
@@ -8,8 +9,44 @@ class RejectedScreen extends StatelessWidget {
   const RejectedScreen({super.key, required this.adminNote});
 
   Future<void> _tryAgain(BuildContext context) async {
+    // Fetch current user data before logout to prefill the form
+    final user = await AuthService.getCurrentUser();
+    Map<String, dynamic>? prefill;
+    if (user != null) {
+      // Also fetch pharmacy details for pharmacy-specific fields
+      try {
+        final res = await ApiService.get('/pharmacy/profile');
+        if (res.success && res.data != null) {
+          final p = res.data['pharmacy'] ?? res.data;
+          prefill = {
+            'fullName': user.fullName,
+            'email': user.email,
+            'phone': user.phone,
+            'pharmacyName': p['pharmacyName'] ?? '',
+            'licenseNumber': p['licenseNumber'] ?? '',
+            'address': p['address'] ?? '',
+            'lat': p['location']?['coordinates']?[1] ?? 0.0,
+            'lng': p['location']?['coordinates']?[0] ?? 0.0,
+          };
+        } else {
+          prefill = {
+            'fullName': user.fullName,
+            'email': user.email,
+            'phone': user.phone,
+          };
+        }
+      } catch (_) {
+        prefill = {
+          'fullName': user.fullName,
+          'email': user.email,
+          'phone': user.phone,
+        };
+      }
+    }
     await AuthService.logout();
-    Navigator.pushReplacementNamed(context, '/register');
+    if (context.mounted) {
+      Navigator.pushReplacementNamed(context, '/register', arguments: prefill);
+    }
   }
 
   @override

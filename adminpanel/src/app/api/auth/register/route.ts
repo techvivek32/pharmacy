@@ -25,11 +25,23 @@ export async function POST(request: NextRequest) {
     // Check if user exists with same email AND same role
     const existingUser = await User.findOne({ email, role });
     if (existingUser) {
-      return errorResponse('Account already exists with this email');
+      // Allow re-registration if pharmacy was rejected
+      if (role === 'pharmacy') {
+        const existingPharmacy = await Pharmacy.findOne({ userId: existingUser._id });
+        if (existingPharmacy?.approvalStatus === 'rejected') {
+          // Delete old records so they can re-register
+          await Pharmacy.deleteOne({ userId: existingUser._id });
+          await User.deleteOne({ _id: existingUser._id });
+        } else {
+          return errorResponse('Account already exists with this email');
+        }
+      } else {
+        return errorResponse('Account already exists with this email');
+      }
     }
 
-    // Check phone uniqueness across all roles
-    const existingPhone = await User.findOne({ phone });
+    // Check phone uniqueness across all roles (exclude same email+role re-registration)
+    const existingPhone = await User.findOne({ phone, $or: [{ email: { $ne: email } }, { role: { $ne: role } }] });
     if (existingPhone) {
       return errorResponse('Account already exists with this phone number');
     }

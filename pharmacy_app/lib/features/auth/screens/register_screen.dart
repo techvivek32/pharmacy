@@ -10,7 +10,8 @@ import 'otp_verification_screen.dart';
 import 'map_picker_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  final Map<String, dynamic>? prefillData;
+  const RegisterScreen({super.key, this.prefillData});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -30,6 +31,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
   double _lng = 0.0;
   bool _locationSelected = false;
   bool _isSendingOtp = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final d = widget.prefillData;
+    if (d != null) {
+      _nameController.text = d['fullName'] ?? '';
+      _emailController.text = d['email'] ?? '';
+      _phoneController.text = d['phone'] ?? '';
+      _pharmacyNameController.text = d['pharmacyName'] ?? '';
+      _licenseController.text = d['licenseNumber'] ?? '';
+      _addressController.text = d['address'] ?? '';
+      if (d['lat'] != null && d['lng'] != null) {
+        _lat = d['lat'];
+        _lng = d['lng'];
+        _locationSelected = true;
+      }
+    }
+  }
 
   @override
   void dispose() {
