@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
       return errorResponse('Email and OTP are required');
     }
 
-    const result = verifyOTP(email, otp);
+    const result = await verifyOTP(email, otp);
 
     if (!result.valid) {
       return errorResponse(result.message);
