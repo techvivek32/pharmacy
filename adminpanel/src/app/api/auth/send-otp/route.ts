@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
+import Pharmacy from '@/models/Pharmacy';
+import Rider from '@/models/Rider';
 import { successResponse, errorResponse } from '@/lib/response';
 import { generateOTP, storeOTP } from '@/lib/otp-store';
 import { sendOTPEmail } from '@/lib/email';
@@ -18,7 +20,26 @@ export async function POST(request: NextRequest) {
     // Check if user already exists with same email AND role
     const existingUser = await User.findOne({ email, ...(role ? { role } : {}) });
     if (existingUser) {
-      return errorResponse('User already exists with this email');
+      // Allow re-registration if previously rejected
+      let isRejected = false;
+      if (role === 'pharmacy') {
+        const pharmacy = await Pharmacy.findOne({ userId: existingUser._id });
+        isRejected = pharmacy?.approvalStatus === 'rejected';
+        if (isRejected) {
+          await Pharmacy.deleteOne({ userId: existingUser._id });
+          await User.deleteOne({ _id: existingUser._id });
+        }
+      } else if (role === 'rider') {
+        const rider = await Rider.findOne({ userId: existingUser._id });
+        isRejected = rider?.approvalStatus === 'rejected';
+        if (isRejected) {
+          await Rider.deleteOne({ userId: existingUser._id });
+          await User.deleteOne({ _id: existingUser._id });
+        }
+      }
+      if (!isRejected) {
+        return errorResponse('User already exists with this email');
+      }
     }
 
     // Generate and store OTP
