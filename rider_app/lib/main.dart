@@ -7,7 +7,9 @@ import 'providers/auth_provider.dart';
 import 'providers/delivery_provider.dart';
 import 'features/auth/screens/splash_screen.dart';
 import 'features/auth/screens/login_screen.dart';
+import 'features/auth/screens/register_screen.dart';
 import 'features/auth/screens/pending_approval_screen.dart';
+import 'features/auth/screens/rejected_screen.dart';
 import 'features/main/screens/main_screen.dart';
 import 'features/deliveries/screens/delivery_detail_screen.dart';
 import 'features/deliveries/screens/navigation_screen.dart';
@@ -40,6 +42,18 @@ class MyApp extends StatelessWidget {
           '/pending-approval': (context) => const PendingApprovalScreen(),
         },
         onGenerateRoute: (settings) {
+          if (settings.name == '/rejected') {
+            final note = (settings.arguments as String?) ?? '';
+            return MaterialPageRoute(
+              builder: (_) => RejectedScreen(adminNote: note),
+            );
+          }
+          if (settings.name == '/register') {
+            final prefill = settings.arguments as Map<String, dynamic>?;
+            return MaterialPageRoute(
+              builder: (_) => RegisterScreen(prefill: prefill),
+            );
+          }
           if (settings.name == '/delivery-detail') {
             final delivery = settings.arguments;
             return MaterialPageRoute(

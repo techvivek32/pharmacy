@@ -12,7 +12,9 @@ import '../../../services/api_service.dart';
 import 'otp_verification_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  final Map<String, dynamic>? prefill;
+
+  const RegisterScreen({super.key, this.prefill});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -29,6 +31,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String _vehicleType = 'bike';
   File? _licenseImage;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final p = widget.prefill;
+    if (p != null) {
+      _nameController.text = p['fullName'] ?? '';
+      _emailController.text = p['email'] ?? '';
+      _phoneController.text = p['phone'] ?? '';
+      _licenseController.text = p['licenseNumber'] ?? '';
+      if (p['vehicleType'] != null) _vehicleType = p['vehicleType'];
+    }
+  }
 
   @override
   void dispose() {

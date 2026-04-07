@@ -29,8 +29,15 @@ export async function POST(request: NextRequest) {
       if (role === 'pharmacy') {
         const existingPharmacy = await Pharmacy.findOne({ userId: existingUser._id });
         if (existingPharmacy?.approvalStatus === 'rejected') {
-          // Delete old records so they can re-register
           await Pharmacy.deleteOne({ userId: existingUser._id });
+          await User.deleteOne({ _id: existingUser._id });
+        } else {
+          return errorResponse('Account already exists with this email');
+        }
+      } else if (role === 'rider') {
+        const existingRider = await Rider.findOne({ userId: existingUser._id });
+        if (existingRider?.approvalStatus === 'rejected') {
+          await Rider.deleteOne({ userId: existingUser._id });
           await User.deleteOne({ _id: existingUser._id });
         } else {
           return errorResponse('Account already exists with this email');

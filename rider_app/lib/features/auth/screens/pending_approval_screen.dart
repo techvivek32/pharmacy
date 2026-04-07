@@ -24,7 +24,7 @@ class _PendingApprovalScreenState extends State<PendingApprovalScreen> {
         if (status == 'approved') {
           Navigator.pushReplacementNamed(context, '/home');
         } else if (status == 'rejected') {
-          _showRejectedDialog(note);
+          Navigator.pushReplacementNamed(context, '/rejected', arguments: note);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Still pending approval. Please wait.')),
@@ -35,27 +35,6 @@ class _PendingApprovalScreenState extends State<PendingApprovalScreen> {
     } finally {
       if (mounted) setState(() => _checking = false);
     }
-  }
-
-  void _showRejectedDialog(String note) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Registration Rejected'),
-        content: Text(note.isNotEmpty ? note : 'Your registration was rejected by admin.'),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await AuthService.logout();
-              if (mounted) Navigator.pushReplacementNamed(context, '/login');
-            },
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> _logout() async {

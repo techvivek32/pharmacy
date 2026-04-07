@@ -36,8 +36,11 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (res.success) {
       final status = res.data?['approvalStatus'];
+      final note = res.data?['adminNote'] ?? '';
       if (status == 'approved') {
         Navigator.pushReplacementNamed(context, '/home');
+      } else if (status == 'rejected') {
+        Navigator.pushReplacementNamed(context, '/rejected', arguments: note);
       } else {
         Navigator.pushReplacement(
           context,
