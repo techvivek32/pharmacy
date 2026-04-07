@@ -1,14 +1,29 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_card.dart';
 import '../../../providers/auth_provider.dart';
 import 'edit_profile_screen.dart';
 import 'wallet_screen.dart';
 import 'order_history_screen.dart';
 import 'privacy_policy_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AuthProvider>().refreshProfile();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,120 +32,144 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
       body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppTheme.spacing16),
         child: Column(
           children: [
-            // Profile header
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppTheme.spacing24),
-              color: AppTheme.surface,
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 45,
-                    backgroundColor: AppTheme.primary.withOpacity(0.1),
-                    child: const Icon(Icons.person, size: 45, color: AppTheme.primary),
-                  ),
-                  const SizedBox(height: AppTheme.spacing12),
-                  Text(
-                    user?.fullName ?? 'Rider',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: AppTheme.spacing4),
-                  Text(
-                    user?.email ?? '',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
-                  ),
-                  const SizedBox(height: AppTheme.spacing4),
-                  Text(
-                    user?.phone ?? '',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppTheme.spacing8),
-            // Menu items
-            _MenuItem(
-              icon: Icons.edit_outlined,
-              label: 'Edit Profile',
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EditProfileScreen())),
-            ),
-            _MenuItem(
-              icon: Icons.account_balance_wallet_outlined,
-              label: 'Wallet',
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletScreen())),
-            ),
-            _MenuItem(
-              icon: Icons.history,
-              label: 'Order History',
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderHistoryScreen())),
-            ),
-            const Divider(height: 1),
-            _MenuItem(
-              icon: Icons.privacy_tip_outlined,
-              label: 'Privacy Policy',
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen())),
-            ),
-            const Divider(height: 1),
-            _MenuItem(
-              icon: Icons.logout,
-              label: 'Logout',
-              color: AppTheme.error,
+            _buildProfileHeader(context, user),
+            const SizedBox(height: AppTheme.spacing24),
+            _buildMenuItem(context, icon: Icons.person, title: 'Edit Profile',
               onTap: () async {
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text('Logout'),
-                    content: const Text('Are you sure you want to logout?'),
-                    actions: [
-                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, true),
-                        child: const Text('Logout', style: TextStyle(color: AppTheme.error)),
-                      ),
-                    ],
-                  ),
-                );
-                if (confirmed == true && context.mounted) {
-                  await context.read<AuthProvider>().logout();
-                  Navigator.pushReplacementNamed(context, '/login');
-                }
+                await Navigator.push(context, MaterialPageRoute(builder: (_) => const EditProfileScreen()));
+                if (mounted) context.read<AuthProvider>().refreshProfile();
               },
             ),
+            _buildMenuItem(context, icon: Icons.account_balance_wallet_outlined, title: 'Wallet',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletScreen())),
+            ),
+            _buildMenuItem(context, icon: Icons.history, title: 'Order History',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderHistoryScreen())),
+            ),
+            _buildMenuItem(context, icon: Icons.privacy_tip_outlined, title: 'Privacy Policy',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen())),
+            ),
+            const SizedBox(height: AppTheme.spacing16),
+            _buildLogoutButton(context),
           ],
         ),
       ),
     );
   }
-}
 
-class _MenuItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final Color? color;
+  Widget _buildProfileHeader(BuildContext context, dynamic user) {
+    ImageProvider? imageProvider;
+    final profileImage = user?.profileImage;
+    if (profileImage != null && profileImage.isNotEmpty) {
+      if (profileImage.startsWith('data:image')) {
+        imageProvider = MemoryImage(base64Decode(profileImage.split(',')[1]));
+      } else if (profileImage.startsWith('http')) {
+        imageProvider = NetworkImage(profileImage);
+      }
+    }
 
-  const _MenuItem({required this.icon, required this.label, required this.onTap, this.color});
+    return AppCard(
+      padding: const EdgeInsets.all(AppTheme.spacing20),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 40,
+            backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
+            backgroundImage: imageProvider,
+            child: imageProvider == null
+                ? Text(
+                    user?.fullName?.isNotEmpty == true ? user!.fullName.substring(0, 1).toUpperCase() : 'R',
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(color: AppTheme.primary),
+                  )
+                : null,
+          ),
+          const SizedBox(width: AppTheme.spacing16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(user?.fullName ?? 'Rider', style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: AppTheme.spacing4),
+                Text(user?.email ?? '', style: Theme.of(context).textTheme.bodyMedium),
+                const SizedBox(height: AppTheme.spacing4),
+                Text(user?.phone ?? '', style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    final c = color ?? AppTheme.textPrimary;
-    return Material(
-      color: AppTheme.surface,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacing16, vertical: AppTheme.spacing16),
-          child: Row(
-            children: [
-              Icon(icon, color: c, size: 22),
-              const SizedBox(width: AppTheme.spacing16),
-              Expanded(child: Text(label, style: TextStyle(fontSize: 15, color: c))),
-              Icon(Icons.arrow_forward_ios, size: 14, color: AppTheme.textSecondary.withOpacity(0.5)),
-            ],
+  Widget _buildMenuItem(BuildContext context, {required IconData icon, required String title, required VoidCallback onTap}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppTheme.spacing12),
+      child: AppCard(
+        padding: EdgeInsets.zero,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+          child: Padding(
+            padding: const EdgeInsets.all(AppTheme.spacing16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(AppTheme.spacing8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                  ),
+                  child: Icon(icon, color: AppTheme.primary, size: 20),
+                ),
+                const SizedBox(width: AppTheme.spacing16),
+                Expanded(child: Text(title, style: Theme.of(context).textTheme.bodyLarge)),
+                const Icon(Icons.arrow_forward_ios, size: 16, color: AppTheme.textSecondary),
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton.icon(
+        onPressed: () => _showLogoutDialog(context),
+        icon: const Icon(Icons.logout),
+        label: const Text('Logout'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.error,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusMedium)),
+        ),
+      ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await context.read<AuthProvider>().logout();
+              if (mounted) Navigator.pushReplacementNamed(context, '/login');
+            },
+            child: const Text('Logout', style: TextStyle(color: AppTheme.error)),
+          ),
+        ],
       ),
     );
   }

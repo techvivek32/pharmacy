@@ -211,14 +211,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               InputField(
                 controller: _nameController,
                 label: 'Full Name',
-                prefixIcon: Icons.person,
+                prefixIcon: const Icon(Icons.person),
                 validator: (v) => v!.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: AppTheme.spacing12),
               InputField(
                 controller: _emailController,
                 label: 'Email',
-                prefixIcon: Icons.email,
+                prefixIcon: const Icon(Icons.email),
                 keyboardType: TextInputType.emailAddress,
                 validator: (v) => v!.isEmpty ? 'Required' : null,
               ),
@@ -226,7 +226,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               InputField(
                 controller: _phoneController,
                 label: 'Phone Number',
-                prefixIcon: Icons.phone,
+                prefixIcon: const Icon(Icons.phone),
                 keyboardType: TextInputType.phone,
                 validator: (v) => v!.isEmpty ? 'Required' : null,
               ),
@@ -234,7 +234,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               InputField(
                 controller: _passwordController,
                 label: 'Password',
-                prefixIcon: Icons.lock,
+                prefixIcon: const Icon(Icons.lock),
                 isPassword: true,
                 validator: (v) => v!.length < 6 ? 'Min 6 characters' : null,
               ),
@@ -248,7 +248,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               InputField(
                 controller: _licenseController,
                 label: 'Licence Number',
-                prefixIcon: Icons.badge,
+                prefixIcon: const Icon(Icons.badge),
                 validator: (v) => v!.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: AppTheme.spacing12),

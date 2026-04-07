@@ -1,49 +1,121 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
-class InputField extends StatefulWidget {
-  final TextEditingController? controller;
+class InputField extends StatelessWidget {
   final String? label;
   final String? hint;
-  final IconData? prefixIcon;
-  final bool isPassword;
-  final TextInputType? keyboardType;
+  final TextEditingController? controller;
   final String? Function(String?)? validator;
+  final TextInputType? keyboardType;
+  final bool isPassword;
+  final Widget? prefixIcon;
+  final Widget? suffixIcon;
+  final int? maxLines;
+  final int? maxLength;
+  final bool enabled;
+  final VoidCallback? onTap;
+  final Function(String)? onChanged;
+  final TextCapitalization textCapitalization;
 
   const InputField({
     super.key,
-    this.controller,
     this.label,
     this.hint,
-    this.prefixIcon,
-    this.isPassword = false,
-    this.keyboardType,
+    this.controller,
     this.validator,
+    this.keyboardType,
+    this.isPassword = false,
+    this.prefixIcon,
+    this.suffixIcon,
+    this.maxLines = 1,
+    this.maxLength,
+    this.enabled = true,
+    this.onTap,
+    this.onChanged,
+    this.textCapitalization = TextCapitalization.none,
   });
 
   @override
-  State<InputField> createState() => _InputFieldState();
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (label != null) ...[
+          Text(label!, style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: AppTheme.spacing8),
+        ],
+        _PasswordAwareField(
+          controller: controller,
+          validator: validator,
+          keyboardType: keyboardType,
+          isPassword: isPassword,
+          prefixIcon: prefixIcon,
+          suffixIcon: suffixIcon,
+          maxLines: maxLines,
+          maxLength: maxLength,
+          enabled: enabled,
+          onTap: onTap,
+          onChanged: onChanged,
+          textCapitalization: textCapitalization,
+          hint: hint,
+        ),
+      ],
+    );
+  }
 }
 
-class _InputFieldState extends State<InputField> {
-  bool _obscureText = true;
+class _PasswordAwareField extends StatefulWidget {
+  final String? hint;
+  final TextEditingController? controller;
+  final String? Function(String?)? validator;
+  final TextInputType? keyboardType;
+  final bool isPassword;
+  final Widget? prefixIcon;
+  final Widget? suffixIcon;
+  final int? maxLines;
+  final int? maxLength;
+  final bool enabled;
+  final VoidCallback? onTap;
+  final Function(String)? onChanged;
+  final TextCapitalization textCapitalization;
+
+  const _PasswordAwareField({
+    this.hint, this.controller, this.validator, this.keyboardType,
+    this.isPassword = false, this.prefixIcon, this.suffixIcon,
+    this.maxLines, this.maxLength, this.enabled = true,
+    this.onTap, this.onChanged, this.textCapitalization = TextCapitalization.none,
+  });
+
+  @override
+  State<_PasswordAwareField> createState() => _PasswordAwareFieldState();
+}
+
+class _PasswordAwareFieldState extends State<_PasswordAwareField> {
+  bool _obscure = true;
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       controller: widget.controller,
-      obscureText: widget.isPassword && _obscureText,
-      keyboardType: widget.keyboardType,
       validator: widget.validator,
+      keyboardType: widget.keyboardType,
+      obscureText: widget.isPassword && _obscure,
+      maxLines: widget.isPassword ? 1 : widget.maxLines,
+      maxLength: widget.maxLength,
+      enabled: widget.enabled,
+      onTap: widget.onTap,
+      onChanged: widget.onChanged,
+      textCapitalization: widget.textCapitalization,
       decoration: InputDecoration(
-        labelText: widget.label,
         hintText: widget.hint,
-        prefixIcon: widget.prefixIcon != null ? Icon(widget.prefixIcon) : null,
+        prefixIcon: widget.prefixIcon,
+        counterText: '',
         suffixIcon: widget.isPassword
             ? IconButton(
-                icon: Icon(_obscureText ? Icons.visibility : Icons.visibility_off),
-                onPressed: () => setState(() => _obscureText = !_obscureText),
+                icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                onPressed: () => setState(() => _obscure = !_obscure),
               )
-            : null,
+            : widget.suffixIcon,
       ),
     );
   }

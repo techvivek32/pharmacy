@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../services/api_service.dart';
 import '../models/user_model.dart';
 
 class AuthProvider with ChangeNotifier {
@@ -15,7 +16,6 @@ class AuthProvider with ChangeNotifier {
   Future<void> checkAuth() async {
     _isLoading = true;
     notifyListeners();
-
     try {
       final isLoggedIn = await AuthService.isLoggedIn();
       if (isLoggedIn) {
@@ -24,7 +24,6 @@ class AuthProvider with ChangeNotifier {
     } catch (e) {
       _error = e.toString();
     }
-
     _isLoading = false;
     notifyListeners();
   }
@@ -33,10 +32,8 @@ class AuthProvider with ChangeNotifier {
     _isLoading = true;
     _error = null;
     notifyListeners();
-
     try {
       final result = await AuthService.login(email, password);
-      
       if (result.success) {
         _user = result.user;
         _isLoading = false;
@@ -61,5 +58,23 @@ class AuthProvider with ChangeNotifier {
     _user = null;
     _error = null;
     notifyListeners();
+  }
+
+  void updateUser(Map<String, dynamic> userData) {
+    _user = User.fromJson(userData);
+    AuthService.saveUserData(userData);
+    notifyListeners();
+  }
+
+  Future<void> refreshProfile() async {
+    try {
+      final res = await ApiService.get('/patients/profile');
+      if (res.success && res.data != null) {
+        final userData = res.data['user'];
+        _user = User.fromJson(userData);
+        AuthService.saveUserData(userData);
+        notifyListeners();
+      }
+    } catch (_) {}
   }
 }

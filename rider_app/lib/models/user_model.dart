@@ -5,6 +5,7 @@ class User {
   final String phone;
   final String role;
   final bool isVerified;
+  final String? profileImage;
 
   User({
     required this.id,
@@ -13,6 +14,7 @@ class User {
     required this.phone,
     required this.role,
     required this.isVerified,
+    this.profileImage,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class User {
       phone: json['phone'] ?? '',
       role: json['role'] ?? '',
       isVerified: json['isVerified'] ?? false,
+      profileImage: json['profileImage'],
     );
   }
 
@@ -34,6 +37,19 @@ class User {
       'phone': phone,
       'role': role,
       'isVerified': isVerified,
+      if (profileImage != null) 'profileImage': profileImage,
     };
+  }
+
+  User copyWith({String? fullName, String? phone, String? profileImage}) {
+    return User(
+      id: id,
+      fullName: fullName ?? this.fullName,
+      email: email,
+      phone: phone ?? this.phone,
+      role: role,
+      isVerified: isVerified,
+      profileImage: profileImage ?? this.profileImage,
+    );
   }
 }

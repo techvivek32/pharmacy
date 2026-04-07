@@ -93,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _emailController,
                   label: 'Email',
                   hint: 'Enter your email',
-                  prefixIcon: Icons.email,
+                  prefixIcon: const Icon(Icons.email),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -107,7 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _passwordController,
                   label: 'Password',
                   hint: 'Enter your password',
-                  prefixIcon: Icons.lock,
+                  prefixIcon: const Icon(Icons.lock),
                   isPassword: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {

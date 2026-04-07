@@ -38,6 +38,11 @@ class AuthService {
     await prefs.remove(AppConstants.userKey);
   }
 
+  static Future<void> saveUserData(Map<String, dynamic> userData) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(AppConstants.userKey, json.encode(userData));
+  }
+
   static Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.containsKey(AppConstants.tokenKey);

@@ -206,7 +206,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
               controller: _otpController,
               label: 'Enter OTP',
               keyboardType: TextInputType.number,
-              prefixIcon: Icons.lock_outline,
+              prefixIcon: const Icon(Icons.lock_outline),
             ),
             const SizedBox(height: AppTheme.spacing24),
             PrimaryButton(
