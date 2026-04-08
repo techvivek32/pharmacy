@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../services/api_service.dart';
+import '../../deliveries/screens/navigation_screen.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -52,13 +53,18 @@ class _OrdersScreenState extends State<OrdersScreen> {
     if (!mounted) return;
     setState(() => _processingIds.remove(orderId));
     if (res.success) {
-      // Remove from list immediately
+      // Find the order data to pass to navigation
+      final order = _orders.firstWhere((o) => o['orderId'].toString() == orderId);
       setState(() => _orders.removeWhere((o) => o['orderId'].toString() == orderId));
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Order accepted! Head to pickup location.'), backgroundColor: AppTheme.success),
-      );
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => NavigationScreen(delivery: order),
+          ),
+        );
+      }
     } else {
-      // Refresh — might already be taken
       await _fetchOrders();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

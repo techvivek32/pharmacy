@@ -61,7 +61,8 @@ class MyApp extends StatelessWidget {
             );
           }
           if (settings.name == '/navigation') {
-            final delivery = settings.arguments;
+            final delivery = settings.arguments as Map<String, dynamic>?;
+            if (delivery == null) return null;
             return MaterialPageRoute(
               builder: (context) => NavigationScreen(delivery: delivery),
             );
