@@ -19,8 +19,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
 
   const menuItems = [
     { name: 'Dashboard', icon: '📊', path: '/admin' },
-    { name: 'Pharmacy Requests', icon: '🔔', path: '/admin/pharmacy-requests' },
-    { name: 'Rider Requests', icon: '🏍️', path: '/admin/rider-requests' },
+    { name: 'Registration Requests', icon: '🔔', path: '/admin/registration-requests' },
     { name: 'Orders', icon: '📦', path: '/admin/orders' },
     { name: 'Patients', icon: '👥', path: '/admin/patients' },
     { name: 'Pharmacies', icon: '🏥', path: '/admin/pharmacies' },
@@ -47,7 +46,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
               key={item.path}
               href={item.path}
               className={`flex items-center px-6 py-3 text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-colors ${
-                pathname === item.path ? 'bg-primary-50 text-primary-600 border-r-4 border-primary-600' : ''
+                pathname === item.path || pathname.startsWith(item.path + '/') ? 'bg-primary-50 text-primary-600 border-r-4 border-primary-600' : ''
               }`}
             >
               <span className="text-2xl mr-3">{item.icon}</span>
