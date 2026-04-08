@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../services/api_service.dart';
 import '../../../services/location_service.dart';
+import 'map_navigation_screen.dart';
 
 class NavigationScreen extends StatefulWidget {
   final Map<String, dynamic> delivery;
@@ -46,18 +47,23 @@ class _NavigationScreenState extends State<NavigationScreen> {
   List? get _deliveryCoords => widget.delivery['deliveryCoords'] as List?;
 
   Future<void> _openMaps(String address, List? coords) async {
-    Uri uri;
-    if (coords != null && coords.length == 2) {
-      final lat = (coords[1] as num).toDouble();
-      final lng = (coords[0] as num).toDouble();
-      uri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng');
-    } else {
-      final encoded = Uri.encodeComponent(address);
-      uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$encoded');
-    }
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+    if (coords == null || coords.length < 2) return;
+    final lat = (coords[1] as num).toDouble();
+    final lng = (coords[0] as num).toDouble();
+    final destination = LatLng(lat, lng);
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MapNavigationScreen(
+          title: address.contains('Pharmacy') || address.contains('pharmacy')
+              ? 'Pickup Location'
+              : 'Delivery Location',
+          address: address,
+          destination: destination,
+        ),
+      ),
+    );
   }
 
   Future<void> _arrivedAtPharmacy() async {
@@ -342,7 +348,10 @@ class _NavigationScreenState extends State<NavigationScreen> {
               ),
               if (isActive)
                 IconButton(
-                  onPressed: () => _openMaps(address, coords),
+                  onPressed: () => _openMaps(
+                    address,
+                    coords,
+                  ),
                   icon: const Icon(Icons.navigation, color: AppTheme.primary),
                   tooltip: 'Open in Maps',
                 ),
