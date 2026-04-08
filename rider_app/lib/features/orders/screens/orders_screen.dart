@@ -142,7 +142,6 @@ class _OrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final deliveryFee = (order['deliveryFee'] ?? 0).toDouble();
-    final totalAmount = (order['totalAmount'] ?? 0).toDouble();
     final distance = order['distance'];
     final pickupAddress = order['pickupAddress'] ?? 'Pharmacy';
     final deliveryAddress = order['deliveryAddress'] ?? 'Patient';
@@ -256,9 +255,7 @@ class _OrderCard extends StatelessWidget {
                   Text('${distance} km', style: Theme.of(context).textTheme.bodySmall),
                   const SizedBox(width: AppTheme.spacing16),
                 ],
-                const Icon(Icons.receipt_outlined, size: 16, color: AppTheme.textSecondary),
-                const SizedBox(width: 4),
-                Text('Total: ${totalAmount.toStringAsFixed(0)} MAD', style: Theme.of(context).textTheme.bodySmall),
+
               ],
             ),
 
