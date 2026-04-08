@@ -40,7 +40,7 @@ class PrescriptionProvider with ChangeNotifier {
       final ordersResponse = await ApiService.get('/pharmacy/orders');
       if (ordersResponse.success) {
         final orders = (ordersResponse.data['orders'] as List?) ?? [];
-        _confirmedCount = orders.where((o) => o['status'] == 'confirmed' || o['status'] == 'preparing' || o['status'] == 'ready').length;
+        _confirmedCount = orders.where((o) => !['delivered', 'cancelled', 'pending'].contains(o['status'])).length;
         _completedCount = orders.where((o) => o['status'] == 'delivered').length;
       }
     } catch (e) {

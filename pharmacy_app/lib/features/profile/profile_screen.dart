@@ -5,6 +5,7 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/input_field.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../providers/auth_provider.dart';
+import 'wallet_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -63,6 +64,12 @@ class ProfileScreen extends StatelessWidget {
               Icons.edit,
               'Edit Profile',
               () => _showEditProfile(context, user),
+            ),
+            _buildMenuItem(
+              context,
+              Icons.account_balance_wallet_outlined,
+              'Wallet',
+              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PharmacyWalletScreen())),
             ),
             _buildMenuItem(
               context,

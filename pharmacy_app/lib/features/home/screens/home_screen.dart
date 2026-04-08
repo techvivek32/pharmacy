@@ -102,7 +102,7 @@ class _DashboardTabState extends State<_DashboardTab> {
           try {
             final dt = DateTime.parse((o['createdAt'] ?? '').toString());
             if (dt.year == today.year && dt.month == today.month && dt.day == today.day) {
-              rev += (o['totalAmount'] as num?)?.toDouble() ?? 0;
+              rev += (o['subtotal'] as num?)?.toDouble() ?? 0;
             }
           } catch (_) {}
         }
@@ -345,7 +345,7 @@ class _DashboardTabState extends State<_DashboardTab> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  Text('${(o['totalAmount'] as num?)?.toStringAsFixed(0) ?? '0'} MAD',
+                                  Text('${(o['subtotal'] as num?)?.toStringAsFixed(0) ?? '0'} MAD',
                                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -438,8 +438,14 @@ class _DashboardTabState extends State<_DashboardTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: color)),
                 Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+                const SizedBox(height: 2),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(value,
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: color)),
+                ),
               ],
             ),
           ),
