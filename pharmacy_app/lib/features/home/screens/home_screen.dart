@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/prescription_provider.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/app_card.dart';
+import '../../../services/api_service.dart';
 import '../../orders/orders_screen.dart';
 import '../../profile/profile_screen.dart';
 import '../../requests/screens/prescription_requests_screen.dart';
@@ -22,12 +22,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Restore user data and fetch on start
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await context.read<AuthProvider>().checkAuth();
-      if (mounted) {
-        context.read<PrescriptionProvider>().fetchPrescriptionRequests();
-      }
+      if (mounted) context.read<PrescriptionProvider>().fetchPrescriptionRequests();
     });
   }
 
@@ -39,7 +36,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Re-fetch data when app comes back to foreground
     if (state == AppLifecycleState.resumed) {
       context.read<PrescriptionProvider>().fetchPrescriptionRequests();
     }
@@ -63,10 +59,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         selectedItemColor: AppTheme.primary,
         unselectedItemColor: AppTheme.textSecondary,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
-          BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: 'Requests'),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Orders'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), activeIcon: Icon(Icons.dashboard), label: 'Dashboard'),
+          BottomNavigationBarItem(icon: Icon(Icons.receipt_long_outlined), activeIcon: Icon(Icons.receipt_long), label: 'Requests'),
+          BottomNavigationBarItem(icon: Icon(Icons.history_outlined), activeIcon: Icon(Icons.history), label: 'Orders'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
     );
@@ -81,181 +77,411 @@ class _DashboardTab extends StatefulWidget {
 }
 
 class _DashboardTabState extends State<_DashboardTab> {
+  List<Map<String, dynamic>> _recentOrders = [];
+  double _todayRevenue = 0;
+  bool _loadingOrders = false;
+
   @override
   void initState() {
     super.initState();
+    _fetchRecentOrders();
+  }
+
+  Future<void> _fetchRecentOrders() async {
+    setState(() => _loadingOrders = true);
+    final res = await ApiService.get('/pharmacy/orders');
+    if (!mounted) return;
+    if (res.success && res.data != null) {
+      final orders = List<Map<String, dynamic>>.from(
+        (res.data['orders'] as List? ?? []).map((e) => Map<String, dynamic>.from(e)),
+      );
+      final today = DateTime.now();
+      double rev = 0;
+      for (final o in orders) {
+        if (o['status'] == 'delivered') {
+          try {
+            final dt = DateTime.parse((o['createdAt'] ?? '').toString());
+            if (dt.year == today.year && dt.month == today.month && dt.day == today.day) {
+              rev += (o['totalAmount'] as num?)?.toDouble() ?? 0;
+            }
+          } catch (_) {}
+        }
+      }
+      setState(() {
+        _recentOrders = orders.take(3).toList();
+        _todayRevenue = rev;
+        _loadingOrders = false;
+      });
+    } else {
+      setState(() => _loadingOrders = false);
+    }
+  }
+
+  String _greeting() {
+    final h = DateTime.now().hour;
+    if (h < 12) return 'Good Morning';
+    if (h < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  }
+
+  Color _statusColor(String s) {
+    switch (s) {
+      case 'delivered': return AppTheme.success;
+      case 'confirmed': case 'preparing': case 'ready': return AppTheme.info;
+      case 'cancelled': return AppTheme.error;
+      default: return AppTheme.warning;
+    }
+  }
+
+  String _statusLabel(String s) {
+    switch (s) {
+      case 'delivered': return 'Delivered';
+      case 'confirmed': return 'Confirmed';
+      case 'preparing': return 'Preparing';
+      case 'ready': return 'Ready';
+      case 'assigned': return 'Rider Assigned';
+      case 'in_transit': return 'In Transit';
+      case 'cancelled': return 'Cancelled';
+      default: return 'Pending';
+    }
+  }
+
+  String _formatDate(dynamic raw) {
+    if (raw == null) return '';
+    try {
+      final dt = DateTime.parse(raw.toString()).toLocal();
+      return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+    } catch (_) { return ''; }
   }
 
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
-      body: RefreshIndicator(
-        onRefresh: () =>
-            context.read<PrescriptionProvider>().fetchPrescriptionRequests(),
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(AppTheme.spacing16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Hello, ${user?.fullName ?? 'Pharmacy'}',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: AppTheme.spacing24),
-              Consumer<PrescriptionProvider>(
-                builder: (context, provider, _) => Row(
-                  children: [
-                    Expanded(
-                      child: _StatCard(
-                        icon: Icons.pending_actions,
-                        title: 'Pending',
-                        value: '${provider.prescriptions.length}',
-                        color: AppTheme.warning,
+    return Consumer<PrescriptionProvider>(
+      builder: (context, provider, _) {
+        final pending = provider.prescriptions.length;
+        final confirmed = provider.confirmedCount;
+        final completed = provider.completedCount;
+
+        return RefreshIndicator(
+          onRefresh: () async {
+            await provider.fetchPrescriptionRequests();
+            await _fetchRecentOrders();
+          },
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: AppTheme.primary,
+                    borderRadius: BorderRadius.vertical(bottom: Radius.circular(AppTheme.radiusXLarge)),
+                  ),
+                  padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 16, 20, 28),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(_greeting(), style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                              const SizedBox(height: 2),
+                              Text(user?.fullName ?? 'Pharmacy',
+                                  style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          CircleAvatar(
+                            radius: 24,
+                            backgroundColor: Colors.white.withOpacity(0.2),
+                            child: Text(
+                              (user?.fullName ?? 'P').substring(0, 1).toUpperCase(),
+                              style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(width: AppTheme.spacing8),
-                    Expanded(
-                      child: _StatCard(
-                        icon: Icons.check_circle_outline,
-                        title: 'Confirmed',
-                        value: '${provider.confirmedCount}',
-                        color: AppTheme.info,
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                        ),
+                        child: Row(
+                          children: [
+                            _headerStat('Pending', '$pending', Icons.pending_actions_outlined),
+                            Container(width: 1, height: 40, color: Colors.white30),
+                            _headerStat('Active', '$confirmed', Icons.local_shipping_outlined),
+                            Container(width: 1, height: 40, color: Colors.white30),
+                            _headerStat('Completed', '$completed', Icons.check_circle_outline),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: AppTheme.spacing8),
-                    Expanded(
-                      child: _StatCard(
-                        icon: Icons.check_circle,
-                        title: 'Completed',
-                        value: '${provider.completedCount}',
-                        color: AppTheme.success,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: AppTheme.spacing24),
-              Text('Quick Actions',
-                  style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: AppTheme.spacing16),
-              _ActionCard(
-                icon: Icons.receipt_long,
-                title: 'Prescription Requests',
-                subtitle: 'View and respond to requests',
-                onTap: () {
-                  // Switch to requests tab via parent
-                  final homeState = context
-                      .findAncestorStateOfType<_HomeScreenState>();
-                  homeState?.setState(() => homeState._currentIndex = 1);
-                },
-              ),
-              const SizedBox(height: AppTheme.spacing12),
-              _ActionCard(
-                icon: Icons.history,
-                title: 'Order History',
-                subtitle: 'View all completed orders',
-                onTap: () {
-                  final homeState = context
-                      .findAncestorStateOfType<_HomeScreenState>();
-                  homeState?.setState(() => homeState._currentIndex = 2);
-                },
+              SliverPadding(
+                padding: const EdgeInsets.all(16),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    // Stats row
+                    Row(
+                      children: [
+                        Expanded(child: _statCard(Icons.today, "Today's Revenue",
+                            '${_todayRevenue.toStringAsFixed(0)} MAD', AppTheme.success)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _statCard(Icons.check_circle_outline, 'Total Completed',
+                            '$completed', AppTheme.primary)),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Quick actions
+                    const Text('Quick Actions', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(child: _actionTile(
+                          Icons.receipt_long, 'Requests', AppTheme.warning,
+                          badge: pending > 0 ? '$pending' : null,
+                          onTap: () {
+                            final s = context.findAncestorStateOfType<_HomeScreenState>();
+                            s?.setState(() => s._currentIndex = 1);
+                          },
+                        )),
+                        const SizedBox(width: 12),
+                        Expanded(child: _actionTile(
+                          Icons.history, 'Orders', AppTheme.info,
+                          badge: confirmed > 0 ? '$confirmed' : null,
+                          onTap: () {
+                            final s = context.findAncestorStateOfType<_HomeScreenState>();
+                            s?.setState(() => s._currentIndex = 2);
+                          },
+                        )),
+                        const SizedBox(width: 12),
+                        Expanded(child: _actionTile(
+                          Icons.person_outline, 'Profile', AppTheme.textSecondary,
+                          onTap: () {
+                            final s = context.findAncestorStateOfType<_HomeScreenState>();
+                            s?.setState(() => s._currentIndex = 3);
+                          },
+                        )),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Recent orders
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Recent Orders', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        TextButton(
+                          onPressed: () {
+                            final s = context.findAncestorStateOfType<_HomeScreenState>();
+                            s?.setState(() => s._currentIndex = 2);
+                          },
+                          child: const Text('See All'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    if (_loadingOrders)
+                      const Center(child: CircularProgressIndicator())
+                    else if (_recentOrders.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface,
+                          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                          border: Border.all(color: AppTheme.divider),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(Icons.inbox_outlined, size: 48, color: AppTheme.textSecondary.withOpacity(0.4)),
+                            const SizedBox(height: 8),
+                            const Text('No orders yet', style: TextStyle(fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 4),
+                            Text('Orders from patients will appear here',
+                                style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
+                          ],
+                        ),
+                      )
+                    else
+                      ..._recentOrders.map((o) {
+                        final status = o['status']?.toString() ?? '';
+                        final color = _statusColor(status);
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface,
+                            borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                            border: Border.all(color: AppTheme.divider),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 40, height: 40,
+                                decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+                                child: Icon(Icons.receipt_long, color: color, size: 20),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(o['orderNumber']?.toString() ?? '',
+                                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                                    Text(_formatDate(o['createdAt']),
+                                        style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                                  ],
+                                ),
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text('${(o['totalAmount'] as num?)?.toStringAsFixed(0) ?? '0'} MAD',
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: color.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(_statusLabel(status),
+                                        style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600)),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    const SizedBox(height: 16),
+
+                    // Tips
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.info.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                        border: Border.all(color: AppTheme.info.withOpacity(0.2)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(color: AppTheme.info.withOpacity(0.15), shape: BoxShape.circle),
+                            child: const Icon(Icons.tips_and_updates, color: AppTheme.info, size: 22),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Respond Quickly', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                SizedBox(height: 2),
+                                Text('Faster quote responses increase your order acceptance rate.',
+                                    style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ]),
+                ),
               ),
             ],
           ),
-        ),
+        );
+      },
+    );
+  }
+
+  Widget _headerStat(String label, String value, IconData icon) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, color: Colors.white70, size: 18),
+          const SizedBox(height: 4),
+          Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+          Text(label, style: const TextStyle(color: Colors.white60, fontSize: 10)),
+        ],
       ),
     );
   }
-}
 
-class _StatCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String value;
-  final Color color;
-
-  const _StatCard({
-    required this.icon,
-    required this.title,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppTheme.spacing12, horizontal: AppTheme.spacing8),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 26),
-            const SizedBox(height: AppTheme.spacing4),
-            Text(value,
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineSmall
-                    ?.copyWith(color: color, fontWeight: FontWeight.bold)),
-            Text(title,
-                style: Theme.of(context).textTheme.bodySmall,
-                textAlign: TextAlign.center),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ActionCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  const _ActionCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      child: InkWell(
-        onTap: onTap,
+  Widget _statCard(IconData icon, String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        child: Padding(
-          padding: const EdgeInsets.all(AppTheme.spacing16),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(AppTheme.spacing12),
-                decoration: BoxDecoration(
-                  color: AppTheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                ),
-                child: Icon(icon, color: AppTheme.primary, size: 28),
-              ),
-              const SizedBox(width: AppTheme.spacing16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title,
-                        style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: AppTheme.spacing4),
-                    Text(subtitle,
-                        style: Theme.of(context).textTheme.bodySmall),
-                  ],
-                ),
-              ),
-              const Icon(Icons.arrow_forward_ios, size: 16),
-            ],
+        border: Border.all(color: AppTheme.divider),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+            child: Icon(icon, color: color, size: 20),
           ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: color)),
+                Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _actionTile(IconData icon, String label, Color color, {VoidCallback? onTap, String? badge}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+          border: Border.all(color: AppTheme.divider),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+                  child: Icon(icon, color: color, size: 22),
+                ),
+                const SizedBox(height: 8),
+                Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
+              ],
+            ),
+            if (badge != null)
+              Positioned(
+                top: 0, right: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(color: AppTheme.error, borderRadius: BorderRadius.circular(10)),
+                  child: Text(badge, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                ),
+              ),
+          ],
         ),
       ),
     );

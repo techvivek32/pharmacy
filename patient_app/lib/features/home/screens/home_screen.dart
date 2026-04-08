@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/order_provider.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/app_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,7 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadRecentOrders();
+      context.read<OrderProvider>().fetchOrders();
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is Map && args['tab'] != null) {
         setState(() => _selectedIndex = args['tab'] as int);
@@ -27,588 +26,567 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  Future<void> _loadRecentOrders() async {
-    if (mounted) {
-      await context.read<OrderProvider>().fetchOrders();
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _buildBody(),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: (i) => setState(() => _selectedIndex = i),
+        selectedItemColor: AppTheme.primary,
+        unselectedItemColor: AppTheme.textSecondary,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.receipt_long_outlined), activeIcon: Icon(Icons.receipt_long), label: 'Orders'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    switch (_selectedIndex) {
+      case 0: return _HomeTab(onTabChange: (i) => setState(() => _selectedIndex = i));
+      case 1: return _OrdersTab();
+      case 2: return _ProfileTab();
+      default: return _HomeTab(onTabChange: (i) => setState(() => _selectedIndex = i));
+    }
+  }
+}
+
+class _HomeTab extends StatelessWidget {
+  final ValueChanged<int> onTabChange;
+  const _HomeTab({required this.onTabChange});
+
+  String _greeting() {
+    final h = DateTime.now().hour;
+    if (h < 12) return 'Good Morning';
+    if (h < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  }
+
+  Color _statusColor(String s) {
+    switch (s) {
+      case 'delivered': return AppTheme.success;
+      case 'in_transit': case 'picked_up': case 'assigned': return AppTheme.info;
+      case 'cancelled': return AppTheme.error;
+      default: return AppTheme.warning;
+    }
+  }
+
+  String _statusLabel(String s) {
+    switch (s) {
+      case 'delivered': return 'Delivered';
+      case 'in_transit': return 'On the way';
+      case 'picked_up': return 'Picked up';
+      case 'assigned': return 'Rider assigned';
+      case 'confirmed': return 'Confirmed';
+      case 'searching': return 'Finding pharmacy';
+      case 'quote_pending': return 'Quote received';
+      default: return 'Pending';
+    }
+  }
+
+  IconData _statusIcon(String s) {
+    switch (s) {
+      case 'delivered': return Icons.check_circle;
+      case 'in_transit': return Icons.local_shipping;
+      case 'picked_up': return Icons.shopping_bag;
+      case 'assigned': return Icons.delivery_dining;
+      case 'quote_pending': return Icons.receipt;
+      default: return Icons.pending;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = context.watch<AuthProvider>().user;
+
+    return Consumer<OrderProvider>(
+      builder: (context, orderProvider, _) {
+        final orders = orderProvider.orders;
+        final active = orders.where((o) => !['delivered', 'cancelled'].contains(o.status)).length;
+        final completed = orders.where((o) => o.status == 'delivered').length;
+        final pending = orders.where((o) => o.status == 'quote_pending').length;
+        final recent = orders.take(3).toList();
+
+        return RefreshIndicator(
+          onRefresh: () => orderProvider.fetchOrders(),
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: AppTheme.primary,
+                    borderRadius: BorderRadius.vertical(bottom: Radius.circular(AppTheme.radiusXLarge)),
+                  ),
+                  padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 16, 20, 28),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(_greeting(), style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                              const SizedBox(height: 2),
+                              Text(user?.fullName ?? 'User',
+                                  style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          CircleAvatar(
+                            radius: 24,
+                            backgroundColor: Colors.white.withOpacity(0.2),
+                            child: Text(
+                              (user?.fullName ?? 'U').substring(0, 1).toUpperCase(),
+                              style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                        ),
+                        child: Row(
+                          children: [
+                            _headerStat('Active', '$active', Icons.local_shipping_outlined),
+                            Container(width: 1, height: 40, color: Colors.white30),
+                            _headerStat('Completed', '$completed', Icons.check_circle_outline),
+                            Container(width: 1, height: 40, color: Colors.white30),
+                            _headerStat('Quotes', '$pending', Icons.receipt_outlined),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.all(16),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    // Upload prescription CTA
+                    GestureDetector(
+                      onTap: () => Navigator.pushNamed(context, '/upload-prescription'),
+                      child: Container(
+                        padding: const EdgeInsets.all(AppTheme.spacing16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [AppTheme.primary, AppTheme.primary.withOpacity(0.7)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.camera_alt, color: Colors.white, size: 28),
+                            ),
+                            const SizedBox(width: 16),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Upload Prescription', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                                  SizedBox(height: 2),
+                                  Text('Get quotes from nearby pharmacies', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Quick actions
+                    const Text('Quick Actions', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(child: _actionTile(context, Icons.receipt_long, 'My Orders', AppTheme.info,
+                            badge: active > 0 ? '$active' : null,
+                            onTap: () => onTabChange(1))),
+                        const SizedBox(width: 12),
+                        Expanded(child: _actionTile(context, Icons.local_pharmacy, 'Quotes', AppTheme.warning,
+                            badge: pending > 0 ? '$pending' : null,
+                            onTap: () => Navigator.pushNamed(context, '/my-quotes'))),
+                        const SizedBox(width: 12),
+                        Expanded(child: _actionTile(context, Icons.history, 'History', AppTheme.success,
+                            onTap: () => Navigator.pushNamed(context, '/order-history'))),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Recent orders
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Recent Orders', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        TextButton(onPressed: () => onTabChange(1), child: const Text('See All')),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    if (orderProvider.isLoading)
+                      const Center(child: CircularProgressIndicator())
+                    else if (recent.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface,
+                          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                          border: Border.all(color: AppTheme.divider),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(Icons.receipt_long_outlined, size: 48, color: AppTheme.textSecondary.withOpacity(0.4)),
+                            const SizedBox(height: 8),
+                            const Text('No orders yet', style: TextStyle(fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 4),
+                            Text('Upload a prescription to get started',
+                                style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
+                          ],
+                        ),
+                      )
+                    else
+                      ...recent.map((o) => GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, '/order-tracking', arguments: o.id),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface,
+                            borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                            border: Border.all(color: AppTheme.divider),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 40, height: 40,
+                                decoration: BoxDecoration(
+                                  color: _statusColor(o.status).withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(_statusIcon(o.status), color: _statusColor(o.status), size: 20),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(o.orderNumber.isNotEmpty ? o.orderNumber : 'Pending Quote',
+                                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                                    Text(o.pharmacyName ?? _statusLabel(o.status),
+                                        style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                                  ],
+                                ),
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text('${o.totalAmount.toStringAsFixed(0)} MAD',
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: _statusColor(o.status).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(_statusLabel(o.status),
+                                        style: TextStyle(fontSize: 10, color: _statusColor(o.status), fontWeight: FontWeight.w600)),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      )),
+                    const SizedBox(height: 16),
+                  ]),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _headerStat(String label, String value, IconData icon) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, color: Colors.white70, size: 18),
+          const SizedBox(height: 4),
+          Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+          Text(label, style: const TextStyle(color: Colors.white60, fontSize: 10)),
+        ],
+      ),
+    );
+  }
+
+  Widget _actionTile(BuildContext context, IconData icon, String label, Color color,
+      {VoidCallback? onTap, String? badge}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+          border: Border.all(color: AppTheme.divider),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+                  child: Icon(icon, color: color, size: 22),
+                ),
+                const SizedBox(height: 8),
+                Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
+              ],
+            ),
+            if (badge != null)
+              Positioned(
+                top: 0, right: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(color: AppTheme.error, borderRadius: BorderRadius.circular(10)),
+                  child: Text(badge, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OrdersTab extends StatelessWidget {
+  Color _statusColor(String s) {
+    switch (s) {
+      case 'delivered': return AppTheme.success;
+      case 'in_transit': case 'picked_up': case 'assigned': return AppTheme.info;
+      case 'cancelled': return AppTheme.error;
+      default: return AppTheme.warning;
+    }
+  }
+
+  String _statusLabel(String s) {
+    switch (s) {
+      case 'delivered': return 'Delivered';
+      case 'in_transit': return 'On the way';
+      case 'picked_up': return 'Picked up';
+      case 'assigned': return 'Rider assigned';
+      case 'confirmed': return 'Confirmed';
+      case 'searching': return 'Finding pharmacy';
+      case 'quote_pending': return 'Quote received';
+      default: return 'Pending';
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _buildBody(),
-      bottomNavigationBar: _buildBottomNav(),
-    );
-  }
-
-  Widget _buildBody() {
-    switch (_selectedIndex) {
-      case 0:
-        return _buildHomeTab();
-      case 1:
-        return _buildOrdersTab();
-      case 2:
-        return _buildProfileTab();
-      default:
-        return _buildHomeTab();
-    }
-  }
-
-  Widget _buildHomeTab() {
-    final user = context.watch<AuthProvider>().user;
-
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppTheme.spacing16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(user?.fullName ?? 'User'),
-            const SizedBox(height: AppTheme.spacing24),
-            _buildUploadCard(),
-            const SizedBox(height: AppTheme.spacing24),
-            _buildQuickActions(),
-            const SizedBox(height: AppTheme.spacing24),
-            _buildRecentOrders(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(String name) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Hello, $name',
-          style: Theme.of(context).textTheme.displaySmall,
-        ),
-        const SizedBox(height: AppTheme.spacing8),
-        Text(
-          'How can we help you today?',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildUploadCard() {
-    return AppCard(
-      child: InkWell(
-        onTap: () => Navigator.pushNamed(context, '/upload-prescription'),
-        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        child: Padding(
-          padding: const EdgeInsets.all(AppTheme.spacing20),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(AppTheme.spacing16),
-                decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                ),
-                child: const Icon(
-                  Icons.camera_alt,
-                  color: AppTheme.primary,
-                  size: 32,
-                ),
-              ),
-              const SizedBox(width: AppTheme.spacing16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Upload Prescription',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: AppTheme.spacing4),
-                    Text(
-                      'Get quotes from nearby pharmacies',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(
-                Icons.arrow_forward_ios,
-                color: AppTheme.textSecondary,
-                size: 20,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickActions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Quick Actions',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        const SizedBox(height: AppTheme.spacing16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildActionCard(
-                icon: Icons.history,
-                title: 'Order History',
-                onTap: () => Navigator.pushNamed(context, '/order-history'),
-              ),
-            ),
-            const SizedBox(width: AppTheme.spacing12),
-            Expanded(
-              child: _buildActionCard(
-                icon: Icons.person,
-                title: 'Profile',
-                onTap: () => setState(() => _selectedIndex = 2),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionCard({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return AppCard(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        child: Padding(
-          padding: const EdgeInsets.all(AppTheme.spacing16),
-          child: Column(
-            children: [
-              Icon(icon, color: AppTheme.primary, size: 32),
-              const SizedBox(height: AppTheme.spacing8),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.bodyMedium,
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecentOrders() {
-    return Consumer<OrderProvider>(
-      builder: (context, orderProvider, _) {
-        if (orderProvider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        final orders = orderProvider.orders.take(3).toList();
-
-        if (orders.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Recent Orders',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                TextButton(
-                  onPressed: () => setState(() => _selectedIndex = 1),
-                  child: const Text('View All'),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppTheme.spacing12),
-            ...orders.map((order) => Padding(
-                  padding: const EdgeInsets.only(bottom: AppTheme.spacing12),
-                  child: _buildOrderCard(order),
-                )),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildOrderCard(dynamic order) {
-    return AppCard(
-      child: InkWell(
-        onTap: () => Navigator.pushNamed(
-          context,
-          '/order-tracking',
-          arguments: order.id,
-        ),
-        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        child: Padding(
-          padding: const EdgeInsets.all(AppTheme.spacing16),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(AppTheme.spacing12),
-                decoration: BoxDecoration(
-                  color: _getStatusColor(order.status).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-                ),
-                child: Icon(
-                  _getStatusIcon(order.status),
-                  color: _getStatusColor(order.status),
-                ),
-              ),
-              const SizedBox(width: AppTheme.spacing12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      order.orderNumber ?? 'Order',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: AppTheme.spacing4),
-                    Text(
-                      _getStatusText(order.status),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: _getStatusColor(order.status),
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                '${order.totalAmount} MAD',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOrdersTab() {
-    return Consumer<OrderProvider>(
-      builder: (context, orderProvider, _) {
-        if (orderProvider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        final orders = orderProvider.orders;
-
-        if (orders.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.shopping_bag_outlined,
-                  size: 80,
-                  color: AppTheme.textSecondary.withValues(alpha: 0.5),
-                ),
-                const SizedBox(height: AppTheme.spacing16),
-                Text(
-                  'No orders yet',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: AppTheme.spacing8),
-                Text(
-                  'Upload a prescription to get started',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppTheme.textSecondary,
-                      ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return SafeArea(
-          child: RefreshIndicator(
-            onRefresh: () => orderProvider.fetchOrders(),
-            child: ListView.builder(
-              padding: const EdgeInsets.all(AppTheme.spacing16),
-              itemCount: orders.length,
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: AppTheme.spacing12),
-                  child: _buildOrderCard(orders[index]),
-                );
-              },
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildProfileTab() {
-    final user = context.watch<AuthProvider>().user;
-
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppTheme.spacing16),
-        child: Column(
-          children: [
-            _buildProfileHeader(user),
-            const SizedBox(height: AppTheme.spacing24),
-            _buildProfileMenuItem(
-              icon: Icons.person,
-              title: 'Edit Profile',
-              onTap: () async {
-                await Navigator.pushNamed(context, '/edit-profile');
-                if (mounted) context.read<AuthProvider>().refreshProfile();
-              },
-            ),
-            _buildProfileMenuItem(
-              icon: Icons.location_on,
-              title: 'Saved Addresses',
-              onTap: () => Navigator.pushNamed(context, '/saved-addresses'),
-            ),
-            _buildProfileMenuItem(
-              icon: Icons.payment,
-              title: 'Payment Methods',
-              onTap: () => Navigator.pushNamed(context, '/payment-methods'),
-            ),
-            _buildProfileMenuItem(
-              icon: Icons.notifications,
-              title: 'Notifications',
-              onTap: () => Navigator.pushNamed(context, '/notifications'),
-            ),
-            _buildProfileMenuItem(
-              icon: Icons.help,
-              title: 'Help & Support',
-              onTap: () => Navigator.pushNamed(context, '/help-support'),
-            ),
-            _buildProfileMenuItem(
-              icon: Icons.info,
-              title: 'About',
-              onTap: () => Navigator.pushNamed(context, '/about'),
-            ),
-            const SizedBox(height: AppTheme.spacing16),
-            _buildLogoutButton(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProfileHeader(dynamic user) {
-    ImageProvider? imageProvider;
-    final profileImage = user?.profileImage;
-    if (profileImage != null && profileImage.toString().startsWith('http')) {
-      imageProvider = NetworkImage(profileImage);
-    }
-
-    return AppCard(
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacing20),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 40,
-              backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
-              backgroundImage: imageProvider,
-              child: imageProvider == null
-                  ? Text(
-                      user?.fullName?.substring(0, 1).toUpperCase() ?? 'U',
-                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                            color: AppTheme.primary,
-                          ),
-                    )
-                  : null,
-            ),
-            const SizedBox(width: AppTheme.spacing16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    user?.fullName ?? 'User',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: AppTheme.spacing4),
-                  Text(
-                    user?.email ?? '',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: AppTheme.spacing4),
-                  Text(
-                    user?.phone ?? '',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProfileMenuItem({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppTheme.spacing12),
-      child: AppCard(
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppTheme.spacing16,
-              vertical: AppTheme.spacing16,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(AppTheme.spacing8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                  ),
-                  child: Icon(icon, color: AppTheme.primary, size: 20),
-                ),
-                const SizedBox(width: AppTheme.spacing16),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ),
-                const Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: AppTheme.textSecondary,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLogoutButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: () => _showLogoutDialog(),
-        icon: const Icon(Icons.logout),
-        label: const Text('Logout'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.error,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: AppTheme.spacing16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+      appBar: AppBar(
+        title: const Text('My Orders'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              await context.read<AuthProvider>().logout();
-              if (context.mounted) {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/login',
-                  (route) => false,
-                );
-              }
-            },
-            child: const Text('Logout', style: TextStyle(color: AppTheme.error)),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => context.read<OrderProvider>().fetchOrders(),
           ),
         ],
       ),
+      body: Consumer<OrderProvider>(
+        builder: (context, provider, _) {
+          if (provider.isLoading) return const Center(child: CircularProgressIndicator());
+          if (provider.orders.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.shopping_bag_outlined, size: 80, color: AppTheme.textSecondary.withOpacity(0.4)),
+                  const SizedBox(height: 16),
+                  const Text('No orders yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text('Upload a prescription to get started',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary)),
+                ],
+              ),
+            );
+          }
+          return RefreshIndicator(
+            onRefresh: () => provider.fetchOrders(),
+            child: ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: provider.orders.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (context, i) {
+                final o = provider.orders[i];
+                final color = _statusColor(o.status);
+                return GestureDetector(
+                  onTap: () => Navigator.pushNamed(context, '/order-tracking', arguments: o.id),
+                  child: Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                      side: const BorderSide(color: AppTheme.divider),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(o.orderNumber.isNotEmpty ? o.orderNumber : 'Pending Quote',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: color.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                                ),
+                                child: Text(_statusLabel(o.status),
+                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+                              ),
+                            ],
+                          ),
+                          if (o.pharmacyName != null) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                const Icon(Icons.local_pharmacy, size: 14, color: AppTheme.textSecondary),
+                                const SizedBox(width: 4),
+                                Text(o.pharmacyName!, style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+                              ],
+                            ),
+                          ],
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '${o.createdAt.day.toString().padLeft(2, '0')}/${o.createdAt.month.toString().padLeft(2, '0')}/${o.createdAt.year}',
+                                style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                              ),
+                              Text('${o.totalAmount.toStringAsFixed(2)} MAD',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary, fontSize: 14)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ProfileTab extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final user = context.watch<AuthProvider>().user;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Profile')),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              color: AppTheme.surface,
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 45,
+                    backgroundColor: AppTheme.primary.withOpacity(0.1),
+                    child: Text(
+                      (user?.fullName ?? 'U').substring(0, 1).toUpperCase(),
+                      style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: AppTheme.primary),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(user?.fullName ?? '', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text(user?.email ?? '', style: const TextStyle(color: AppTheme.textSecondary)),
+                  Text(user?.phone ?? '', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            _menuItem(context, Icons.person_outline, 'Edit Profile', () => Navigator.pushNamed(context, '/edit-profile')),
+            _menuItem(context, Icons.location_on_outlined, 'Saved Addresses', () => Navigator.pushNamed(context, '/saved-addresses')),
+            _menuItem(context, Icons.history, 'Order History', () => Navigator.pushNamed(context, '/order-history')),
+            _menuItem(context, Icons.receipt_long_outlined, 'My Quotes', () => Navigator.pushNamed(context, '/my-quotes')),
+            _menuItem(context, Icons.help_outline, 'Help & Support', () => Navigator.pushNamed(context, '/help-support')),
+            const Divider(height: 1),
+            _menuItem(context, Icons.logout, 'Logout', () async {
+              final ok = await showDialog<bool>(
+                context: context,
+                builder: (_) => AlertDialog(
+                  title: const Text('Logout'),
+                  content: const Text('Are you sure you want to logout?'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                    TextButton(onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Logout', style: TextStyle(color: AppTheme.error))),
+                  ],
+                ),
+              );
+              if (ok == true && context.mounted) {
+                await context.read<AuthProvider>().logout();
+                Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
+              }
+            }, color: AppTheme.error),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      currentIndex: _selectedIndex,
-      onTap: (index) => setState(() => _selectedIndex = index),
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Home',
+  Widget _menuItem(BuildContext context, IconData icon, String label, VoidCallback onTap, {Color? color}) {
+    final c = color ?? AppTheme.textPrimary;
+    return Material(
+      color: AppTheme.surface,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Row(
+            children: [
+              Icon(icon, color: c, size: 22),
+              const SizedBox(width: 16),
+              Expanded(child: Text(label, style: TextStyle(fontSize: 15, color: c))),
+              Icon(Icons.arrow_forward_ios, size: 14, color: AppTheme.textSecondary.withOpacity(0.5)),
+            ],
+          ),
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.receipt_long),
-          label: 'Orders',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Profile',
-        ),
-      ],
+      ),
     );
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'delivered':
-        return AppTheme.success;
-      case 'in_transit':
-      case 'picked_up':
-        return AppTheme.info;
-      case 'cancelled':
-        return AppTheme.error;
-      default:
-        return AppTheme.warning;
-    }
-  }
-
-  IconData _getStatusIcon(String status) {
-    switch (status) {
-      case 'delivered':
-        return Icons.check_circle;
-      case 'in_transit':
-        return Icons.local_shipping;
-      case 'picked_up':
-        return Icons.shopping_bag;
-      default:
-        return Icons.pending;
-    }
-  }
-
-  String _getStatusText(String status) {
-    switch (status) {
-      case 'delivered':
-        return 'Delivered';
-      case 'in_transit':
-        return 'On the way';
-      case 'picked_up':
-        return 'Picked up';
-      case 'confirmed':
-        return 'Confirmed';
-      default:
-        return 'Pending';
-    }
   }
 }
