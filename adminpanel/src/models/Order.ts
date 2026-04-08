@@ -142,5 +142,7 @@ OrderSchema.index({ patientId: 1 });
 OrderSchema.index({ pharmacyId: 1 });
 OrderSchema.index({ riderId: 1 });
 OrderSchema.index({ status: 1 });
+OrderSchema.index({ 'pharmacyAddress.location': '2dsphere' }, { sparse: true });
+OrderSchema.index({ 'deliveryAddress.location': '2dsphere' }, { sparse: true });
 
 export default mongoose.models.Order || mongoose.model<IOrder>('Order', OrderSchema);

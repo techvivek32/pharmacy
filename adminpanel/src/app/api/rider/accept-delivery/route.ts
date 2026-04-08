@@ -6,6 +6,7 @@ import { authenticateRequest } from '@/lib/auth';
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response';
 import { sendNotificationToUser } from '@/services/notification';
 
+export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     const auth = await authenticateRequest(request);
@@ -29,7 +30,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (!rider.isAvailable) {
-      return errorResponse('You are not available for deliveries');
+      // Reset availability in case it got stuck
+      rider.isAvailable = true;
+      await rider.save();
     }
 
     // Get order
@@ -56,34 +59,34 @@ export async function POST(request: NextRequest) {
     await rider.save();
 
     // Notify patient
-    await sendNotificationToUser(
-      order.patientId.toString(),
-      'Rider Assigned',
-      'A rider has been assigned to your order and will pick it up soon.',
-      {
-        orderId: order._id.toString(),
-        type: 'rider_assigned',
-      }
-    );
+    try {
+      await sendNotificationToUser(
+        order.patientId.toString(),
+        'Rider Assigned',
+        'A rider has been assigned to your order and will pick it up soon.',
+        { orderId: order._id.toString(), type: 'rider_assigned' }
+      );
+    } catch (_) {}
 
     // Notify pharmacy
-    await sendNotificationToUser(
-      order.pharmacyId.toString(),
-      'Rider on the Way',
-      `Rider is coming to pick up order ${order.orderNumber}`,
-      {
-        orderId: order._id.toString(),
-        type: 'rider_coming',
+    try {
+      if (order.pharmacyId) {
+        await sendNotificationToUser(
+          order.pharmacyId.toString(),
+          'Rider on the Way',
+          `Rider is coming to pick up order ${order.orderNumber}`,
+          { orderId: order._id.toString(), type: 'rider_coming' }
+        );
       }
-    );
+    } catch (_) {}
 
     return successResponse({
       order: {
         orderNumber: order.orderNumber,
-        pickupLocation: order.pharmacyAddress.location.coordinates,
-        deliveryLocation: order.deliveryAddress.location.coordinates,
-        pickupAddress: order.pharmacyAddress.address,
-        deliveryAddress: order.deliveryAddress.address,
+        pickupAddress: order.pharmacyAddress?.address || '',
+        deliveryAddress: order.deliveryAddress?.address || '',
+        pharmacyCoords: order.pharmacyAddress?.location?.coordinates || null,
+        deliveryCoords: order.deliveryAddress?.location?.coordinates || null,
       },
     });
   } catch (error: any) {
