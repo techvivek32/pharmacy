@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../services/api_service.dart';
 import '../../../services/location_service.dart';
@@ -16,74 +15,61 @@ class NavigationScreen extends StatefulWidget {
 }
 
 class _NavigationScreenState extends State<NavigationScreen> {
-  GoogleMapController? _mapController;
-  StreamSubscription<Position>? _locationSub;
-  Timer? _statusTimer;
-
-  LatLng? _riderPos;
-  // Phase: 'to_pharmacy' → 'at_pharmacy' → 'to_patient' → 'delivered'
+  // Phase: 'to_pharmacy' → 'to_patient' → 'delivered'
   String _phase = 'to_pharmacy';
   bool _isUpdating = false;
-
-  late final LatLng? _pharmacyLatLng;
-  late final LatLng? _patientLatLng;
+  Timer? _locationTimer;
 
   @override
   void initState() {
     super.initState();
-
-    final pharmCoords = widget.delivery['pharmacyCoords'] as List?;
-    final delivCoords = widget.delivery['deliveryCoords'] as List?;
-
-    _pharmacyLatLng = pharmCoords != null && pharmCoords.length == 2
-        ? LatLng((pharmCoords[1] as num).toDouble(), (pharmCoords[0] as num).toDouble())
-        : null;
-
-    _patientLatLng = delivCoords != null && delivCoords.length == 2
-        ? LatLng((delivCoords[1] as num).toDouble(), (delivCoords[0] as num).toDouble())
-        : null;
-
-    _startLiveTracking();
+    // Keep sending location every 30s during delivery
+    _locationTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      LocationService.updateLocation();
+    });
+    LocationService.updateLocation();
   }
 
   @override
   void dispose() {
-    _locationSub?.cancel();
-    _statusTimer?.cancel();
-    _mapController?.dispose();
+    _locationTimer?.cancel();
     super.dispose();
   }
 
-  void _startLiveTracking() {
-    _locationSub = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10,
-      ),
-    ).listen((pos) {
-      final newPos = LatLng(pos.latitude, pos.longitude);
-      setState(() => _riderPos = newPos);
-      _mapController?.animateCamera(CameraUpdate.newLatLng(newPos));
+  String get _orderId => widget.delivery['orderId']?.toString() ?? '';
+  String get _pickupAddress => widget.delivery['pickupAddress']?.toString() ?? 'Pharmacy';
+  String get _deliveryAddress => widget.delivery['deliveryAddress']?.toString() ?? 'Patient';
+  String get _orderNumber => widget.delivery['orderNumber']?.toString() ?? '';
+  num get _deliveryFee => widget.delivery['deliveryFee'] ?? 0;
 
-      // Send location to backend every update
-      ApiService.put('/rider/update-location', {
-        'lat': pos.latitude,
-        'lng': pos.longitude,
-        'isOnline': true,
-      });
-    });
+  List? get _pharmacyCoords => widget.delivery['pharmacyCoords'] as List?;
+  List? get _deliveryCoords => widget.delivery['deliveryCoords'] as List?;
+
+  Future<void> _openMaps(String address, List? coords) async {
+    Uri uri;
+    if (coords != null && coords.length == 2) {
+      final lat = (coords[1] as num).toDouble();
+      final lng = (coords[0] as num).toDouble();
+      uri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng');
+    } else {
+      final encoded = Uri.encodeComponent(address);
+      uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$encoded');
+    }
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   Future<void> _arrivedAtPharmacy() async {
     setState(() => _isUpdating = true);
     final res = await ApiService.put('/rider/update-status', {
-      'orderId': widget.delivery['orderId'].toString(),
+      'orderId': _orderId,
       'status': 'picked_up',
     });
+    if (!mounted) return;
     setState(() => _isUpdating = false);
     if (res.success) {
       setState(() => _phase = 'to_patient');
-      _moveCameraTo(_patientLatLng);
     } else {
       _showError(res.message);
     }
@@ -92,20 +78,16 @@ class _NavigationScreenState extends State<NavigationScreen> {
   Future<void> _arrivedAtPatient() async {
     setState(() => _isUpdating = true);
     final res = await ApiService.put('/rider/update-status', {
-      'orderId': widget.delivery['orderId'].toString(),
+      'orderId': _orderId,
       'status': 'delivered',
     });
+    if (!mounted) return;
     setState(() => _isUpdating = false);
     if (res.success) {
       setState(() => _phase = 'delivered');
     } else {
       _showError(res.message);
     }
-  }
-
-  void _moveCameraTo(LatLng? target) {
-    if (target == null) return;
-    _mapController?.animateCamera(CameraUpdate.newLatLngZoom(target, 15));
   }
 
   void _showError(String msg) {
@@ -116,245 +98,305 @@ class _NavigationScreenState extends State<NavigationScreen> {
     }
   }
 
-  Set<Marker> _buildMarkers() {
-    final markers = <Marker>{};
-
-    if (_riderPos != null) {
-      markers.add(Marker(
-        markerId: const MarkerId('rider'),
-        position: _riderPos!,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-        infoWindow: const InfoWindow(title: 'You'),
-      ));
-    }
-
-    if (_pharmacyLatLng != null) {
-      markers.add(Marker(
-        markerId: const MarkerId('pharmacy'),
-        position: _pharmacyLatLng!,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-        infoWindow: InfoWindow(title: 'Pharmacy', snippet: widget.delivery['pickupAddress'] ?? ''),
-      ));
-    }
-
-    if (_patientLatLng != null) {
-      markers.add(Marker(
-        markerId: const MarkerId('patient'),
-        position: _patientLatLng!,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-        infoWindow: InfoWindow(title: 'Patient', snippet: widget.delivery['deliveryAddress'] ?? ''),
-      ));
-    }
-
-    return markers;
-  }
-
-  LatLng get _initialCameraTarget {
-    if (_pharmacyLatLng != null) return _pharmacyLatLng!;
-    if (_patientLatLng != null) return _patientLatLng!;
-    return const LatLng(33.5731, -7.5898); // Casablanca default
-  }
-
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: _phase == 'delivered',
+      onPopInvoked: (didPop) {
+        if (!didPop) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Complete the delivery before going back')),
+          );
+        }
+      },
       child: Scaffold(
-        body: Stack(
-          children: [
-            // Full screen map
-            GoogleMap(
-              initialCameraPosition: CameraPosition(
-                target: _initialCameraTarget,
-                zoom: 14,
-              ),
-              onMapCreated: (controller) {
-                _mapController = controller;
-                if (_pharmacyLatLng != null) {
-                  _moveCameraTo(_pharmacyLatLng);
-                }
-              },
-              markers: _buildMarkers(),
-              myLocationEnabled: true,
-              myLocationButtonEnabled: false,
-              zoomControlsEnabled: false,
-            ),
-
-            // Top bar
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: SafeArea(
-                child: Container(
-                  margin: const EdgeInsets.all(AppTheme.spacing16),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppTheme.spacing16,
-                    vertical: AppTheme.spacing12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8)],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          color: _phase == 'delivered' ? AppTheme.success : AppTheme.warning,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: AppTheme.spacing8),
-                      Expanded(
-                        child: Text(
-                          _phase == 'to_pharmacy'
-                              ? 'Head to Pharmacy'
-                              : _phase == 'to_patient'
-                                  ? 'Head to Patient'
-                                  : 'Delivery Complete!',
-                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                        ),
-                      ),
-                      Text(
-                        '${widget.delivery['deliveryFee'] ?? 0} MAD',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.success,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Bottom action panel
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(
-                  AppTheme.spacing16,
-                  AppTheme.spacing20,
-                  AppTheme.spacing16,
-                  AppTheme.spacing32,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(AppTheme.radiusXLarge)),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 12)],
-                ),
-                child: _buildBottomContent(),
-              ),
-            ),
-          ],
+        backgroundColor: AppTheme.background,
+        body: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              Expanded(child: _buildBody()),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildBottomContent() {
-    if (_phase == 'delivered') {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTheme.spacing16,
+        vertical: AppTheme.spacing12,
+      ),
+      color: AppTheme.surface,
+      child: Row(
         children: [
-          const Icon(Icons.check_circle, color: AppTheme.success, size: 48),
-          const SizedBox(height: AppTheme.spacing12),
-          const Text('Delivery Completed!',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: AppTheme.spacing4),
-          Text('You earned ${widget.delivery['deliveryFee'] ?? 0} MAD',
-              style: const TextStyle(color: AppTheme.success, fontWeight: FontWeight.w600)),
-          const SizedBox(height: AppTheme.spacing20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusMedium)),
+          Container(
+            width: 10, height: 10,
+            decoration: BoxDecoration(
+              color: _phase == 'delivered' ? AppTheme.success : AppTheme.warning,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: AppTheme.spacing8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _phase == 'to_pharmacy'
+                      ? 'Head to Pharmacy'
+                      : _phase == 'to_patient'
+                          ? 'Head to Patient'
+                          : 'Delivery Complete!',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                Text(_orderNumber,
+                    style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppTheme.success.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+            ),
+            child: Text(
+              '$_deliveryFee MAD',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppTheme.success,
+                fontSize: 15,
               ),
-              child: const Text('Back to Home', style: TextStyle(fontSize: 16)),
             ),
           ),
         ],
-      );
-    }
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_phase == 'delivered') return _buildDeliveredView();
 
     final isToPharmacy = _phase == 'to_pharmacy';
-    final targetAddress = isToPharmacy
-        ? widget.delivery['pickupAddress'] ?? 'Pharmacy'
-        : widget.delivery['deliveryAddress'] ?? 'Patient';
 
     return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        // Progress steps
+        _buildProgressSteps(),
+
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppTheme.spacing16),
+            child: Column(
+              children: [
+                // Active destination card
+                _buildDestinationCard(
+                  isActive: true,
+                  icon: isToPharmacy ? Icons.store : Icons.location_on,
+                  color: isToPharmacy ? AppTheme.primary : AppTheme.error,
+                  title: isToPharmacy ? 'Pickup Location' : 'Delivery Location',
+                  address: isToPharmacy ? _pickupAddress : _deliveryAddress,
+                  coords: isToPharmacy ? _pharmacyCoords : _deliveryCoords,
+                ),
+                const SizedBox(height: AppTheme.spacing12),
+                // Next destination card (dimmed)
+                _buildDestinationCard(
+                  isActive: false,
+                  icon: isToPharmacy ? Icons.location_on : Icons.check_circle,
+                  color: AppTheme.textSecondary,
+                  title: isToPharmacy ? 'Then Deliver To' : 'Completed',
+                  address: isToPharmacy ? _deliveryAddress : 'Delivery done',
+                  coords: isToPharmacy ? _deliveryCoords : null,
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Bottom action button
+        Container(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          color: AppTheme.surface,
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isUpdating
+                  ? null
+                  : (isToPharmacy ? _arrivedAtPharmacy : _arrivedAtPatient),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isToPharmacy ? AppTheme.primary : AppTheme.success,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppTheme.radiusMedium)),
+              ),
+              child: _isUpdating
+                  ? const SizedBox(
+                      width: 22, height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : Text(
+                      isToPharmacy ? 'Arrived at Pharmacy' : 'Arrived at Patient',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProgressSteps() {
+    return Container(
+      color: AppTheme.surface,
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppTheme.spacing24, vertical: AppTheme.spacing12),
+      child: Row(
+        children: [
+          _stepDot(label: 'Pickup', done: _phase != 'to_pharmacy', active: _phase == 'to_pharmacy'),
+          Expanded(child: Container(height: 2, color: _phase != 'to_pharmacy' ? AppTheme.primary : AppTheme.divider)),
+          _stepDot(label: 'Deliver', done: _phase == 'delivered', active: _phase == 'to_patient'),
+          Expanded(child: Container(height: 2, color: _phase == 'delivered' ? AppTheme.primary : AppTheme.divider)),
+          _stepDot(label: 'Done', done: _phase == 'delivered', active: false),
+        ],
+      ),
+    );
+  }
+
+  Widget _stepDot({required String label, required bool done, required bool active}) {
+    final color = done || active ? AppTheme.primary : AppTheme.divider;
+    return Column(
+      children: [
+        Container(
+          width: 28, height: 28,
+          decoration: BoxDecoration(
+            color: done ? AppTheme.primary : active ? AppTheme.primary.withOpacity(0.15) : AppTheme.divider,
+            shape: BoxShape.circle,
+            border: Border.all(color: color, width: 2),
+          ),
+          child: done
+              ? const Icon(Icons.check, size: 14, color: Colors.white)
+              : active
+                  ? Container(width: 10, height: 10,
+                      margin: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle))
+                  : null,
+        ),
+        const SizedBox(height: 4),
+        Text(label, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w500)),
+      ],
+    );
+  }
+
+  Widget _buildDestinationCard({
+    required bool isActive,
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String address,
+    List? coords,
+  }) {
+    return Opacity(
+      opacity: isActive ? 1.0 : 0.45,
+      child: Card(
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+          side: BorderSide(
+            color: isActive ? color.withOpacity(0.4) : AppTheme.divider,
+            width: isActive ? 1.5 : 1,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppTheme.spacing16),
+          child: Row(
+            children: [
+              Container(
+                width: 44, height: 44,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 22),
+              ),
+              const SizedBox(width: AppTheme.spacing12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: isActive ? color : AppTheme.textSecondary,
+                            fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 2),
+                    Text(address,
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              ),
+              if (isActive)
+                IconButton(
+                  onPressed: () => _openMaps(address, coords),
+                  icon: const Icon(Icons.navigation, color: AppTheme.primary),
+                  tooltip: 'Open in Maps',
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDeliveredView() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.spacing32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              width: 100, height: 100,
               decoration: BoxDecoration(
-                color: (isToPharmacy ? AppTheme.primary : AppTheme.error).withOpacity(0.1),
+                color: AppTheme.success.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                isToPharmacy ? Icons.store : Icons.location_on,
-                color: isToPharmacy ? AppTheme.primary : AppTheme.error,
-                size: 20,
-              ),
+              child: const Icon(Icons.check_circle, color: AppTheme.success, size: 56),
             ),
-            const SizedBox(width: AppTheme.spacing12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isToPharmacy ? 'Pickup from Pharmacy' : 'Deliver to Patient',
-                    style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-                  ),
-                  Text(
-                    targetAddress,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+            const SizedBox(height: AppTheme.spacing24),
+            const Text('Delivery Completed!',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const SizedBox(height: AppTheme.spacing8),
+            Text('You earned $_deliveryFee MAD',
+                style: const TextStyle(
+                    fontSize: 18, color: AppTheme.success, fontWeight: FontWeight.w600)),
+            const SizedBox(height: AppTheme.spacing8),
+            Text(_orderNumber,
+                style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
+            const SizedBox(height: AppTheme.spacing48),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () =>
+                    Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMedium)),
+                ),
+                child: const Text('Back to Home', style: TextStyle(fontSize: 16)),
               ),
             ),
           ],
         ),
-        const SizedBox(height: AppTheme.spacing16),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _isUpdating ? null : (isToPharmacy ? _arrivedAtPharmacy : _arrivedAtPatient),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isToPharmacy ? AppTheme.primary : AppTheme.success,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusMedium)),
-            ),
-            child: _isUpdating
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                  )
-                : Text(
-                    isToPharmacy ? 'Arrived at Pharmacy' : 'Arrived at Patient',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

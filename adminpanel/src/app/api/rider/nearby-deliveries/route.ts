@@ -17,11 +17,12 @@ export async function GET(request: NextRequest) {
     const rider = await Rider.findOne({ userId: auth.userId });
     if (!rider) return errorResponse('Rider profile not found', 404);
 
-    // Fetch all unassigned confirmed/ready orders
-    // riderId: null covers both missing field and explicitly null
+    // Fetch unassigned confirmed/ready orders created in last 24 hours
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const orders = await Order.find({
       status: { $in: ['confirmed', 'ready'] },
-      $or: [{ riderId: { $exists: false } }, { riderId: null }],
+      riderId: { $in: [null, undefined] },
+      createdAt: { $gte: since },
     })
       .sort({ createdAt: -1 })
       .limit(50)
@@ -37,16 +38,17 @@ export async function GET(request: NextRequest) {
 
         if (riderHasLocation) {
           const pharmCoords = order.pharmacyAddress?.location?.coordinates;
-          if (pharmCoords?.length === 2) {
+          if (pharmCoords?.length === 2 && pharmCoords[0] !== 0 && pharmCoords[1] !== 0) {
             distanceKm = calcDistance(
-              rider.currentLocation.coordinates[1], // rider lat
-              rider.currentLocation.coordinates[0], // rider lng
-              pharmCoords[1],                        // pharmacy lat
-              pharmCoords[0]                         // pharmacy lng
+              rider.currentLocation.coordinates[1],
+              rider.currentLocation.coordinates[0],
+              pharmCoords[1],
+              pharmCoords[0]
             );
-            // Filter out orders more than 10km away
+            // Only filter by distance if we actually got a valid distance
             if (distanceKm > 10) return null;
           }
+          // If pharmacy has no coords, still show the order
         }
 
         return {
