@@ -2,6 +2,9 @@ import { NextRequest } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Order from '@/models/Order';
 import Rider from '@/models/Rider';
+import Pharmacy from '@/models/Pharmacy';
+import Patient from '@/models/Patient';
+import User from '@/models/User';
 import { authenticateRequest } from '@/lib/auth';
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response';
 
@@ -32,42 +35,61 @@ export async function GET(request: NextRequest) {
       rider.currentLocation?.coordinates?.length === 2 &&
       (rider.currentLocation.coordinates[0] !== 0 || rider.currentLocation.coordinates[1] !== 0);
 
-    const result = orders
-      .map((order: any) => {
-        let distanceKm: number | null = null;
+    const result = await Promise.all(orders.map(async (order: any) => {
+      let distanceKm: number | null = null;
 
-        if (riderHasLocation) {
-          const pharmCoords = order.pharmacyAddress?.location?.coordinates;
-          if (pharmCoords?.length === 2 && pharmCoords[0] !== 0 && pharmCoords[1] !== 0) {
-            distanceKm = calcDistance(
-              rider.currentLocation.coordinates[1],
-              rider.currentLocation.coordinates[0],
-              pharmCoords[1],
-              pharmCoords[0]
-            );
-            // Only filter by distance if we actually got a valid distance
-            if (distanceKm > 10) return null;
-          }
-          // If pharmacy has no coords, still show the order
+      if (riderHasLocation) {
+        const pharmCoords = order.pharmacyAddress?.location?.coordinates;
+        if (pharmCoords?.length === 2 && pharmCoords[0] !== 0 && pharmCoords[1] !== 0) {
+          distanceKm = calcDistance(
+            rider.currentLocation.coordinates[1],
+            rider.currentLocation.coordinates[0],
+            pharmCoords[1],
+            pharmCoords[0]
+          );
+          if (distanceKm > 10) return null;
         }
+      }
 
-        return {
-          orderId: order._id,
-          orderNumber: order.orderNumber,
-          pickupAddress: order.pharmacyAddress?.address || '',
-          deliveryAddress: order.deliveryAddress?.address || '',
-          pharmacyCoords: order.pharmacyAddress?.location?.coordinates || null,
-          deliveryCoords: order.deliveryAddress?.location?.coordinates || null,
-          distance: distanceKm !== null ? Math.round(distanceKm * 10) / 10 : null,
-          deliveryFee: order.deliveryFee || 0,
-          totalAmount: order.totalAmount || 0,
-          status: order.status,
-          createdAt: order.createdAt,
-        };
-      })
-      .filter(Boolean);
+      // Fetch phone numbers
+      let pharmacyPhone = '';
+      let patientPhone = '';
+      let pharmacyName = '';
+      try {
+        const pharmacy = await Pharmacy.findById(order.pharmacyId).lean() as any;
+        if (pharmacy) {
+          pharmacyName = pharmacy.pharmacyName || '';
+          const pharmUser = await User.findById(pharmacy.userId).select('phone').lean() as any;
+          pharmacyPhone = pharmUser?.phone || '';
+        }
+      } catch (_) {}
+      try {
+        const patient = await Patient.findById(order.patientId).lean() as any;
+        if (patient) {
+          const patUser = await User.findById(patient.userId).select('phone').lean() as any;
+          patientPhone = patUser?.phone || '';
+        }
+      } catch (_) {}
 
-    return successResponse({ deliveries: result });
+      return {
+        orderId: order._id,
+        orderNumber: order.orderNumber,
+        pickupAddress: order.pharmacyAddress?.address || '',
+        deliveryAddress: order.deliveryAddress?.address || '',
+        pharmacyCoords: order.pharmacyAddress?.location?.coordinates || null,
+        deliveryCoords: order.deliveryAddress?.location?.coordinates || null,
+        distance: distanceKm !== null ? Math.round(distanceKm * 10) / 10 : null,
+        deliveryFee: order.deliveryFee || 0,
+        totalAmount: order.totalAmount || 0,
+        status: order.status,
+        pharmacyPhone,
+        pharmacyName,
+        patientPhone,
+        createdAt: order.createdAt,
+      };
+    }));
+
+    return successResponse({ deliveries: result.filter(Boolean) });
   } catch (error: any) {
     console.error('Get nearby deliveries error:', error);
     return errorResponse('Failed to fetch deliveries', 500);

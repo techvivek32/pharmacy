@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../services/api_service.dart';
 import '../../../services/location_service.dart';
@@ -16,7 +17,6 @@ class NavigationScreen extends StatefulWidget {
 }
 
 class _NavigationScreenState extends State<NavigationScreen> {
-  // Phase: 'to_pharmacy' → 'to_patient' → 'delivered'
   String _phase = 'to_pharmacy';
   bool _isUpdating = false;
   Timer? _locationTimer;
@@ -24,7 +24,6 @@ class _NavigationScreenState extends State<NavigationScreen> {
   @override
   void initState() {
     super.initState();
-    // Keep sending location every 30s during delivery
     _locationTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       LocationService.updateLocation();
     });
@@ -42,25 +41,29 @@ class _NavigationScreenState extends State<NavigationScreen> {
   String get _deliveryAddress => widget.delivery['deliveryAddress']?.toString() ?? 'Patient';
   String get _orderNumber => widget.delivery['orderNumber']?.toString() ?? '';
   num get _deliveryFee => widget.delivery['deliveryFee'] ?? 0;
-
   List? get _pharmacyCoords => widget.delivery['pharmacyCoords'] as List?;
   List? get _deliveryCoords => widget.delivery['deliveryCoords'] as List?;
+  String get _pharmacyPhone => widget.delivery['pharmacyPhone']?.toString() ?? '';
+  String get _patientPhone => widget.delivery['patientPhone']?.toString() ?? '';
+
+  Future<void> _callNumber(String phone) async {
+    if (phone.isEmpty) return;
+    final uri = Uri(scheme: 'tel', path: phone);
+    if (await canLaunchUrl(uri)) await launchUrl(uri);
+  }
 
   Future<void> _openMaps(String address, List? coords) async {
     if (coords == null || coords.length < 2) return;
     final lat = (coords[1] as num).toDouble();
     final lng = (coords[0] as num).toDouble();
-    final destination = LatLng(lat, lng);
     if (!mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => MapNavigationScreen(
-          title: address.contains('Pharmacy') || address.contains('pharmacy')
-              ? 'Pickup Location'
-              : 'Delivery Location',
+          title: _phase == 'to_pharmacy' ? 'Pickup Location' : 'Delivery Location',
           address: address,
-          destination: destination,
+          destination: LatLng(lat, lng),
         ),
       ),
     );
@@ -190,15 +193,12 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
     return Column(
       children: [
-        // Progress steps
         _buildProgressSteps(),
-
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppTheme.spacing16),
             child: Column(
               children: [
-                // Active destination card
                 _buildDestinationCard(
                   isActive: true,
                   icon: isToPharmacy ? Icons.store : Icons.location_on,
@@ -206,9 +206,9 @@ class _NavigationScreenState extends State<NavigationScreen> {
                   title: isToPharmacy ? 'Pickup Location' : 'Delivery Location',
                   address: isToPharmacy ? _pickupAddress : _deliveryAddress,
                   coords: isToPharmacy ? _pharmacyCoords : _deliveryCoords,
+                  phone: isToPharmacy ? _pharmacyPhone : _patientPhone,
                 ),
                 const SizedBox(height: AppTheme.spacing12),
-                // Next destination card (dimmed)
                 _buildDestinationCard(
                   isActive: false,
                   icon: isToPharmacy ? Icons.location_on : Icons.check_circle,
@@ -216,13 +216,12 @@ class _NavigationScreenState extends State<NavigationScreen> {
                   title: isToPharmacy ? 'Then Deliver To' : 'Completed',
                   address: isToPharmacy ? _deliveryAddress : 'Delivery done',
                   coords: isToPharmacy ? _deliveryCoords : null,
+                  phone: '',
                 ),
               ],
             ),
           ),
         ),
-
-        // Bottom action button
         Container(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           color: AppTheme.surface,
@@ -286,9 +285,11 @@ class _NavigationScreenState extends State<NavigationScreen> {
           child: done
               ? const Icon(Icons.check, size: 14, color: Colors.white)
               : active
-                  ? Container(width: 10, height: 10,
+                  ? Container(
+                      width: 10, height: 10,
                       margin: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle))
+                      decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
+                    )
                   : null,
         ),
         const SizedBox(height: 4),
@@ -303,6 +304,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
     required Color color,
     required String title,
     required String address,
+    required String phone,
     List? coords,
   }) {
     return Opacity(
@@ -346,15 +348,38 @@ class _NavigationScreenState extends State<NavigationScreen> {
                   ],
                 ),
               ),
-              if (isActive)
-                IconButton(
-                  onPressed: () => _openMaps(
-                    address,
-                    coords,
+              if (isActive) ...[
+                // Call button
+                if (phone.isNotEmpty)
+                  Container(
+                    width: 38, height: 38,
+                    margin: const EdgeInsets.only(right: 6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.success.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () => _callNumber(phone),
+                      icon: const Icon(Icons.call, color: AppTheme.success, size: 18),
+                      tooltip: 'Call',
+                    ),
                   ),
-                  icon: const Icon(Icons.navigation, color: AppTheme.primary),
-                  tooltip: 'Open in Maps',
+                // Navigate button
+                Container(
+                  width: 38, height: 38,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () => _openMaps(address, coords),
+                    icon: const Icon(Icons.navigation, color: AppTheme.primary, size: 18),
+                    tooltip: 'Navigate',
+                  ),
                 ),
+              ],
             ],
           ),
         ),
