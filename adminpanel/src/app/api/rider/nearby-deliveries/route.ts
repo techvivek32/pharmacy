@@ -20,37 +20,38 @@ export async function GET(request: NextRequest) {
       return errorResponse('Rider profile not found', 404);
     }
 
-    if (!rider.currentLocation) {
-      return errorResponse('Please update your location first');
-    }
-
     // Find nearby orders that need delivery
     const orders = await Order.find({
       status: { $in: ['ready', 'confirmed'] },
       riderId: { $exists: false },
     })
-      .populate('pharmacyId')
+      .populate('pharmacyId', 'pharmacyName address location')
       .populate('patientId')
       .sort({ createdAt: -1 })
       .limit(20);
 
-    // Calculate distance and filter
+    // If rider has location, filter by 10km; otherwise return all available
     const nearbyOrders = orders
       .map((order: any) => {
-        const distance = calculateDistance(
-          rider.currentLocation!.coordinates,
-          order.pharmacyAddress.location.coordinates
-        );
-
-        if (distance > 10) return null; // Only show orders within 10km
+        let distance = null;
+        if (rider.currentLocation && order.pharmacyAddress?.location?.coordinates?.length === 2) {
+          distance = calculateDistance(
+            rider.currentLocation.coordinates,
+            order.pharmacyAddress.location.coordinates
+          );
+          if (distance > 10) return null;
+        }
 
         return {
           orderId: order._id,
           orderNumber: order.orderNumber,
-          pickupAddress: order.pharmacyAddress.address,
-          deliveryAddress: order.deliveryAddress.address,
+          pickupAddress: order.pharmacyAddress?.address || order.pharmacyId?.address || '',
+          deliveryAddress: order.deliveryAddress?.address || '',
+          pharmacyLocation: order.pharmacyAddress?.location?.coordinates || null,
+          deliveryLocation: order.deliveryAddress?.location?.coordinates || null,
           distance: distance,
           deliveryFee: order.deliveryFee,
+          totalAmount: order.totalAmount,
           status: order.status,
           createdAt: order.createdAt,
         };
