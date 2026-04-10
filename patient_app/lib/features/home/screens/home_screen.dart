@@ -290,7 +290,7 @@ class _HomeTab extends StatelessWidget {
                                   children: [
                                     Text(o.orderNumber.isNotEmpty ? o.orderNumber : 'Pending Quote',
                                         style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                                    Text(o.pharmacyName ?? _statusLabel(o.status),
+                                    Text(_statusLabel(o.status),
                                         style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
                                   ],
                                 ),
@@ -471,16 +471,6 @@ class _OrdersTab extends StatelessWidget {
                               ),
                             ],
                           ),
-                          if (o.pharmacyName != null) ...[
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(Icons.local_pharmacy, size: 14, color: AppTheme.textSecondary),
-                                const SizedBox(width: 4),
-                                Text(o.pharmacyName!, style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
-                              ],
-                            ),
-                          ],
                           const SizedBox(height: 8),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
