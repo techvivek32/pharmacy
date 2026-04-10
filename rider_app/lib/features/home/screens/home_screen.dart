@@ -39,6 +39,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _fetchData() async {
     setState(() => _loading = true);
+    // Check rider's current online status from backend
+    final profileRes = await ApiService.get('/rider/profile');
+    if (!mounted) return;
+    if (profileRes.success && profileRes.data != null) {
+      final rider = profileRes.data['rider'];
+      final backendOnline = rider?['isOnline'] == true;
+      if (backendOnline != _isOnline) {
+        setState(() => _isOnline = backendOnline);
+        if (backendOnline) {
+          _pollTimer?.cancel();
+          _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) => _fetchAvailableOrders());
+        }
+      }
+    }
     final res = await ApiService.get('/rider/orders');
     if (!mounted) return;
     if (res.success && res.data != null) {
@@ -103,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) => _fetchAvailableOrders());
       await _fetchAvailableOrders();
     } else {
-      await LocationService.stopTracking();
+      await LocationService.markOffline();
       setState(() {
         _isOnline = false;
         _availableOrders = [];

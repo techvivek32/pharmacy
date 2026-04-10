@@ -34,8 +34,9 @@ export async function PUT(request: NextRequest) {
     order.status = status;
     if (status === 'delivered') {
       order.deliveredAt = new Date();
-      // Free up rider
+      // Free up rider and keep them online for next delivery
       rider.isAvailable = true;
+      rider.isOnline = true;
       rider.totalDeliveries = (rider.totalDeliveries || 0) + 1;
       rider.totalEarnings = (rider.totalEarnings || 0) + order.deliveryFee;
       await rider.save();

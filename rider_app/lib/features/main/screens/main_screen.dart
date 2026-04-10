@@ -32,7 +32,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    LocationService.stopTracking();
+    LocationService.stopTracking(); // just cancel timer, don't mark offline
     super.dispose();
   }
 
@@ -40,9 +40,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _initLocation();
-    } else if (state == AppLifecycleState.paused) {
-      LocationService.stopTracking();
     }
+    // Do NOT mark offline on pause — rider stays online between screens
   }
 
   Future<void> _initLocation() async {
@@ -113,9 +112,9 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             label: 'Active',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_wallet_outlined),
-            activeIcon: Icon(Icons.account_balance_wallet),
-            label: 'Wallet',
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Profile',
           ),
         ],
       ),

@@ -52,11 +52,17 @@ class LocationService {
     _timer = Timer.periodic(const Duration(seconds: 30), (_) => updateLocation());
   }
 
-  /// Stop tracking and mark rider offline.
-  static Future<void> stopTracking() async {
+  /// Stop the location timer only — does NOT mark rider offline.
+  /// Call markOffline() separately when rider manually goes offline.
+  static void stopTracking() {
     _timer?.cancel();
     _timer = null;
     _isTracking = false;
+  }
+
+  /// Mark rider offline on backend.
+  static Future<void> markOffline() async {
+    stopTracking();
     await ApiService.put('/rider/update-location', {
       'lat': 0,
       'lng': 0,
