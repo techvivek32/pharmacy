@@ -515,10 +515,20 @@ class _ProfileTab extends StatelessWidget {
                   CircleAvatar(
                     radius: 45,
                     backgroundColor: AppTheme.primary.withOpacity(0.1),
-                    child: Text(
-                      (user?.fullName ?? 'U').substring(0, 1).toUpperCase(),
-                      style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: AppTheme.primary),
-                    ),
+                    backgroundImage: (user?.profileImage != null &&
+                            user!.profileImage!.toString().startsWith('http'))
+                        ? NetworkImage(user.profileImage!)
+                        : null,
+                    child: (user?.profileImage == null ||
+                            !user!.profileImage!.toString().startsWith('http'))
+                        ? Text(
+                            (user?.fullName ?? 'U').substring(0, 1).toUpperCase(),
+                            style: const TextStyle(
+                                fontSize: 36,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primary),
+                          )
+                        : null,
                   ),
                   const SizedBox(height: 12),
                   Text(user?.fullName ?? '', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),

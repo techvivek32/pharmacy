@@ -97,12 +97,16 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    order.orderNumber ?? 'Order',
-                    style: Theme.of(context).textTheme.titleMedium,
+                  Expanded(
+                    child: Text(
+                      order.orderNumber?.isNotEmpty == true ? order.orderNumber! : 'Pending Quote',
+                      style: Theme.of(context).textTheme.titleMedium,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   _buildStatusChip(order.status),
                 ],
               ),
@@ -126,7 +130,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   Text(
-                    '${order.totalAmount} MAD',
+                    '${order.totalAmount.toStringAsFixed(2)} MAD',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: AppTheme.primary,
                         ),
