@@ -3,19 +3,19 @@ import 'api_service.dart';
 
 class PrescriptionService {
   static Future<PrescriptionUploadResult> uploadPrescription({
-    required String imageUrl,
-    required String imagePublicId,
+    String? imageUrl,
+    String? imagePublicId,
     String? address,
     List<double>? coordinates,
+    List<Map<String, dynamic>>? medicines,
   }) async {
     try {
-      final Map<String, dynamic> data = {
-        'imageUrl': imageUrl,
-        'imagePublicId': imagePublicId,
-      };
-
+      final Map<String, dynamic> data = {};
+      if (imageUrl != null) data['imageUrl'] = imageUrl;
+      if (imagePublicId != null) data['imagePublicId'] = imagePublicId;
       if (address != null) data['address'] = address;
       if (coordinates != null) data['coordinates'] = coordinates;
+      if (medicines != null && medicines.isNotEmpty) data['medicines'] = medicines;
 
       final response = await ApiService.post('/prescriptions/upload', data);
 

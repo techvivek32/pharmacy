@@ -16,10 +16,10 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     const body = await request.json();
-    const { imageUrl, imagePublicId, address, coordinates } = body;
+    const { imageUrl, imagePublicId, address, coordinates, medicines } = body;
 
-    if (!imageUrl) {
-      return errorResponse('Image URL is required');
+    if (!imageUrl && (!medicines || medicines.length === 0)) {
+      return errorResponse('Either image URL or medicines list is required');
     }
 
     const patient = await Patient.findOne({ userId: auth.userId });
@@ -29,11 +29,12 @@ export async function POST(request: NextRequest) {
 
     const prescriptionData: any = {
       patientId: patient._id,
-      imageUrl,
+      imageUrl: imageUrl || '',
       status: 'pending',
     };
 
     if (imagePublicId) prescriptionData.imagePublicId = imagePublicId;
+    if (medicines && medicines.length > 0) prescriptionData.medicines = medicines;
 
     let nearbyPharmaciesCount = 0;
 

@@ -4,6 +4,7 @@ export interface IPrescription extends Document {
   patientId: mongoose.Types.ObjectId;
   imageUrl: string;
   imagePublicId?: string;
+  medicines?: Array<{ name: string; quantity: number }>;
   status: 'pending' | 'quoted' | 'accepted' | 'rejected' | 'expired';
   deliveryAddress?: {
     address: string;
@@ -32,6 +33,12 @@ const PrescriptionSchema = new Schema<IPrescription>(
     imagePublicId: {
       type: String,
     },
+    medicines: [
+      {
+        name: { type: String, required: true },
+        quantity: { type: Number, default: 1 },
+      },
+    ],
     status: {
       type: String,
       enum: ['pending', 'quoted', 'accepted', 'rejected', 'expired'],
