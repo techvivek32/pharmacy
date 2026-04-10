@@ -103,19 +103,19 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         elevation: 8,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
+            icon: Icon(Icons.delivery_dining_outlined),
+            activeIcon: Icon(Icons.delivery_dining),
             label: 'Home',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.receipt_long_outlined),
             activeIcon: Icon(Icons.receipt_long),
-            label: 'Orders',
+            label: 'Active',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profile',
+            icon: Icon(Icons.account_balance_wallet_outlined),
+            activeIcon: Icon(Icons.account_balance_wallet),
+            label: 'Wallet',
           ),
         ],
       ),

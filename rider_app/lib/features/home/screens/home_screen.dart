@@ -1,10 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../services/api_service.dart';
-import '../../orders/screens/orders_screen.dart';
-import '../../profile/screens/order_history_screen.dart';
+import '../../../services/location_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,98 +14,121 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  bool _isOnline = false;
+  bool _togglingOnline = false;
   bool _loading = true;
-  int _availableOrders = 0;
-  int _totalDeliveries = 0;
-  double _totalEarnings = 0;
+
+  double _walletBalance = 0;
   double _todayEarnings = 0;
   int _todayDeliveries = 0;
-  List<Map<String, dynamic>> _recentOrders = [];
+
+  List<Map<String, dynamic>> _availableOrders = [];
+  Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _fetchData();
   }
 
-  Future<void> _loadData() async {
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetchData() async {
     setState(() => _loading = true);
-
-    // Fetch stats + history in parallel
-    final results = await Future.wait([
-      ApiService.get('/rider/nearby-deliveries'),
-      ApiService.get('/rider/orders'),
-    ]);
-
+    final res = await ApiService.get('/rider/orders');
     if (!mounted) return;
-
-    final nearbyRes = results[0];
-    final ordersRes = results[1];
-
-    int available = 0;
-    if (nearbyRes.success && nearbyRes.data != null) {
-      available = (nearbyRes.data['deliveries'] as List? ?? []).length;
-    }
-
-    int totalDeliveries = 0;
-    double totalEarnings = 0;
-    double todayEarnings = 0;
-    int todayDeliveries = 0;
-    List<Map<String, dynamic>> recent = [];
-
-    if (ordersRes.success && ordersRes.data != null) {
-      totalDeliveries = (ordersRes.data['totalDeliveries'] as num?)?.toInt() ?? 0;
-      totalEarnings = (ordersRes.data['totalEarnings'] as num?)?.toDouble() ?? 0;
-
-      final orders = List<Map<String, dynamic>>.from(
-        (ordersRes.data['orders'] as List? ?? []).map((e) => Map<String, dynamic>.from(e)),
-      );
-
+    if (res.success && res.data != null) {
       final today = DateTime.now();
+      double todayEarn = 0;
+      int todayCount = 0;
+      final orders = List<Map<String, dynamic>>.from(
+        (res.data['orders'] as List? ?? []).map((e) => Map<String, dynamic>.from(e)),
+      );
       for (final o in orders) {
         if (o['status'] == 'delivered') {
           try {
-            final dt = DateTime.parse(
-                (o['deliveredAt'] ?? o['createdAt']).toString());
-            if (dt.year == today.year &&
-                dt.month == today.month &&
-                dt.day == today.day) {
-              todayEarnings += (o['deliveryFee'] as num?)?.toDouble() ?? 0;
-              todayDeliveries++;
+            final dt = DateTime.parse((o['deliveredAt'] ?? o['createdAt']).toString()).toLocal();
+            if (dt.year == today.year && dt.month == today.month && dt.day == today.day) {
+              todayEarn += (o['deliveryFee'] as num?)?.toDouble() ?? 0;
+              todayCount++;
             }
           } catch (_) {}
         }
       }
-
-      recent = orders.take(3).toList();
+      setState(() {
+        _walletBalance = (res.data['totalEarnings'] as num?)?.toDouble() ?? 0;
+        _todayEarnings = todayEarn;
+        _todayDeliveries = todayCount;
+        _loading = false;
+      });
+    } else {
+      setState(() => _loading = false);
     }
-
-    setState(() {
-      _availableOrders = available;
-      _totalDeliveries = totalDeliveries;
-      _totalEarnings = totalEarnings;
-      _todayEarnings = todayEarnings;
-      _todayDeliveries = todayDeliveries;
-      _recentOrders = recent;
-      _loading = false;
-    });
+    if (_isOnline) _fetchAvailableOrders();
   }
 
-  String _formatDate(dynamic raw) {
-    if (raw == null) return '';
-    try {
-      final dt = DateTime.parse(raw.toString()).toLocal();
-      return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
-    } catch (_) {
-      return '';
+  Future<void> _fetchAvailableOrders() async {
+    final res = await ApiService.get('/rider/nearby-deliveries');
+    if (!mounted) return;
+    if (res.success && res.data != null) {
+      setState(() {
+        _availableOrders = List<Map<String, dynamic>>.from(
+          (res.data['deliveries'] as List? ?? []).map((e) => Map<String, dynamic>.from(e)),
+        );
+      });
     }
   }
 
-  String _greeting() {
-    final h = DateTime.now().hour;
-    if (h < 12) return 'Good Morning';
-    if (h < 17) return 'Good Afternoon';
-    return 'Good Evening';
+  Future<void> _toggleOnline(bool value) async {
+    setState(() => _togglingOnline = true);
+    if (value) {
+      final granted = await LocationService.requestPermission();
+      if (!granted) {
+        setState(() => _togglingOnline = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Location permission required to go online')),
+          );
+        }
+        return;
+      }
+      await LocationService.updateLocation(isOnline: true);
+      setState(() => _isOnline = true);
+      LocationService.startTracking();
+      _pollTimer?.cancel();
+      _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) => _fetchAvailableOrders());
+      await _fetchAvailableOrders();
+    } else {
+      await LocationService.stopTracking();
+      setState(() {
+        _isOnline = false;
+        _availableOrders = [];
+      });
+      _pollTimer?.cancel();
+    }
+    setState(() => _togglingOnline = false);
+  }
+
+  Future<void> _acceptOrder(Map<String, dynamic> order) async {
+    final res = await ApiService.post('/rider/accept-delivery', {'orderId': order['orderId'].toString()});
+    if (!mounted) return;
+    if (res.success) {
+      setState(() => _availableOrders.removeWhere((o) => o['orderId'].toString() == order['orderId'].toString()));
+      Navigator.pushNamed(context, '/navigation', arguments: order);
+    } else {
+      await _fetchAvailableOrders();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res.message), backgroundColor: AppTheme.error),
+      );
+    }
+  }
+
+  void _skipOrder(Map<String, dynamic> order) {
+    setState(() => _availableOrders.removeWhere((o) => o['orderId'].toString() == order['orderId'].toString()));
   }
 
   @override
@@ -115,23 +138,15 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: RefreshIndicator(
-        onRefresh: _loadData,
+        color: AppTheme.primary,
+        onRefresh: _fetchData,
         child: CustomScrollView(
           slivers: [
-            // Header
+            // Green header
             SliverToBoxAdapter(
               child: Container(
-                decoration: const BoxDecoration(
-                  color: AppTheme.primary,
-                  borderRadius: BorderRadius.vertical(
-                      bottom: Radius.circular(AppTheme.radiusXLarge)),
-                ),
-                padding: EdgeInsets.fromLTRB(
-                  AppTheme.spacing20,
-                  MediaQuery.of(context).padding.top + AppTheme.spacing16,
-                  AppTheme.spacing20,
-                  AppTheme.spacing32,
-                ),
+                color: AppTheme.primary,
+                padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 16, 20, 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -142,76 +157,81 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _greeting(),
-                              style: const TextStyle(
-                                  color: Colors.white70, fontSize: 14),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              user?.fullName ?? 'Rider',
+                              'Hey, ${user?.fullName?.split(' ').first ?? 'Driver'}!',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                            const SizedBox(height: 2),
+                            const Text(
+                              'Ready to earn today?',
+                              style: TextStyle(color: Colors.white70, fontSize: 13),
+                            ),
                           ],
                         ),
-                        CircleAvatar(
-                          radius: 24,
-                          backgroundColor: Colors.white.withOpacity(0.2),
-                          child: Text(
-                            (user?.fullName ?? 'R')
-                                .substring(0, 1)
-                                .toUpperCase(),
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold),
-                          ),
+                        GestureDetector(
+                          onTap: () async {
+                            await context.read<AuthProvider>().logout();
+                            if (mounted) Navigator.pushReplacementNamed(context, '/login');
+                          },
+                          child: const Icon(Icons.logout, color: Colors.white, size: 24),
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppTheme.spacing20),
-                    // Today's summary
+                    const SizedBox(height: 16),
+                    // Availability toggle
                     Container(
-                      padding: const EdgeInsets.all(AppTheme.spacing16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
-                        borderRadius:
-                            BorderRadius.circular(AppTheme.radiusMedium),
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
                       ),
                       child: Row(
                         children: [
-                          Expanded(
-                            child: _headerStat(
-                              'Today\'s Earnings',
-                              '${_todayEarnings.toStringAsFixed(0)} MAD',
-                              Icons.payments_outlined,
-                            ),
-                          ),
                           Container(
-                              width: 1,
-                              height: 40,
-                              color: Colors.white30),
-                          Expanded(
-                            child: _headerStat(
-                              'Today\'s Trips',
-                              '$_todayDeliveries',
-                              Icons.delivery_dining,
+                            width: 36, height: 36,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.power_settings_new,
+                              color: _isOnline ? Colors.white : Colors.white70,
+                              size: 20,
                             ),
                           ),
-                          Container(
-                              width: 1,
-                              height: 40,
-                              color: Colors.white30),
+                          const SizedBox(width: 12),
                           Expanded(
-                            child: _headerStat(
-                              'Available',
-                              '$_availableOrders',
-                              Icons.inbox_outlined,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Availability',
+                                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15)),
+                                Text(
+                                  _isOnline ? 'Online' : 'Offline',
+                                  style: TextStyle(
+                                    color: _isOnline ? Colors.white : Colors.white60,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
+                          _togglingOnline
+                              ? const SizedBox(
+                                  width: 36, height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : Switch(
+                                  value: _isOnline,
+                                  onChanged: _toggleOnline,
+                                  activeColor: Colors.white,
+                                  activeTrackColor: AppTheme.primaryDark,
+                                  inactiveThumbColor: Colors.white,
+                                  inactiveTrackColor: Colors.white30,
+                                ),
                         ],
                       ),
                     ),
@@ -220,401 +240,292 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            if (_loading)
-              const SliverFillRemaining(
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.all(AppTheme.spacing16),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    // Overall stats row
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _statCard(
-                            icon: Icons.check_circle_outline,
-                            label: 'Total Deliveries',
-                            value: '$_totalDeliveries',
-                            color: AppTheme.success,
-                          ),
-                        ),
-                        const SizedBox(width: AppTheme.spacing12),
-                        Expanded(
-                          child: _statCard(
-                            icon: Icons.account_balance_wallet_outlined,
-                            label: 'Total Earned',
-                            value: '${_totalEarnings.toStringAsFixed(0)} MAD',
-                            color: AppTheme.primary,
-                          ),
-                        ),
-                      ],
+            SliverPadding(
+              padding: const EdgeInsets.all(16),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  // Wallet balance card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary,
+                      borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
                     ),
-                    const SizedBox(height: AppTheme.spacing20),
-
-                    // Quick actions
-                    _sectionTitle('Quick Actions'),
-                    const SizedBox(height: AppTheme.spacing12),
-                    Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: _actionTile(
-                            icon: Icons.receipt_long,
-                            label: 'Available\nOrders',
-                            color: AppTheme.info,
-                            badge: _availableOrders > 0
-                                ? '$_availableOrders'
-                                : null,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const OrdersScreen()),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: AppTheme.spacing12),
-                        Expanded(
-                          child: _actionTile(
-                            icon: Icons.history,
-                            label: 'Order\nHistory',
-                            color: AppTheme.warning,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) =>
-                                      const OrderHistoryScreen()),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: AppTheme.spacing12),
-                        Expanded(
-                          child: _actionTile(
-                            icon: Icons.account_balance_wallet,
-                            label: 'My\nWallet',
-                            color: AppTheme.success,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const OrderHistoryScreen()),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppTheme.spacing20),
-
-                    // Recent orders
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _sectionTitle('Recent Orders'),
-                        TextButton(
-                          onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const OrderHistoryScreen()),
-                          ),
-                          child: const Text('See All'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppTheme.spacing8),
-
-                    if (_recentOrders.isEmpty)
-                      Container(
-                        padding: const EdgeInsets.all(AppTheme.spacing24),
-                        decoration: BoxDecoration(
-                          color: AppTheme.surface,
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusLarge),
-                          border: Border.all(color: AppTheme.divider),
-                        ),
-                        child: Column(
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(Icons.delivery_dining,
-                                size: 48,
-                                color:
-                                    AppTheme.textSecondary.withOpacity(0.4)),
-                            const SizedBox(height: AppTheme.spacing8),
-                            Text('No deliveries yet',
-                                style: Theme.of(context).textTheme.titleSmall),
-                            const SizedBox(height: AppTheme.spacing4),
-                            Text(
-                              'Accept orders from the Orders tab to get started',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(
-                                      color: AppTheme.textSecondary),
-                              textAlign: TextAlign.center,
-                            ),
+                            const Text('Wallet Balance',
+                                style: TextStyle(color: Colors.white70, fontSize: 13)),
+                            const Icon(Icons.account_balance_wallet_outlined,
+                                color: Colors.white70, size: 20),
                           ],
                         ),
-                      )
-                    else
-                      ..._recentOrders.map((o) => _recentOrderCard(o)),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${_walletBalance.toStringAsFixed(0)} MAD',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 30,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            onPressed: () {},
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppTheme.primary,
+                              backgroundColor: Colors.white,
+                              side: BorderSide.none,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium)),
+                            ),
+                            child: const Text('Request Payout',
+                                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
 
-                    const SizedBox(height: AppTheme.spacing16),
+                  // Stats row
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _statCard(
+                          icon: Icons.trending_up,
+                          label: "Today's Earnings",
+                          value: '${_todayEarnings.toStringAsFixed(0)} MAD',
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _statCard(
+                          icon: Icons.delivery_dining,
+                          label: 'Deliveries',
+                          value: '$_todayDeliveries',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
 
-                    // Tips card
+                  // Online: show available orders / Offline: show offline state
+                  if (!_isOnline) ...[
                     Container(
-                      padding: const EdgeInsets.all(AppTheme.spacing16),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppTheme.info.withOpacity(0.08),
-                        borderRadius:
-                            BorderRadius.circular(AppTheme.radiusLarge),
-                        border: Border.all(
-                            color: AppTheme.info.withOpacity(0.2)),
+                        color: const Color(0xFFFFF8E1),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                        border: Border.all(color: const Color(0xFFFFE082)),
                       ),
                       child: Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: AppTheme.info.withOpacity(0.15),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.tips_and_updates,
-                                color: AppTheme.info, size: 22),
-                          ),
-                          const SizedBox(width: AppTheme.spacing12),
-                          const Expanded(
+                          const Icon(Icons.info_outline, color: Color(0xFFF39C12), size: 20),
+                          const SizedBox(width: 12),
+                          Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Stay Online',
+                                const Text("You're offline",
                                     style: TextStyle(
                                         fontWeight: FontWeight.bold,
+                                        color: Color(0xFFF39C12),
                                         fontSize: 14)),
-                                SizedBox(height: 2),
-                                Text(
-                                  'Keep the app open to receive nearby delivery requests in real time.',
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      color: AppTheme.textSecondary),
-                                ),
+                                const SizedBox(height: 2),
+                                Text('Toggle your availability to start receiving job offers',
+                                    style: TextStyle(color: Colors.orange.shade700, fontSize: 12)),
                               ],
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppTheme.spacing16),
-                  ]),
-                ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(child: _quickTile(Icons.delivery_dining, 'Deliveries',
+                            () => Navigator.pushNamed(context, '/order-history'))),
+                        const SizedBox(width: 12),
+                        Expanded(child: _quickTile(Icons.trending_up, 'Earnings',
+                            () => Navigator.pushNamed(context, '/wallet'))),
+                      ],
+                    ),
+                  ] else ...[
+                    if (_availableOrders.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface,
+                          borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                          border: Border.all(color: AppTheme.divider),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(Icons.delivery_dining,
+                                size: 48, color: AppTheme.textSecondary.withOpacity(0.4)),
+                            const SizedBox(height: 8),
+                            const Text('No jobs available nearby',
+                                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                            const SizedBox(height: 4),
+                            const Text('New jobs will appear here automatically',
+                                style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                          ],
+                        ),
+                      )
+                    else ...[
+                      const Text('New Job Available',
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 12),
+                      ..._availableOrders.map((order) => _jobCard(order)),
+                    ],
+                  ],
+                  const SizedBox(height: 16),
+                ]),
               ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _headerStat(String label, String value, IconData icon) {
-    return Column(
-      children: [
-        Icon(icon, color: Colors.white70, size: 18),
-        const SizedBox(height: 4),
-        Text(value,
-            style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 16)),
-        Text(label,
-            style: const TextStyle(color: Colors.white60, fontSize: 10),
-            textAlign: TextAlign.center),
-      ],
-    );
-  }
-
-  Widget _statCard({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
+  Widget _statCard({required IconData icon, required String label, required String value}) {
     return Container(
-      padding: const EdgeInsets.all(AppTheme.spacing16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
         border: Border.all(color: AppTheme.divider),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 22),
-          ),
-          const SizedBox(width: AppTheme.spacing12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(value,
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: color)),
-                Text(label,
-                    style: const TextStyle(
-                        fontSize: 11, color: AppTheme.textSecondary)),
-              ],
-            ),
-          ),
+          Icon(icon, color: AppTheme.primary, size: 22),
+          const SizedBox(height: 8),
+          Text(label,
+              style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+          const SizedBox(height: 4),
+          Text(value,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
         ],
       ),
     );
   }
 
-  Widget _actionTile({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-    String? badge,
-  }) {
+  Widget _quickTile(IconData icon, String label, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: AppTheme.spacing16),
+        padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
           color: AppTheme.surface,
           borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
           border: Border.all(color: AppTheme.divider),
         ),
-        child: Stack(
-          alignment: Alignment.center,
+        child: Column(
           children: [
-            Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: color, size: 24),
-                ),
-                const SizedBox(height: AppTheme.spacing8),
-                Text(label,
-                    style: const TextStyle(
-                        fontSize: 11, fontWeight: FontWeight.w600),
-                    textAlign: TextAlign.center),
-              ],
-            ),
-            if (badge != null)
-              Positioned(
-                top: 0,
-                right: 8,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppTheme.error,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(badge,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold)),
-                ),
-              ),
+            Icon(icon, color: AppTheme.primary, size: 28),
+            const SizedBox(height: 8),
+            Text(label,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
           ],
         ),
       ),
     );
   }
 
-  Widget _sectionTitle(String title) {
-    return Text(title,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold));
-  }
-
-  Widget _recentOrderCard(Map<String, dynamic> o) {
-    final status = o['status']?.toString() ?? '';
-    final isDelivered = status == 'delivered';
-    final fee = (o['deliveryFee'] as num?)?.toDouble() ?? 0.0;
-    final color = isDelivered ? AppTheme.success : AppTheme.warning;
+  Widget _jobCard(Map<String, dynamic> order) {
+    final fee = (order['deliveryFee'] as num?)?.toDouble() ?? 0;
+    final distance = order['distance'];
+    final pickup = order['pickupAddress']?.toString() ?? 'Pharmacy';
+    final delivery = order['deliveryAddress']?.toString() ?? 'Patient';
+    // Extract pharmacy name from pickup address (first part before comma)
+    final pharmacyName = pickup.contains(',') ? pickup.split(',').first.trim() : pickup;
+    final patientName = delivery.contains(',') ? delivery.split(',').first.trim() : delivery;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: AppTheme.spacing8),
-      padding: const EdgeInsets.all(AppTheme.spacing12),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        border: Border.all(color: AppTheme.divider),
+        border: Border.all(color: AppTheme.primary.withOpacity(0.4), width: 1.5),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              isDelivered ? Icons.check_circle : Icons.delivery_dining,
-              color: color,
-              size: 20,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(pharmacyName,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('${fee.toStringAsFixed(0)} MAD',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: AppTheme.primary)),
+                  const Text('Payment',
+                      style: TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
+                ],
+              ),
+            ],
           ),
-          const SizedBox(width: AppTheme.spacing12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 6),
+          Text('Pickup for $patientName',
+              style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+          if (distance != null) ...[
+            const SizedBox(height: 6),
+            Row(
               children: [
-                Text(
-                  o['orderNumber']?.toString() ?? '',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w600, fontSize: 14),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  o['deliveryAddress']?.toString() ?? '',
-                  style: const TextStyle(
-                      fontSize: 12, color: AppTheme.textSecondary),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  _formatDate(o['deliveredAt'] ?? o['createdAt']),
-                  style: const TextStyle(
-                      fontSize: 11, color: AppTheme.textSecondary),
-                ),
+                const Icon(Icons.location_on_outlined, size: 14, color: AppTheme.textSecondary),
+                const SizedBox(width: 4),
+                Text('$distance km',
+                    style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
               ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          ],
+          const SizedBox(height: 14),
+          Row(
             children: [
-              Text(
-                isDelivered ? '+${fee.toStringAsFixed(0)} MAD' : '—',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                    fontSize: 13),
-              ),
-              const SizedBox(height: 2),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => _acceptOrder(order),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMedium)),
+                    elevation: 0,
+                  ),
+                  child: const Text('Accept', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
                 ),
-                child: Text(
-                  isDelivered ? 'Done' : status,
-                  style: TextStyle(
-                      fontSize: 10,
-                      color: color,
-                      fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => _skipOrder(order),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.primary,
+                    side: const BorderSide(color: AppTheme.primary),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMedium)),
+                  ),
+                  child: const Text('Skip', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
                 ),
               ),
             ],

@@ -20,6 +20,11 @@ export async function GET(request: NextRequest) {
     const rider = await Rider.findOne({ userId: auth.userId });
     if (!rider) return errorResponse('Rider profile not found', 404);
 
+    // Only return orders if rider is online
+    if (!rider.isOnline) {
+      return successResponse({ deliveries: [] });
+    }
+
     // Fetch unassigned confirmed/ready orders created in last 24 hours
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const orders = await Order.find({
