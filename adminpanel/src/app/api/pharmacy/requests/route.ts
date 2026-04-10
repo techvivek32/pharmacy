@@ -94,6 +94,7 @@ export async function GET(request: NextRequest) {
         return {
           id: p._id,
           imageUrl: p.imageUrl || '',
+          medicines: p.medicines || [],
           patientName,
           patientPhone,
           patientEmail,

@@ -126,8 +126,11 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   const SizedBox(height: AppTheme.spacing16),
                   _buildDeliveryAddress(order),
                   const SizedBox(height: AppTheme.spacing16),
-                  if (order.prescriptionImage != null) ...[
+                  if (order.prescriptionImage != null && order.prescriptionImage!.isNotEmpty) ...[
                     _buildPrescriptionImage(order.prescriptionImage!),
+                    const SizedBox(height: AppTheme.spacing16),
+                  ] else if (order.medicines.isNotEmpty) ...[
+                    _buildMedicinesList(order.medicines),
                     const SizedBox(height: AppTheme.spacing16),
                   ],
                   // Quote details (medicines + pricing)
@@ -457,6 +460,58 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 ),
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMedicinesList(List<Map<String, dynamic>> medicines) {
+    return AppCard(
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.spacing16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Requested Medicines',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: AppTheme.spacing12),
+            ...medicines.map((m) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppTheme.spacing8),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                        ),
+                        child: const Icon(Icons.medication, size: 16, color: AppTheme.primary),
+                      ),
+                      const SizedBox(width: AppTheme.spacing12),
+                      Expanded(
+                        child: Text(
+                          m['name']?.toString() ?? '',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                        ),
+                        child: Text(
+                          'Qty: ${m['quantity'] ?? 1}',
+                          style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primary),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
           ],
         ),
       ),

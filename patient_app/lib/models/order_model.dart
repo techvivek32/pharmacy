@@ -22,6 +22,7 @@ class Order {
   final Map<String, dynamic>? deliveryAddress;
   final String? prescriptionImage;
   final bool isPendingQuote;
+  final List<Map<String, dynamic>> medicines;
 
   Order({
     required this.id,
@@ -47,6 +48,7 @@ class Order {
     this.deliveryAddress,
     this.prescriptionImage,
     this.isPendingQuote = false,
+    this.medicines = const [],
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -85,6 +87,9 @@ class Order {
           : null,
       prescriptionImage: json['prescriptionImage'],
       isPendingQuote: json['_isPendingQuote'] == true,
+      medicines: (json['medicines'] as List?)
+          ?.map((m) => Map<String, dynamic>.from(m as Map))
+          .toList() ?? [],
     );
   }
 }
