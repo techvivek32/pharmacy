@@ -6,6 +6,7 @@ import Prescription from '@/models/Prescription';
 import Patient from '@/models/Patient';
 import Pharmacy from '@/models/Pharmacy';
 import User from '@/models/User';
+import Rider from '@/models/Rider';
 import { successResponse, errorResponse } from '@/lib/response';
 import jwt from 'jsonwebtoken';
 
