@@ -52,7 +52,11 @@ export async function GET(request: NextRequest) {
             pharmCoords[1],
             pharmCoords[0]
           );
-          if (distanceKm > 10) return null;
+          // Strictly filter: only show orders within 20km of rider
+          if (distanceKm > 20) return null;
+        } else {
+          // Rider has location but pharmacy has no coords — skip, can't verify range
+          return null;
         }
       }
 
