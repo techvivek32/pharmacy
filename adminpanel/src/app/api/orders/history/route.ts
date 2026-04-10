@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     const orders = await Order.find({ patientId: patient._id })
       .sort({ createdAt: -1 })
       .populate('pharmacyId', 'pharmacyName address phone')
-      .populate('riderId', 'fullName phone')
+      .populate({ path: 'riderId', model: Rider, select: 'userId vehicleType' })
       .populate('quoteId')
       .populate({ path: 'prescriptionId', select: 'imageUrl deliveryAddress' })
       .lean() as any[];
