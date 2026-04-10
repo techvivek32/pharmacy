@@ -28,7 +28,7 @@ const PrescriptionSchema = new Schema<IPrescription>(
     },
     imageUrl: {
       type: String,
-      required: true,
+      default: '',
     },
     imagePublicId: {
       type: String,
