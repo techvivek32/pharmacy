@@ -55,19 +55,26 @@ interface OrderDetail {
 export default function OrdersPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 1 });
   const [selectedOrder, setSelectedOrder] = useState<OrderDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
-  useEffect(() => { fetchOrders(); }, [selectedStatus, pagination.page]);
+  useEffect(() => { fetchOrders(); }, [selectedStatus, search, dateFrom, dateTo, pagination.page]);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const status = selectedStatus !== 'all' ? `&status=${selectedStatus}` : '';
-      const res = await fetch(`/api/orders?page=${pagination.page}&limit=10${status}`);
+      const params = new URLSearchParams({ page: String(pagination.page), limit: '10' });
+      if (selectedStatus !== 'all') params.set('status', selectedStatus);
+      if (search.trim()) params.set('search', search.trim());
+      if (dateFrom) params.set('dateFrom', dateFrom);
+      if (dateTo) params.set('dateTo', dateTo);
+      const res = await fetch(`/api/orders?${params}`);
       const data = await res.json() as any;
       if (data.success) {
         setOrders(Array.isArray(data.data?.orders) ? data.data.orders : []);
@@ -76,6 +83,9 @@ export default function OrdersPage() {
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
+
+  const resetFilters = () => { setSelectedStatus('all'); setSearch(''); setDateFrom(''); setDateTo(''); setPagination(p => ({ ...p, page: 1 })); };
+  const hasFilters = selectedStatus !== 'all' || search || dateFrom || dateTo;
 
   const fetchOrderDetail = async (id: string) => {
     setDetailLoading(true);
@@ -129,14 +139,48 @@ export default function OrdersPage() {
         </header>
 
         <main className="flex-1 overflow-y-auto p-6">
-          {/* Status filters */}
-          <div className="mb-6 flex flex-wrap gap-2">
-            {['all', 'pending', 'confirmed', 'preparing', 'ready', 'assigned', 'picked_up', 'in_transit', 'delivered', 'cancelled'].map(s => (
-              <button key={s} onClick={() => { setSelectedStatus(s); setPagination(p => ({ ...p, page: 1 })); }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectedStatus === s ? 'bg-green-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'}`}>
-                {statusLabel(s)}
+          {/* Filters toolbar */}
+          <div className="mb-6 flex flex-wrap items-center gap-3">
+            {/* Status dropdown */}
+            <select
+              value={selectedStatus}
+              onChange={e => { setSelectedStatus(e.target.value); setPagination(p => ({ ...p, page: 1 })); }}
+              className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-green-400">
+              {['all', 'pending', 'confirmed', 'preparing', 'ready', 'assigned', 'picked_up', 'in_transit', 'delivered', 'cancelled'].map(s => (
+                <option key={s} value={s}>{statusLabel(s)}</option>
+              ))}
+            </select>
+
+            {/* Search */}
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+              </svg>
+              <input
+                type="text" placeholder="Search order #..."
+                value={search}
+                onChange={e => { setSearch(e.target.value); setPagination(p => ({ ...p, page: 1 })); }}
+                className="pl-9 pr-4 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-400 w-48"
+              />
+            </div>
+
+            {/* Date range */}
+            <div className="flex items-center gap-2">
+              <input type="date" value={dateFrom}
+                onChange={e => { setDateFrom(e.target.value); setPagination(p => ({ ...p, page: 1 })); }}
+                className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-400" />
+              <span className="text-gray-400 text-sm">to</span>
+              <input type="date" value={dateTo}
+                onChange={e => { setDateTo(e.target.value); setPagination(p => ({ ...p, page: 1 })); }}
+                className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-400" />
+            </div>
+
+            {/* Clear filters */}
+            {hasFilters && (
+              <button onClick={resetFilters} className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-red-500 hover:bg-red-50 font-medium">
+                ✕ Clear
               </button>
-            ))}
+            )}
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
