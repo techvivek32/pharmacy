@@ -151,19 +151,6 @@ export default function OrdersPage() {
               ))}
             </select>
 
-            {/* Search */}
-            <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-              </svg>
-              <input
-                type="text" placeholder="Search order #..."
-                value={search}
-                onChange={e => { setSearch(e.target.value); setPagination(p => ({ ...p, page: 1 })); }}
-                className="pl-9 pr-4 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-400 w-48"
-              />
-            </div>
-
             {/* Date range */}
             <div className="flex items-center gap-2">
               <input type="date" value={dateFrom}
@@ -181,6 +168,19 @@ export default function OrdersPage() {
                 ✕ Clear
               </button>
             )}
+
+            {/* Search — pushed to the right */}
+            <div className="relative ml-auto">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+              </svg>
+              <input
+                type="text" placeholder="Search order, patient, pharmacy, rider..."
+                value={search}
+                onChange={e => { setSearch(e.target.value); setPagination(p => ({ ...p, page: 1 })); }}
+                className="pl-9 pr-4 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-400 w-64"
+              />
+            </div>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
