@@ -16,17 +16,12 @@ export default function RevenueChart() {
     <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
       <h2 className="text-xl font-semibold text-gray-800 mb-6">Revenue Overview</h2>
       
-      <div className="flex items-end justify-between h-64 space-x-4">
+      <div className="flex items-end justify-between space-x-4" style={{ height: '256px' }}>
         {data.map((item, index) => (
-          <div key={index} className="flex-1 flex flex-col items-center">
-            <div className="w-full bg-gray-100 rounded-t-lg relative" style={{ height: '100%' }}>
-              <div
-                className="absolute bottom-0 w-full bg-primary-500 rounded-t-lg transition-all duration-500"
-                style={{ height: `${(item.revenue / maxRevenue) * 100}%` }}
-              ></div>
-            </div>
-            <p className="text-xs text-gray-600 mt-2">{item.month}</p>
-            <p className="text-xs font-semibold text-gray-800">{(item.revenue / 1000).toFixed(0)}K</p>
+          <div key={index} className="flex-1 flex flex-col items-center" style={{ height: `${(item.revenue / maxRevenue) * 100}%` }}>
+            <div className="w-full h-full bg-primary-500 rounded-t-lg transition-all duration-500" />
+            <p className="text-xs text-gray-600 mt-2 shrink-0">{item.month}</p>
+            <p className="text-xs font-semibold text-gray-800 shrink-0">{(item.revenue / 1000).toFixed(0)}K</p>
           </div>
         ))}
       </div>
