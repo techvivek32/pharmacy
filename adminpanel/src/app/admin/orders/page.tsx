@@ -12,6 +12,7 @@ interface Order {
   patientImage?: string;
   pharmacyId?: { pharmacyName: string };
   riderId?: { fullName: string };
+  riderName?: string;
   totalAmount: number;
   status: string;
   createdAt: string;
@@ -159,7 +160,7 @@ export default function OrdersPage() {
                         <td className="py-4 px-6 font-medium text-gray-800">{order.orderNumber || order._id.slice(-6).toUpperCase()}</td>
                         <td className="py-4 px-6 text-gray-600">{getPatientName(order)}</td>
                         <td className="py-4 px-6 text-gray-600">{order.pharmacyId?.pharmacyName || '—'}</td>
-                        <td className="py-4 px-6 text-gray-600">{order.riderId?.fullName || 'Unassigned'}</td>
+                        <td className="py-4 px-6 text-gray-600">{(order as any).riderName || order.riderId?.fullName || 'Unassigned'}</td>
                         <td className="py-4 px-6 font-medium text-gray-800">{order.totalAmount} MAD</td>
                         <td className="py-4 px-6">
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor(order.status)}`}>{statusLabel(order.status)}</span>

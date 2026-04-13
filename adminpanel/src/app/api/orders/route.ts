@@ -2,11 +2,13 @@ import { NextRequest } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Order from '@/models/Order';
 import '@/models/Patient';
-import '@/models/User';
+import User from '@/models/User';
 import '@/models/Pharmacy';
-import '@/models/Rider';
+import Rider from '@/models/Rider';
 import '@/models/Prescription';
 import { successResponse, errorResponse } from '@/lib/response';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,24 +31,34 @@ export async function GET(request: NextRequest) {
         populate: { path: 'userId', select: 'fullName email phone profileImage' },
       })
       .populate('pharmacyId', 'pharmacyName address phone')
-      .populate('riderId', 'fullName phone')
+      .populate({ path: 'riderId', model: Rider })
       .populate('prescriptionId', 'imageUrl deliveryAddress')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean() as any[];
 
-    // Normalize so frontend always gets flat patientName
-    const orders = rawOrders.map((o: any) => {
+    // Normalize — fetch rider name from User model
+    const orders = await Promise.all(rawOrders.map(async (o: any) => {
       const user = o.patientId?.userId;
+
+      let riderName = 'Unassigned';
+      if (o.riderId?.userId) {
+        try {
+          const riderUser = await User.findById(o.riderId.userId).select('fullName').lean() as any;
+          if (riderUser?.fullName) riderName = riderUser.fullName;
+        } catch (_) {}
+      }
+
       return {
         ...o,
         patientName: user?.fullName || null,
         patientEmail: user?.email || null,
         patientPhone: user?.phone || null,
         patientImage: user?.profileImage || null,
+        riderName,
       };
-    });
+    }));
 
     return successResponse({
       orders,
