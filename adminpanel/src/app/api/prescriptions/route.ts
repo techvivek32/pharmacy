@@ -18,8 +18,23 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const status = searchParams.get('status');
 
+    const search = searchParams.get('search');
+    const dateFrom = searchParams.get('dateFrom');
+    const dateTo = searchParams.get('dateTo');
+
     const query: any = {};
     if (status) query.status = status;
+    if (dateFrom || dateTo) {
+      query.createdAt = {};
+      if (dateFrom) query.createdAt.$gte = new Date(dateFrom);
+      if (dateTo) { const end = new Date(dateTo); end.setHours(23, 59, 59, 999); query.createdAt.$lte = end; }
+    }
+    if (search) {
+      const regex = { $regex: search, $options: 'i' };
+      const matchingUsers = await User.find({ fullName: regex }).select('_id').lean() as any[];
+      const matchingPatients = await Patient.find({ userId: { $in: matchingUsers.map((u: any) => u._id) } }).select('_id').lean() as any[];
+      query.patientId = { $in: matchingPatients.map((p: any) => p._id) };
+    }
 
     const skip = (page - 1) * limit;
 

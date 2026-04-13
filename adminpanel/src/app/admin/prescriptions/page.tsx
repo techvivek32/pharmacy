@@ -35,20 +35,34 @@ export default function PrescriptionsPage() {
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('');
+  const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 1 });
   const [selected, setSelected] = useState<Prescription | null>(null);
 
-  useEffect(() => { fetchPrescriptions(); }, [filterStatus]);
+  useEffect(() => { fetchPrescriptions(); }, [filterStatus, search, dateFrom, dateTo, pagination.page]);
 
   const fetchPrescriptions = async () => {
     setLoading(true);
     try {
-      const qs = filterStatus ? `?status=${filterStatus}` : '';
-      const res = await fetch(`/api/prescriptions${qs}`, { credentials: 'include' });
+      const params = new URLSearchParams({ page: String(pagination.page), limit: '10' });
+      if (filterStatus) params.set('status', filterStatus);
+      if (search.trim()) params.set('search', search.trim());
+      if (dateFrom) params.set('dateFrom', dateFrom);
+      if (dateTo) params.set('dateTo', dateTo);
+      const res = await fetch(`/api/prescriptions?${params}`, { credentials: 'include' });
       const data = await res.json() as any;
-      if (data.success) setPrescriptions(data.data?.prescriptions || []);
+      if (data.success) {
+        setPrescriptions(data.data?.prescriptions || []);
+        setPagination(p => ({ ...p, total: data.data?.pagination?.total || 0, pages: data.data?.pagination?.pages || 1 }));
+      }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
+
+  const resetFilters = () => { setFilterStatus(''); setSearch(''); setDateFrom(''); setDateTo(''); setPagination(p => ({ ...p, page: 1 })); };
+  const hasFilters = filterStatus || search || dateFrom || dateTo;
 
   const statusColor = (s: string) => {
     const map: Record<string, string> = {
@@ -63,13 +77,6 @@ export default function PrescriptionsPage() {
 
   const statusLabel = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
   const fmt = (d: string) => new Date(d).toLocaleDateString();
-
-  const counts = {
-    total: prescriptions.length,
-    pending: prescriptions.filter(p => p.status === 'pending').length,
-    quoted: prescriptions.filter(p => p.status === 'quoted').length,
-    accepted: prescriptions.filter(p => p.status === 'accepted').length,
-  };
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -90,10 +97,10 @@ export default function PrescriptionsPage() {
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {[
-              { label: 'Total', value: counts.total, color: 'bg-blue-500', emoji: '📋' },
-              { label: 'Pending', value: counts.pending, color: 'bg-yellow-500', emoji: '⏳' },
-              { label: 'Quoted', value: counts.quoted, color: 'bg-blue-400', emoji: '💬' },
-              { label: 'Accepted', value: counts.accepted, color: 'bg-green-500', emoji: '✅' },
+              { label: 'Total', value: pagination.total, color: 'bg-blue-500', emoji: '📋' },
+              { label: 'Pending', value: prescriptions.filter(p => p.status === 'pending').length, color: 'bg-yellow-500', emoji: '⏳' },
+              { label: 'Quoted', value: prescriptions.filter(p => p.status === 'quoted').length, color: 'bg-blue-400', emoji: '💬' },
+              { label: 'Accepted', value: prescriptions.filter(p => p.status === 'accepted').length, color: 'bg-green-500', emoji: '✅' },
             ].map(s => (
               <div key={s.label} className="bg-white rounded-xl shadow-sm p-5 border border-gray-100 flex items-center justify-between">
                 <div>
@@ -105,17 +112,41 @@ export default function PrescriptionsPage() {
             ))}
           </div>
 
-          {/* Filter */}
-          <div className="mb-4 flex gap-2 flex-wrap">
-            {['', 'pending', 'quoted', 'accepted', 'rejected', 'expired'].map(s => (
-              <button key={s} onClick={() => setFilterStatus(s)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === s ? 'bg-green-500 text-white' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'}`}>
-                {s === '' ? 'All' : statusLabel(s)}
-              </button>
-            ))}
+          {/* Filters toolbar */}
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            {/* Status dropdown */}
+            <select value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPagination(p => ({ ...p, page: 1 })); }}
+              className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-green-400">
+              {['', 'pending', 'quoted', 'accepted', 'rejected', 'expired'].map(s => (
+                <option key={s} value={s}>{s === '' ? 'All Status' : statusLabel(s)}</option>
+              ))}
+            </select>
+
+            {/* Date range */}
+            <div className="flex items-center gap-2">
+              <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPagination(p => ({ ...p, page: 1 })); }}
+                className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-400" />
+              <span className="text-gray-400 text-sm">to</span>
+              <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPagination(p => ({ ...p, page: 1 })); }}
+                className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-400" />
+            </div>
+
+            {/* Clear */}
+            {hasFilters && (
+              <button onClick={resetFilters} className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-red-500 hover:bg-red-50 font-medium">✕ Clear</button>
+            )}
+
+            {/* Search — right */}
+            <div className="relative ml-auto">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+              </svg>
+              <input type="text" placeholder="Search patient name..."
+                value={search} onChange={e => { setSearch(e.target.value); setPagination(p => ({ ...p, page: 1 })); }}
+                className="pl-9 pr-4 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-400 w-56" />
+            </div>
           </div>
 
-          {/* Table */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
             {loading ? (
               <div className="p-8 text-center text-gray-500">Loading prescriptions...</div>
@@ -174,6 +205,39 @@ export default function PrescriptionsPage() {
                 </tbody>
               </table>
             )}
+            {/* Pagination */}
+            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
+              <div className="text-sm text-gray-600">Total: <span className="font-medium">{pagination.total}</span> prescriptions</div>
+              <div className="flex items-center gap-1">
+                <button onClick={() => setPagination(p => ({ ...p, page: Math.max(1, p.page - 1) }))} disabled={pagination.page === 1}
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50">‹</button>
+                {(() => {
+                  const { page, pages } = pagination;
+                  const items: (number | '...')[] = [];
+                  if (pages <= 4) {
+                    for (let i = 1; i <= pages; i++) items.push(i);
+                  } else {
+                    items.push(1, 2);
+                    if (page > 3) items.push('...');
+                    if (page > 2 && page < pages - 1) items.push(page);
+                    if (page < pages - 1) items.push('...');
+                    items.push(pages);
+                  }
+                  return items.map((item, i) =>
+                    item === '...' ? (
+                      <span key={`dots-${i}`} className="px-2 py-1.5 text-sm text-gray-400">...</span>
+                    ) : (
+                      <button key={item} onClick={() => setPagination(p => ({ ...p, page: item as number }))}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                          page === item ? 'bg-green-500 text-white' : 'border border-gray-300 hover:bg-gray-50 text-gray-700'
+                        }`}>{item}</button>
+                    )
+                  );
+                })()}
+                <button onClick={() => setPagination(p => ({ ...p, page: Math.min(p.pages, p.page + 1) }))} disabled={pagination.page === pagination.pages}
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50">›</button>
+              </div>
+            </div>
           </div>
         </main>
       </div>
