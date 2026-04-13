@@ -5,6 +5,7 @@ export interface ISettings extends Document {
   commissionRate: number;
   minOrderAmount: number;
   maxDeliveryRadius: number;
+  minWithdrawalAmount: number;
   supportEmail: string;
   supportPhone: string;
   razorpayKeyId: string;
@@ -17,6 +18,7 @@ const SettingsSchema = new Schema<ISettings>(
     commissionRate: { type: Number, default: 15 },
     minOrderAmount: { type: Number, default: 50 },
     maxDeliveryRadius: { type: Number, default: 10 },
+    minWithdrawalAmount: { type: Number, default: 100 },
     supportEmail: { type: String, default: 'support@ordogo.com' },
     supportPhone: { type: String, default: '+212 600 000 000' },
     razorpayKeyId: { type: String, default: '' },

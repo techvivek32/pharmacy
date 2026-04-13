@@ -8,6 +8,7 @@ interface Settings {
   commissionRate: number;
   minOrderAmount: number;
   maxDeliveryRadius: number;
+  minWithdrawalAmount: number;
   supportEmail: string;
   supportPhone: string;
   razorpayKeyId: string;
@@ -21,6 +22,7 @@ export default function SettingsPage() {
     commissionRate: 15,
     minOrderAmount: 50,
     maxDeliveryRadius: 10,
+    minWithdrawalAmount: 100,
     supportEmail: 'support@ordogo.com',
     supportPhone: '+212 600 000 000',
     razorpayKeyId: '',
@@ -156,6 +158,27 @@ export default function SettingsPage() {
                       onChange={(e) => setSettings({ ...settings, maxDeliveryRadius: Number(e.target.value) })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                     />
+                  </div>
+                </div>
+              </div>
+
+              {/* Withdrawal Settings */}
+              <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <h2 className="text-lg font-semibold text-gray-800 mb-1">Withdrawal Settings</h2>
+                <p className="text-sm text-gray-500 mb-4">Set the minimum amount riders and pharmacies can withdraw from their wallet.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Minimum Withdrawal Amount (MAD)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={settings.minWithdrawalAmount}
+                      onChange={(e) => setSettings({ ...settings, minWithdrawalAmount: Number(e.target.value) })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">Users cannot request a withdrawal below this amount.</p>
                   </div>
                 </div>
               </div>
