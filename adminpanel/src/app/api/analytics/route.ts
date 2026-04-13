@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
       { $sort: { deliveries: -1 } },
       { $limit: 5 },
       { $lookup: { from: 'riders', localField: '_id', foreignField: '_id', as: 'rider' } },
-      { $unwind: { path: '$rider', preserveNullAndEmpty: true } },
+      { $unwind: { path: '$rider', preserveNullAndEmptyArrays: true } },
     ]);
 
     const topRiders = await Promise.all(topRidersRaw.map(async (r: any) => {
