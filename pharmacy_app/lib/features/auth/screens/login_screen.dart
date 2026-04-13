@@ -8,6 +8,7 @@ import '../../../services/api_service.dart';
 import 'register_screen.dart';
 import 'pending_approval_screen.dart';
 import 'rejected_screen.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -146,6 +147,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: AppTheme.spacing16),
+                Center(
+                  child: TextButton(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                    ),
+                    child: const Text('Forgot Password?'),
+                  ),
+                ),
                 Center(
                   child: TextButton(
                     onPressed: () => Navigator.push(
