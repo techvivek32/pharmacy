@@ -1,42 +1,54 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import Sidebar from '@/components/admin/Sidebar';
-
-interface User {
-  fullName: string;
-  email: string;
-  phone: string;
-  profileImage?: string;
-}
-
-interface Patient {
-  _id: string;
-  userId: User;
-}
-
-interface Prescription {
-  imageUrl: string;
-  deliveryAddress?: { address: string };
-}
 
 interface Order {
   _id: string;
   orderNumber: string;
-  patientId?: any;
   patientName?: string;
   patientEmail?: string;
   patientPhone?: string;
   patientImage?: string;
-  pharmacyId?: { pharmacyName: string; address?: string; phone?: string };
-  riderId?: { fullName: string; phone?: string };
-  prescriptionId?: Prescription;
+  pharmacyId?: { pharmacyName: string };
+  riderId?: { fullName: string };
   totalAmount: number;
   status: string;
-  deliveryAddress?: { address: string };
-  paymentMethod?: string;
   createdAt: string;
+}
+
+interface OrderDetail {
+  id: string;
+  orderNumber: string;
+  status: string;
+  paymentMethod?: string;
+  paymentStatus?: string;
+  subtotal: number;
+  commissionAmount: number;
+  deliveryFee: number;
+  totalAmount: number;
+  createdAt: string;
+  deliveredAt?: string;
+  estimatedDeliveryTime?: string;
+  patient?: { fullName: string; email: string; phone: string; profileImage?: string };
+  pharmacy?: { name: string; address: string };
+  rider?: { name: string; phone: string; vehicleType: string; vehicleNumber: string; rating: number; totalDeliveries: number };
+  deliveryAddress: string;
+  pharmacyAddress: string;
+  prescription?: { imageUrl: string; medicines: { name: string; quantity: number }[] };
+  items: { medicineName: string; quantity: number; unitPrice: number; totalPrice: number }[];
+  quoteHistory: {
+    id: string;
+    pharmacyName: string;
+    pharmacyAddress: string;
+    status: string;
+    rejectionReason: string;
+    subtotal: number;
+    deliveryFee: number;
+    totalAmount: number;
+    items: { medicineName: string; quantity: number; unitPrice: number; totalPrice: number }[];
+    createdAt: string;
+  }[];
 }
 
 export default function OrdersPage() {
@@ -45,88 +57,83 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 1 });
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<OrderDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
-  useEffect(() => {
-    fetchOrders();
-  }, [selectedStatus, pagination.page]);
+  useEffect(() => { fetchOrders(); }, [selectedStatus, pagination.page]);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
       const status = selectedStatus !== 'all' ? `&status=${selectedStatus}` : '';
-      const response = await fetch(`/api/orders?page=${pagination.page}&limit=10${status}`);
-      const data = await response.json() as any;
+      const res = await fetch(`/api/orders?page=${pagination.page}&limit=10${status}`);
+      const data = await res.json() as any;
       if (data.success) {
         setOrders(Array.isArray(data.data?.orders) ? data.data.orders : []);
         setPagination(p => ({ ...p, total: data.data?.pagination?.total || 0, pages: data.data?.pagination?.pages || 1 }));
       }
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
   };
 
-  const getPatientName = (order: Order) => {
-    return order.patientName || order.patientId?.userId?.fullName || 'Unknown';
+  const fetchOrderDetail = async (id: string) => {
+    setDetailLoading(true);
+    try {
+      const res = await fetch(`/api/orders/${id}`);
+      const data = await res.json() as any;
+      if (data.success) setSelectedOrder(data.data.order);
+    } catch (e) { console.error(e); }
+    finally { setDetailLoading(false); }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'delivered': return 'bg-green-100 text-green-800';
-      case 'in_transit': return 'bg-blue-100 text-blue-800';
-      case 'preparing': return 'bg-yellow-100 text-yellow-800';
-      case 'confirmed': return 'bg-purple-100 text-purple-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      case 'pending': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const getPatientName = (o: Order) => o.patientName || 'Unknown';
+
+  const statusColor = (s: string) => {
+    const map: Record<string, string> = {
+      delivered: 'bg-green-100 text-green-800',
+      in_transit: 'bg-blue-100 text-blue-800',
+      picked_up: 'bg-cyan-100 text-cyan-800',
+      assigned: 'bg-indigo-100 text-indigo-800',
+      preparing: 'bg-yellow-100 text-yellow-800',
+      ready: 'bg-lime-100 text-lime-800',
+      confirmed: 'bg-purple-100 text-purple-800',
+      cancelled: 'bg-red-100 text-red-800',
+      pending: 'bg-orange-100 text-orange-800',
+      rejected: 'bg-red-100 text-red-700',
+      accepted: 'bg-green-100 text-green-700',
+    };
+    return map[s] || 'bg-gray-100 text-gray-800';
   };
 
-  const getStatusLabel = (status: string) =>
-    status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ');
+  const statusLabel = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' ');
 
-  const deliveryAddress = (order: Order) =>
-    order.deliveryAddress?.address ||
-    order.prescriptionId?.deliveryAddress?.address ||
-    'N/A';
+  const fmt = (d?: string) => d ? new Date(d).toLocaleString() : '—';
+  const fmtDate = (d: string) => new Date(d).toLocaleDateString();
 
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar isOpen={sidebarOpen} />
-
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white shadow-sm">
-          <div className="flex items-center justify-between px-6 py-4">
-            <div className="flex items-center">
-              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-500 hover:text-gray-700">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-              <h1 className="ml-4 text-2xl font-semibold text-gray-800">Orders Management</h1>
-            </div>
+          <div className="flex items-center px-6 py-4 gap-4">
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-500 hover:text-gray-700">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <h1 className="text-2xl font-semibold text-gray-800">Orders Management</h1>
           </div>
         </header>
 
         <main className="flex-1 overflow-y-auto p-6">
-          <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
-            <div className="flex space-x-2 flex-wrap gap-2">
-              {['all', 'pending', 'confirmed', 'preparing', 'in_transit', 'delivered', 'cancelled'].map((status) => (
-                <button
-                  key={status}
-                  onClick={() => { setSelectedStatus(status); setPagination(p => ({ ...p, page: 1 })); }}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    selectedStatus === status
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
-                  }`}
-                >
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
-                </button>
-              ))}
-            </div>
+          {/* Status filters */}
+          <div className="mb-6 flex flex-wrap gap-2">
+            {['all', 'pending', 'confirmed', 'preparing', 'ready', 'assigned', 'picked_up', 'in_transit', 'delivered', 'cancelled'].map(s => (
+              <button key={s} onClick={() => { setSelectedStatus(s); setPagination(p => ({ ...p, page: 1 })); }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectedStatus === s ? 'bg-green-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'}`}>
+                {statusLabel(s)}
+              </button>
+            ))}
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
@@ -139,41 +146,25 @@ export default function OrdersPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Order ID</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Patient</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Pharmacy</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Rider</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Amount</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Status</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Date</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Actions</th>
+                      {['Order ID', 'Patient', 'Pharmacy', 'Rider', 'Amount', 'Status', 'Date', 'Actions'].map(h => (
+                        <th key={h} className="text-left py-4 px-6 text-sm font-semibold text-gray-600">{h}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {orders.map((order) => (
+                    {orders.map(order => (
                       <tr key={order._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                        <td className="py-4 px-6">
-                          <span className="font-medium text-gray-800">{order.orderNumber || order._id.slice(-6).toUpperCase()}</span>
-                        </td>
+                        <td className="py-4 px-6 font-medium text-gray-800">{order.orderNumber || order._id.slice(-6).toUpperCase()}</td>
                         <td className="py-4 px-6 text-gray-600">{getPatientName(order)}</td>
                         <td className="py-4 px-6 text-gray-600">{order.pharmacyId?.pharmacyName || '—'}</td>
                         <td className="py-4 px-6 text-gray-600">{order.riderId?.fullName || 'Unassigned'}</td>
+                        <td className="py-4 px-6 font-medium text-gray-800">{order.totalAmount} MAD</td>
                         <td className="py-4 px-6">
-                          <span className="font-medium text-gray-800">{order.totalAmount} MAD</span>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor(order.status)}`}>{statusLabel(order.status)}</span>
                         </td>
+                        <td className="py-4 px-6 text-sm text-gray-600">{fmtDate(order.createdAt)}</td>
                         <td className="py-4 px-6">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                            {getStatusLabel(order.status)}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6 text-sm text-gray-600">
-                          {new Date(order.createdAt).toLocaleDateString()}
-                        </td>
-                        <td className="py-4 px-6">
-                          <button
-                            onClick={() => setSelectedOrder(order)}
-                            className="text-primary-600 hover:text-primary-700 text-sm font-medium"
-                          >
+                          <button onClick={() => fetchOrderDetail(order._id)} className="text-green-600 hover:text-green-700 text-sm font-medium">
                             View Details
                           </button>
                         </td>
@@ -183,159 +174,231 @@ export default function OrdersPage() {
                 </table>
               )}
             </div>
-
             <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
-              <div className="text-sm text-gray-600">
-                Total: <span className="font-medium">{pagination.total}</span> orders
-              </div>
+              <div className="text-sm text-gray-600">Total: <span className="font-medium">{pagination.total}</span> orders</div>
               <div className="flex space-x-2">
-                <button
-                  onClick={() => setPagination(p => ({ ...p, page: Math.max(1, p.page - 1) }))}
-                  disabled={pagination.page === 1}
-                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <span className="px-3 py-1 bg-primary-500 text-white rounded-lg text-sm">{pagination.page}</span>
-                <button
-                  onClick={() => setPagination(p => ({ ...p, page: Math.min(p.pages, p.page + 1) }))}
-                  disabled={pagination.page === pagination.pages}
-                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Next
-                </button>
+                <button onClick={() => setPagination(p => ({ ...p, page: Math.max(1, p.page - 1) }))} disabled={pagination.page === 1}
+                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50">Previous</button>
+                <span className="px-3 py-1 bg-green-500 text-white rounded-lg text-sm">{pagination.page}</span>
+                <button onClick={() => setPagination(p => ({ ...p, page: Math.min(p.pages, p.page + 1) }))} disabled={pagination.page === pagination.pages}
+                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50">Next</button>
               </div>
             </div>
           </div>
         </main>
       </div>
 
-      {/* Order Details Modal */}
-      {selectedOrder && (
+      {/* Detail Modal */}
+      {(selectedOrder || detailLoading) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-800">Order Details</h2>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  {selectedOrder.orderNumber || selectedOrder._id.slice(-6).toUpperCase()}
-                </p>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto">
+            {detailLoading ? (
+              <div className="p-16 text-center text-gray-500">
+                <div className="animate-spin w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full mx-auto mb-4" />
+                Loading order details...
               </div>
-              <div className="flex items-center gap-3">
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedOrder.status)}`}>
-                  {getStatusLabel(selectedOrder.status)}
-                </span>
-                <button
-                  onClick={() => setSelectedOrder(null)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
+            ) : selectedOrder && (
+              <>
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 sticky top-0 bg-white z-10">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-800">Order Details</h2>
+                    <p className="text-sm text-gray-500">{selectedOrder.orderNumber}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor(selectedOrder.status)}`}>{statusLabel(selectedOrder.status)}</span>
+                    <button onClick={() => setSelectedOrder(null)} className="text-gray-400 hover:text-gray-600">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
 
-            <div className="p-6 space-y-6">
-              {/* Patient Info */}
-              <div className="bg-gray-50 rounded-xl p-4">
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Patient Information</h3>
-                <div className="flex items-center gap-4">
-                  {selectedOrder.patientImage ? (
-                    <img
-                      src={selectedOrder.patientImage}
-                      alt="Patient"
-                      className="w-14 h-14 rounded-full object-cover border-2 border-white shadow"
-                    />
-                  ) : (
-                    <div className="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 text-xl font-bold border-2 border-white shadow">
-                      {getPatientName(selectedOrder).charAt(0).toUpperCase()}
+                <div className="p-6 space-y-5">
+
+                  {/* Patient */}
+                  <Section title="👤 Patient Information">
+                    <div className="flex items-center gap-4">
+                      {selectedOrder.patient?.profileImage ? (
+                        <img src={selectedOrder.patient.profileImage} className="w-14 h-14 rounded-full object-cover border-2 border-gray-100" alt="" />
+                      ) : (
+                        <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-xl font-bold">
+                          {selectedOrder.patient?.fullName?.charAt(0) || '?'}
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-semibold text-gray-800 text-lg">{selectedOrder.patient?.fullName || '—'}</p>
+                        <p className="text-sm text-gray-500">{selectedOrder.patient?.email || '—'}</p>
+                        <p className="text-sm text-gray-500">{selectedOrder.patient?.phone || '—'}</p>
+                      </div>
                     </div>
+                  </Section>
+
+                  {/* Addresses */}
+                  <Section title="📍 Addresses">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <InfoRow label="Pickup (Pharmacy)" value={selectedOrder.pharmacyAddress || '—'} />
+                      <InfoRow label="Delivery (Patient)" value={selectedOrder.deliveryAddress || '—'} />
+                    </div>
+                  </Section>
+
+                  {/* Pharmacy */}
+                  {selectedOrder.pharmacy && (
+                    <Section title="🏥 Pharmacy">
+                      <InfoRow label="Name" value={selectedOrder.pharmacy.name} />
+                      <InfoRow label="Address" value={selectedOrder.pharmacy.address} />
+                    </Section>
                   )}
-                  <div className="space-y-1">
-                    <p className="font-semibold text-gray-800 text-lg">{getPatientName(selectedOrder)}</p>
-                    <p className="text-sm text-gray-500 flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      {selectedOrder.patientEmail || selectedOrder.patientId?.userId?.email || '—'}
-                    </p>
-                    <p className="text-sm text-gray-500 flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
-                      {selectedOrder.patientPhone || selectedOrder.patientId?.userId?.phone || '—'}
-                    </p>
-                  </div>
-                </div>
-              </div>
 
-              {/* Delivery Address */}
-              <div className="bg-gray-50 rounded-xl p-4">
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Delivery Address</h3>
-                <div className="flex items-start gap-2">
-                  <svg className="w-5 h-5 text-primary-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <p className="text-gray-700">{deliveryAddress(selectedOrder)}</p>
-                </div>
-              </div>
+                  {/* Rider */}
+                  <Section title="🚴 Rider">
+                    {selectedOrder.rider ? (
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <InfoRow label="Name" value={selectedOrder.rider.name} />
+                        <InfoRow label="Phone" value={selectedOrder.rider.phone} />
+                        <InfoRow label="Vehicle" value={`${selectedOrder.rider.vehicleType} ${selectedOrder.rider.vehicleNumber ? `(${selectedOrder.rider.vehicleNumber})` : ''}`} />
+                        <InfoRow label="Rating" value={`${selectedOrder.rider.rating}/5`} />
+                        <InfoRow label="Total Deliveries" value={`${selectedOrder.rider.totalDeliveries}`} />
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-sm">No rider assigned yet</p>
+                    )}
+                  </Section>
 
-              {/* Prescription Image */}
-              {selectedOrder.prescriptionId?.imageUrl && (
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Prescription Image</h3>
-                  <div className="rounded-xl overflow-hidden border border-gray-200">
-                    <img
-                      src={selectedOrder.prescriptionId.imageUrl}
-                      alt="Prescription"
-                      className="w-full object-contain max-h-72"
-                    />
-                  </div>
-                </div>
-              )}
+                  {/* Prescription */}
+                  {selectedOrder.prescription && (
+                    <Section title="📋 Prescription">
+                      {selectedOrder.prescription.imageUrl ? (
+                        <img src={selectedOrder.prescription.imageUrl} alt="Prescription" className="w-full max-h-64 object-contain rounded-xl border border-gray-200" />
+                      ) : selectedOrder.prescription.medicines?.length > 0 ? (
+                        <div className="space-y-2">
+                          {selectedOrder.prescription.medicines.map((m, i) => (
+                            <div key={i} className="flex items-center justify-between bg-green-50 rounded-lg px-4 py-2">
+                              <span className="text-sm font-medium text-gray-800">💊 {m.name}</span>
+                              <span className="text-sm text-gray-500">Qty: {m.quantity}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 text-sm">No prescription image or medicines</p>
+                      )}
+                    </Section>
+                  )}
 
-              {/* Order Info */}
-              <div className="bg-gray-50 rounded-xl p-4">
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Order Info</h3>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <p className="text-gray-500">Pharmacy</p>
-                    <p className="font-medium text-gray-800">{selectedOrder.pharmacyId?.pharmacyName || '—'}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Rider</p>
-                    <p className="font-medium text-gray-800">{selectedOrder.riderId?.fullName || 'Unassigned'}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Total Amount</p>
-                    <p className="font-medium text-gray-800">{selectedOrder.totalAmount} MAD</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Payment</p>
-                    <p className="font-medium text-gray-800 capitalize">{selectedOrder.paymentMethod || '—'}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Date</p>
-                    <p className="font-medium text-gray-800">{new Date(selectedOrder.createdAt).toLocaleString()}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+                  {/* Confirmed order items */}
+                  {selectedOrder.items?.length > 0 && (
+                    <Section title="💊 Order Items">
+                      <div className="space-y-2">
+                        {selectedOrder.items.map((item, i) => (
+                          <div key={i} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                            <div>
+                              <p className="text-sm font-medium text-gray-800">{item.medicineName}</p>
+                              <p className="text-xs text-gray-500">Qty: {item.quantity} × {item.unitPrice} MAD</p>
+                            </div>
+                            <p className="text-sm font-semibold text-gray-800">{item.totalPrice} MAD</p>
+                          </div>
+                        ))}
+                        <div className="pt-2 space-y-1">
+                          <div className="flex justify-between text-sm text-gray-500"><span>Subtotal</span><span>{selectedOrder.subtotal} MAD</span></div>
+                          {selectedOrder.commissionAmount > 0 && <div className="flex justify-between text-sm text-gray-500"><span>Service Fee</span><span>{selectedOrder.commissionAmount} MAD</span></div>}
+                          <div className="flex justify-between text-sm text-gray-500"><span>Delivery Fee</span><span>{selectedOrder.deliveryFee} MAD</span></div>
+                          <div className="flex justify-between text-base font-bold text-gray-800 pt-1 border-t border-gray-200"><span>Total</span><span>{selectedOrder.totalAmount} MAD</span></div>
+                        </div>
+                      </div>
+                    </Section>
+                  )}
 
-            <div className="px-6 pb-6">
-              <button
-                onClick={() => setSelectedOrder(null)}
-                className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors"
-              >
-                Close
-              </button>
-            </div>
+                  {/* Order timeline */}
+                  <Section title="📅 Order Timeline">
+                    <div className="grid grid-cols-2 gap-3">
+                      <InfoRow label="Created" value={fmt(selectedOrder.createdAt)} />
+                      <InfoRow label="Payment" value={`${selectedOrder.paymentMethod?.toUpperCase() || '—'} (${selectedOrder.paymentStatus || '—'})`} />
+                      {selectedOrder.estimatedDeliveryTime && <InfoRow label="Est. Delivery" value={fmt(selectedOrder.estimatedDeliveryTime)} />}
+                      {selectedOrder.deliveredAt && <InfoRow label="Delivered At" value={fmt(selectedOrder.deliveredAt)} />}
+                    </div>
+                  </Section>
+
+                  {/* Quote History */}
+                  {selectedOrder.quoteHistory?.length > 0 && (
+                    <Section title="📜 Quote History">
+                      <div className="space-y-3">
+                        {selectedOrder.quoteHistory.map((q, i) => (
+                          <div key={q.id} className={`rounded-xl border p-4 ${q.status === 'accepted' ? 'border-green-200 bg-green-50' : q.status === 'rejected' ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-gray-50'}`}>
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-bold text-gray-800">#{i + 1} {q.pharmacyName}</span>
+                                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(q.status)}`}>{statusLabel(q.status)}</span>
+                                </div>
+                                {q.pharmacyAddress && <p className="text-xs text-gray-500 mt-0.5">{q.pharmacyAddress}</p>}
+                              </div>
+                              <span className="text-xs text-gray-400">{fmt(q.createdAt)}</span>
+                            </div>
+
+                            {/* Rejection reason */}
+                            {q.status === 'rejected' && q.rejectionReason && (
+                              <div className="mt-2 flex items-start gap-2 bg-red-100 rounded-lg px-3 py-2">
+                                <span className="text-red-500 text-sm">⚠️</span>
+                                <p className="text-sm text-red-700"><span className="font-medium">Reason:</span> {q.rejectionReason}</p>
+                              </div>
+                            )}
+
+                            {/* Quote items if accepted */}
+                            {q.status === 'accepted' && q.items?.length > 0 && (
+                              <div className="mt-3 space-y-1">
+                                {q.items.map((item, j) => (
+                                  <div key={j} className="flex justify-between text-sm">
+                                    <span className="text-gray-700">{item.medicineName} × {item.quantity}</span>
+                                    <span className="text-gray-600">{item.totalPrice} MAD</span>
+                                  </div>
+                                ))}
+                                <div className="flex justify-between text-sm font-semibold text-green-700 pt-1 border-t border-green-200 mt-1">
+                                  <span>Total</span><span>{q.totalAmount} MAD</span>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Pending quote summary */}
+                            {q.status === 'pending' && q.totalAmount > 0 && (
+                              <p className="text-sm text-gray-600 mt-1">Quote: <span className="font-medium">{q.totalAmount} MAD</span></p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </Section>
+                  )}
+
+                </div>
+
+                <div className="px-6 pb-6">
+                  <button onClick={() => setSelectedOrder(null)} className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors">
+                    Close
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-gray-50 rounded-xl p-4">
+      <h3 className="text-sm font-semibold text-gray-600 mb-3">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs text-gray-500">{label}</p>
+      <p className="text-sm font-medium text-gray-800">{value || '—'}</p>
     </div>
   );
 }
