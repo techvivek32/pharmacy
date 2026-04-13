@@ -223,12 +223,34 @@ export default function OrdersPage() {
             </div>
             <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
               <div className="text-sm text-gray-600">Total: <span className="font-medium">{pagination.total}</span> orders</div>
-              <div className="flex space-x-2">
+              <div className="flex items-center gap-1">
                 <button onClick={() => setPagination(p => ({ ...p, page: Math.max(1, p.page - 1) }))} disabled={pagination.page === 1}
-                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50">Previous</button>
-                <span className="px-3 py-1 bg-green-500 text-white rounded-lg text-sm">{pagination.page}</span>
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50">‹</button>
+                {(() => {
+                  const { page, pages } = pagination;
+                  const items: (number | '...')[] = [];
+                  if (pages <= 4) {
+                    for (let i = 1; i <= pages; i++) items.push(i);
+                  } else {
+                    items.push(1, 2);
+                    if (page > 3) items.push('...');
+                    if (page > 2 && page < pages - 1) items.push(page);
+                    if (page < pages - 1) items.push('...');
+                    items.push(pages);
+                  }
+                  return items.map((item, i) =>
+                    item === '...' ? (
+                      <span key={`dots-${i}`} className="px-2 py-1.5 text-sm text-gray-400">...</span>
+                    ) : (
+                      <button key={item} onClick={() => setPagination(p => ({ ...p, page: item as number }))}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                          page === item ? 'bg-green-500 text-white' : 'border border-gray-300 hover:bg-gray-50 text-gray-700'
+                        }`}>{item}</button>
+                    )
+                  );
+                })()}
                 <button onClick={() => setPagination(p => ({ ...p, page: Math.min(p.pages, p.page + 1) }))} disabled={pagination.page === pagination.pages}
-                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50">Next</button>
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50">›</button>
               </div>
             </div>
           </div>
