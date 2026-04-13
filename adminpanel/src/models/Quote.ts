@@ -18,6 +18,7 @@ export interface IQuote extends Document {
   deliveryFee: number;
   totalAmount: number;
   status: 'pending' | 'accepted' | 'rejected' | 'expired';
+  rejectionReason?: string;
   expiresAt: Date;
   createdAt: Date;
   updatedAt: Date;
