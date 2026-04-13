@@ -6,6 +6,7 @@ import '../../core/widgets/input_field.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../providers/auth_provider.dart';
 import 'wallet_screen.dart';
+import 'pharmacy_info_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -75,7 +76,7 @@ class ProfileScreen extends StatelessWidget {
               context,
               Icons.store,
               'Pharmacy Info',
-              () => _showPharmacyInfo(context),
+              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PharmacyInfoScreen())),
             ),
             _buildMenuItem(
               context,
@@ -204,21 +205,6 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  void _showPharmacyInfo(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Pharmacy Info'),
-        content: const Text(
-            'Pharmacy details are managed by the admin. Contact support to update your pharmacy information.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'))
-        ],
-      ),
-    );
-  }
 
   void _showChangePassword(BuildContext context) {
     final currentCtrl = TextEditingController();
