@@ -4,6 +4,7 @@ import Prescription from '@/models/Prescription';
 import Patient from '@/models/Patient';
 import User from '@/models/User';
 import Quote from '@/models/Quote';
+import Pharmacy from '@/models/Pharmacy';
 import { successResponse, errorResponse } from '@/lib/response';
 
 export const dynamic = 'force-dynamic';
@@ -46,15 +47,43 @@ export async function GET(request: NextRequest) {
         }
       } catch (_) {}
 
-      // Count quotes for this prescription
+      // Get full quote history with pharmacy names and rejection details
       let quotesCount = 0;
       let acceptedQuotes = 0;
       let rejectedQuotes = 0;
+      let quoteHistory: any[] = [];
       try {
-        const quotes = await Quote.find({ prescriptionId: p._id }).lean() as any[];
+        const quotes = await Quote.find({ prescriptionId: p._id }).sort({ createdAt: 1 }).lean() as any[];
         quotesCount = quotes.length;
         acceptedQuotes = quotes.filter((q: any) => q.status === 'accepted').length;
         rejectedQuotes = quotes.filter((q: any) => q.status === 'rejected').length;
+
+        quoteHistory = await Promise.all(quotes.map(async (q: any) => {
+          let pharmacyName = 'Unknown Pharmacy';
+          try {
+            const ph = await Pharmacy.findById(q.pharmacyId).lean() as any;
+            pharmacyName = ph?.pharmacyName || 'Unknown Pharmacy';
+          } catch (_) {}
+
+          // Determine who rejected:
+          // - has rejectionReason → pharmacy rejected
+          // - no rejectionReason + status rejected → patient cancelled
+          const rejectedBy = q.status === 'rejected'
+            ? (q.rejectionReason ? 'pharmacy' : 'patient')
+            : null;
+
+          return {
+            pharmacyName,
+            status: q.status,
+            rejectedBy,
+            rejectionReason: q.rejectionReason || '',
+            totalAmount: q.totalAmount || 0,
+            subtotal: q.subtotal || 0,
+            deliveryFee: q.deliveryFee || 0,
+            items: q.items || [],
+            createdAt: q.createdAt,
+          };
+        }));
       } catch (_) {}
 
       return {
@@ -69,6 +98,7 @@ export async function GET(request: NextRequest) {
         quotesCount,
         acceptedQuotes,
         rejectedQuotes,
+        quoteHistory,
         createdAt: p.createdAt,
         expiresAt: p.expiresAt,
       };

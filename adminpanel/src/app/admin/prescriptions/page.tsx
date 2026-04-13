@@ -15,6 +15,17 @@ interface Prescription {
   quotesCount: number;
   acceptedQuotes: number;
   rejectedQuotes: number;
+  quoteHistory: {
+    pharmacyName: string;
+    status: string;
+    rejectedBy: 'pharmacy' | 'patient' | null;
+    rejectionReason: string;
+    totalAmount: number;
+    subtotal: number;
+    deliveryFee: number;
+    items: { medicineName: string; quantity: number; unitPrice: number; totalPrice: number }[];
+    createdAt: string;
+  }[];
   createdAt: string;
   expiresAt: string;
 }
@@ -251,6 +262,80 @@ export default function PrescriptionsPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Quote History */}
+              {selected.quoteHistory?.length > 0 && (
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <h3 className="text-sm font-semibold text-gray-500 mb-3">🏥 Quote History ({selected.quoteHistory.length})</h3>
+                  <div className="space-y-3">
+                    {selected.quoteHistory.map((q, i) => (
+                      <div key={i} className={`rounded-xl border p-4 ${
+                        q.status === 'accepted' ? 'border-green-200 bg-green-50' :
+                        q.status === 'rejected' ? 'border-red-200 bg-red-50' :
+                        'border-gray-200 bg-white'
+                      }`}>
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-gray-800">#{i + 1} {q.pharmacyName}</span>
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                              q.status === 'accepted' ? 'bg-green-100 text-green-700' :
+                              q.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                              q.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-gray-100 text-gray-600'
+                            }`}>
+                              {q.status.charAt(0).toUpperCase() + q.status.slice(1)}
+                            </span>
+                          </div>
+                          <span className="text-xs text-gray-400">{new Date(q.createdAt).toLocaleString()}</span>
+                        </div>
+
+                        {/* Rejection details */}
+                        {q.status === 'rejected' && (
+                          <div className={`mt-2 rounded-lg px-3 py-2 flex items-start gap-2 ${
+                            q.rejectedBy === 'pharmacy' ? 'bg-red-100' : 'bg-orange-100'
+                          }`}>
+                            <span className="text-base">{q.rejectedBy === 'pharmacy' ? '🏥' : '👤'}</span>
+                            <div>
+                              <p className={`text-xs font-semibold ${
+                                q.rejectedBy === 'pharmacy' ? 'text-red-700' : 'text-orange-700'
+                              }`}>
+                                Rejected by {q.rejectedBy === 'pharmacy' ? 'Pharmacy' : 'Patient'}
+                              </p>
+                              {q.rejectionReason ? (
+                                <p className="text-xs text-red-600 mt-0.5">
+                                  <span className="font-medium">Reason:</span> {q.rejectionReason}
+                                </p>
+                              ) : (
+                                <p className="text-xs text-orange-600 mt-0.5">Patient cancelled the quote</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Accepted quote items */}
+                        {q.status === 'accepted' && q.items?.length > 0 && (
+                          <div className="mt-3 space-y-1">
+                            {q.items.map((item, j) => (
+                              <div key={j} className="flex justify-between text-sm">
+                                <span className="text-gray-700">{item.medicineName} × {item.quantity}</span>
+                                <span className="text-gray-600">{item.totalPrice} MAD</span>
+                              </div>
+                            ))}
+                            <div className="flex justify-between text-sm font-semibold text-green-700 pt-1 border-t border-green-200 mt-1">
+                              <span>Total</span><span>{q.totalAmount} MAD</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Pending quote amount */}
+                        {q.status === 'pending' && q.totalAmount > 0 && (
+                          <p className="text-sm text-gray-600 mt-1">Quote: <span className="font-medium">{q.totalAmount} MAD</span></p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Dates */}
               <div className="bg-gray-50 rounded-xl p-4">
