@@ -17,8 +17,10 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Accept both Bearer token (mobile apps) and admin cookie
     const auth = await authenticateRequest(request);
-    if (!auth) return unauthorizedResponse();
+    const adminToken = request.cookies.get('admin_token')?.value;
+    if (!auth && !adminToken) return unauthorizedResponse();
 
     await connectDB();
 

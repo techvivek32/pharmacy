@@ -78,10 +78,12 @@ export default function OrdersPage() {
 
   const fetchOrderDetail = async (id: string) => {
     setDetailLoading(true);
+    setSelectedOrder(null);
     try {
-      const res = await fetch(`/api/orders/${id}`);
+      const res = await fetch(`/api/orders/${id}`, { credentials: 'include' });
       const data = await res.json() as any;
       if (data.success) setSelectedOrder(data.data.order);
+      else console.error('Order detail error:', data.message);
     } catch (e) { console.error(e); }
     finally { setDetailLoading(false); }
   };
