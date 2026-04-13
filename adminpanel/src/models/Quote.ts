@@ -50,7 +50,7 @@ const QuoteSchema = new Schema<IQuote>(
     ],
     subtotal: {
       type: Number,
-      required: true,
+      default: 0,
     },
     commissionRate: {
       type: Number,
@@ -67,7 +67,11 @@ const QuoteSchema = new Schema<IQuote>(
     },
     totalAmount: {
       type: Number,
-      required: true,
+      default: 0,
+    },
+    rejectionReason: {
+      type: String,
+      default: '',
     },
     status: {
       type: String,

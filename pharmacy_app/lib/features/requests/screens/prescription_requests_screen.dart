@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../providers/prescription_provider.dart';
 import 'package:provider/provider.dart';
+import '../../../services/api_service.dart';
 import 'prescription_detail_screen.dart';
 
 class PrescriptionRequestsScreen extends StatefulWidget {
@@ -170,34 +171,66 @@ class _PrescriptionRequestsScreenState
 
                   const SizedBox(height: AppTheme.spacing12),
 
-                  // View details button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: request['status'] == 'accepted' ? null : () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              PrescriptionDetailScreen(prescription: request),
+                  // Action buttons
+                  if (request['status'] != 'accepted') ...[
+                    const SizedBox(height: AppTheme.spacing8),
+                    Row(
+                      children: [
+                        // Reject button
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _showRejectDialog(context, request),
+                            icon: const Icon(Icons.cancel_outlined, size: 16),
+                            label: const Text('Reject'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppTheme.error,
+                              side: const BorderSide(color: AppTheme.error),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
                         ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        backgroundColor: request['status'] == 'accepted'
-                            ? Colors.green
-                            : null,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                      ),
-                      child: Text(
-                        request['status'] == 'accepted'
-                            ? '✓ Order Confirmed by Patient'
-                            : request['existingQuote'] != null
-                                ? 'View & Edit Quote'
-                                : 'View & Send Quote',
+                        const SizedBox(width: AppTheme.spacing8),
+                        // View/Send Quote button
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    PrescriptionDetailScreen(prescription: request),
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                            ),
+                            child: Text(
+                              request['existingQuote'] != null
+                                  ? 'View & Edit Quote'
+                                  : 'View & Send Quote',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: null,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          backgroundColor: AppTheme.success,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: const Text('✓ Order Confirmed by Patient'),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -205,6 +238,95 @@ class _PrescriptionRequestsScreenState
         ),
       ),
     );
+  }
+
+  Future<void> _showRejectDialog(BuildContext context, dynamic request) async {
+    final reasonController = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Reject Prescription'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Please provide a reason for rejection. The request will be sent to the next nearest pharmacy.',
+              style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: reasonController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'e.g. Medicine out of stock, closed today...',
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                contentPadding: const EdgeInsets.all(12),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.error,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Reject & Reassign'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    // Show loading
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const AlertDialog(
+          content: Row(children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 16),
+            Text('Rejecting...'),
+          ]),
+        ),
+      );
+    }
+
+    final res = await ApiService.post('/pharmacy/reject-prescription', {
+      'prescriptionId': request['id']?.toString() ?? '',
+      'reason': reasonController.text.trim(),
+    });
+
+    reasonController.dispose();
+
+    if (context.mounted) {
+      Navigator.pop(context); // close loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            res.success
+                ? (res.data?['reassigned'] == true
+                    ? 'Rejected. Request sent to next pharmacy!'
+                    : 'Rejected. No more pharmacies available.')
+                : res.message,
+          ),
+          backgroundColor: res.success ? AppTheme.success : AppTheme.error,
+        ),
+      );
+      if (res.success) {
+        context.read<PrescriptionProvider>().fetchPrescriptionRequests();
+      }
+    }
   }
 
   Widget _imagePlaceholder() {
