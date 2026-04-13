@@ -147,15 +147,15 @@ export default function AnalyticsPage() {
                   {data?.charts.last30Stats.length === 0 ? (
                     <p className="text-gray-400 text-sm text-center py-8">No data yet</p>
                   ) : (
-                    <div className="flex items-end gap-1 h-32">
+                    <div className="flex items-end gap-1" style={{ height: '128px' }}>
                       {data?.charts.last30Stats.map((d, i) => {
                         const pct = (d.orders / maxBar(data.charts.last30Stats, 'orders')) * 100;
                         return (
-                          <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
+                          <div key={i} className="flex-1 group relative" style={{ height: `${Math.max(pct, 4)}%` }}>
                             <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-10">
                               {d._id}: {d.orders}
                             </div>
-                            <div className="w-full bg-green-500 rounded-t" style={{ height: `${Math.max(pct, 4)}%` }} />
+                            <div className="w-full h-full bg-green-500 rounded-t" />
                           </div>
                         );
                       })}
@@ -196,15 +196,15 @@ export default function AnalyticsPage() {
                 {data?.charts.last30Stats.length === 0 ? (
                   <p className="text-gray-400 text-sm text-center py-8">No revenue data yet</p>
                 ) : (
-                  <div className="flex items-end gap-1 h-24">
+                  <div className="flex items-end gap-1" style={{ height: '96px' }}>
                     {data?.charts.last30Stats.map((d, i) => {
                       const pct = (d.revenue / maxBar(data.charts.last30Stats, 'revenue')) * 100;
                       return (
-                        <div key={i} className="flex-1 flex flex-col items-center group relative">
+                        <div key={i} className="flex-1 group relative" style={{ height: `${Math.max(pct, 4)}%` }}>
                           <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-10">
                             {d._id}: {d.revenue.toLocaleString()} MAD
                           </div>
-                          <div className="w-full bg-blue-400 rounded-t" style={{ height: `${Math.max(pct, 4)}%` }} />
+                          <div className="w-full h-full bg-blue-400 rounded-t" />
                         </div>
                       );
                     })}
