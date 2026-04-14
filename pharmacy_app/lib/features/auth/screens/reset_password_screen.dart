@@ -17,8 +17,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _otpController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
+  final _otpFormKey = GlobalKey<FormState>();
+  final _passwordFormKey = GlobalKey<FormState>();
   bool _isLoading = false;
+  bool _otpVerified = false;
   int _secondsRemaining = 60;
   Timer? _timer;
 
@@ -70,8 +72,28 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     }
   }
 
+  Future<void> _verifyOtp() async {
+    if (!_otpFormKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
+
+    final res = await ApiService.post(
+      '/auth/verify-otp',
+      {'email': widget.email, 'otp': _otpController.text.trim()},
+      includeAuth: false,
+    );
+
+    setState(() => _isLoading = false);
+    if (!mounted) return;
+
+    if (res.success) {
+      setState(() => _otpVerified = true);
+    } else {
+      _showError(res.message);
+    }
+  }
+
   Future<void> _resetPassword() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_passwordFormKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
 
     final res = await ApiService.post(
@@ -94,7 +116,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           backgroundColor: AppTheme.success,
         ),
       );
-      // Pop back to login
       Navigator.of(context).popUntil((route) => route.isFirst);
     } else {
       _showError(res.message);
@@ -109,97 +130,128 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     }
   }
 
+  Widget _buildOtpStep() {
+    return Form(
+      key: _otpFormKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: AppTheme.spacing32),
+          const Icon(Icons.mark_email_read_outlined, size: 80, color: AppTheme.primary),
+          const SizedBox(height: AppTheme.spacing24),
+          Text('Enter Verification Code',
+              style: Theme.of(context).textTheme.headlineMedium,
+              textAlign: TextAlign.center),
+          const SizedBox(height: AppTheme.spacing8),
+          Text('We sent a 6-digit code to',
+              style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: TextAlign.center),
+          const SizedBox(height: 4),
+          Text(widget.email,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(color: AppTheme.primary),
+              textAlign: TextAlign.center),
+          const SizedBox(height: AppTheme.spacing32),
+          InputField(
+            controller: _otpController,
+            label: 'OTP Code',
+            hint: 'Enter 6-digit code',
+            prefixIcon: Icons.pin_outlined,
+            keyboardType: TextInputType.number,
+            maxLength: 6,
+            validator: (v) {
+              if (v == null || v.isEmpty) return 'Please enter the OTP';
+              if (v.length != 6) return 'OTP must be 6 digits';
+              return null;
+            },
+          ),
+          const SizedBox(height: AppTheme.spacing24),
+          PrimaryButton(
+            text: 'Verify OTP',
+            onPressed: _isLoading ? null : _verifyOtp,
+            isLoading: _isLoading,
+          ),
+          const SizedBox(height: AppTheme.spacing16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text("Didn't receive code? ",
+                  style: Theme.of(context).textTheme.bodyMedium),
+              TextButton(
+                onPressed: _secondsRemaining > 0 ? null : _resendOtp,
+                child: Text(_secondsRemaining > 0
+                    ? 'Resend in ${_secondsRemaining}s'
+                    : 'Resend OTP'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPasswordStep() {
+    return Form(
+      key: _passwordFormKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: AppTheme.spacing32),
+          const Icon(Icons.lock_reset_outlined, size: 80, color: AppTheme.primary),
+          const SizedBox(height: AppTheme.spacing24),
+          Text('Set New Password',
+              style: Theme.of(context).textTheme.headlineMedium,
+              textAlign: TextAlign.center),
+          const SizedBox(height: AppTheme.spacing8),
+          Text('OTP verified! Enter your new password below.',
+              style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: TextAlign.center),
+          const SizedBox(height: AppTheme.spacing32),
+          InputField(
+            controller: _newPasswordController,
+            label: 'New Password',
+            hint: 'Enter new password',
+            prefixIcon: Icons.lock_outline,
+            isPassword: true,
+            validator: (v) {
+              if (v == null || v.isEmpty) return 'Please enter a new password';
+              if (v.length < 6) return 'Password must be at least 6 characters';
+              return null;
+            },
+          ),
+          const SizedBox(height: AppTheme.spacing16),
+          InputField(
+            controller: _confirmPasswordController,
+            label: 'Confirm Password',
+            hint: 'Re-enter new password',
+            prefixIcon: Icons.lock_outline,
+            isPassword: true,
+            validator: (v) {
+              if (v == null || v.isEmpty) return 'Please confirm your password';
+              if (v != _newPasswordController.text) return 'Passwords do not match';
+              return null;
+            },
+          ),
+          const SizedBox(height: AppTheme.spacing24),
+          PrimaryButton(
+            text: 'Reset Password',
+            onPressed: _isLoading ? null : _resetPassword,
+            isLoading: _isLoading,
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Reset Password')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTheme.spacing24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: AppTheme.spacing32),
-              const Icon(Icons.mark_email_read_outlined, size: 80, color: AppTheme.primary),
-              const SizedBox(height: AppTheme.spacing24),
-              Text('Enter Verification Code',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                  textAlign: TextAlign.center),
-              const SizedBox(height: AppTheme.spacing8),
-              Text('We sent a 6-digit code to',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  textAlign: TextAlign.center),
-              const SizedBox(height: 4),
-              Text(widget.email,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(color: AppTheme.primary),
-                  textAlign: TextAlign.center),
-              const SizedBox(height: AppTheme.spacing32),
-              InputField(
-                controller: _otpController,
-                label: 'OTP Code',
-                hint: 'Enter 6-digit code',
-                prefixIcon: Icons.pin_outlined,
-                keyboardType: TextInputType.number,
-                maxLength: 6,
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Please enter the OTP';
-                  if (v.length != 6) return 'OTP must be 6 digits';
-                  return null;
-                },
-              ),
-              const SizedBox(height: AppTheme.spacing16),
-              InputField(
-                controller: _newPasswordController,
-                label: 'New Password',
-                hint: 'Enter new password',
-                prefixIcon: Icons.lock_outline,
-                isPassword: true,
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Please enter a new password';
-                  if (v.length < 6) return 'Password must be at least 6 characters';
-                  return null;
-                },
-              ),
-              const SizedBox(height: AppTheme.spacing16),
-              InputField(
-                controller: _confirmPasswordController,
-                label: 'Confirm Password',
-                hint: 'Re-enter new password',
-                prefixIcon: Icons.lock_outline,
-                isPassword: true,
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Please confirm your password';
-                  if (v != _newPasswordController.text) return 'Passwords do not match';
-                  return null;
-                },
-              ),
-              const SizedBox(height: AppTheme.spacing24),
-              PrimaryButton(
-                text: 'Reset Password',
-                onPressed: _isLoading ? null : _resetPassword,
-                isLoading: _isLoading,
-              ),
-              const SizedBox(height: AppTheme.spacing16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text("Didn't receive code? ",
-                      style: Theme.of(context).textTheme.bodyMedium),
-                  TextButton(
-                    onPressed: _secondsRemaining > 0 ? null : _resendOtp,
-                    child: Text(_secondsRemaining > 0
-                        ? 'Resend in ${_secondsRemaining}s'
-                        : 'Resend OTP'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+        child: _otpVerified ? _buildPasswordStep() : _buildOtpStep(),
       ),
     );
   }

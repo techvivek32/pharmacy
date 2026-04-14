@@ -16,7 +16,7 @@ export async function storeOTP(email: string, otp: string, expiryMinutes: number
   console.log(`[OTP] Stored for ${email}: ${otp} (expires in ${expiryMinutes} min)`);
 }
 
-export async function verifyOTP(email: string, otp: string): Promise<{ valid: boolean; message: string }> {
+export async function verifyOTP(email: string, otp: string, deleteAfterVerify: boolean = true): Promise<{ valid: boolean; message: string }> {
   await connectDB();
   const stored = await OtpModel.findOne({ email });
 
@@ -33,7 +33,11 @@ export async function verifyOTP(email: string, otp: string): Promise<{ valid: bo
     return { valid: false, message: 'Invalid OTP' };
   }
 
-  await OtpModel.deleteOne({ email });
-  console.log(`[OTP] ✅ Verified and removed for ${email}`);
+  if (deleteAfterVerify) {
+    await OtpModel.deleteOne({ email });
+    console.log(`[OTP] ✅ Verified and removed for ${email}`);
+  } else {
+    console.log(`[OTP] ✅ Verified (kept) for ${email}`);
+  }
   return { valid: true, message: 'OTP verified successfully' };
 }
