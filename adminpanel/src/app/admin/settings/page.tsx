@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import AdminShell from '@/components/admin/AdminShell';
+import Sidebar from '@/components/admin/Sidebar';
 
 interface Settings {
   deliveryFee: number;
@@ -16,6 +16,7 @@ interface Settings {
 }
 
 export default function SettingsPage() {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [settings, setSettings] = useState<Settings>({
     deliveryFee: 20,
     commissionRate: 15,
@@ -73,12 +74,34 @@ export default function SettingsPage() {
   };
 
   return (
-    <AdminShell title="Settings" actions={
-      <button onClick={handleSave} disabled={saving}
-        className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 text-sm font-medium">
-        {saving ? 'Saving...' : 'Save Changes'}
-      </button>
-    }>
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar isOpen={sidebarOpen} />
+
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <header className="bg-white shadow-sm">
+          <div className="flex items-center justify-between px-6 py-4">
+            <div className="flex items-center">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <h1 className="ml-4 text-2xl font-semibold text-gray-800">System Settings</h1>
+            </div>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50"
+            >
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-y-auto p-6">
           {loading ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-gray-500">Loading settings...</div>
@@ -224,6 +247,8 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
-    </AdminShell>
+        </main>
+      </div>
+    </div>
   );
 }
