@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Sidebar from '@/components/admin/Sidebar';
+import AdminShell from '@/components/admin/AdminShell';
 
 interface RiderRequest {
   _id: string;
@@ -20,7 +20,6 @@ interface RiderRequest {
 }
 
 export default function RiderRequestsPage() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [requests, setRequests] = useState<RiderRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'pending' | 'approved' | 'rejected'>('pending');
@@ -83,21 +82,7 @@ export default function RiderRequestsPage() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <Sidebar isOpen={sidebarOpen} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white shadow-sm">
-          <div className="flex items-center px-6 py-4">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-500 hover:text-gray-700">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <h1 className="ml-4 text-2xl font-semibold text-gray-800">Rider Requests</h1>
-          </div>
-        </header>
-
-        <main className="flex-1 overflow-y-auto p-6">
+    <AdminShell title="Rider Requests">
           <div className="flex space-x-2 mb-6">
             {(['pending', 'approved', 'rejected'] as const).map(tab => (
               <button key={tab} onClick={() => setActiveTab(tab)}
@@ -180,8 +165,6 @@ export default function RiderRequestsPage() {
               </div>
             )}
           </div>
-        </main>
-      </div>
 
       {showRejectModal && selectedRequest && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -208,6 +191,6 @@ export default function RiderRequestsPage() {
           </div>
         </div>
       )}
-    </div>
+    </AdminShell>
   );
 }

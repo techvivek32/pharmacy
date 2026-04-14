@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Sidebar from '@/components/admin/Sidebar';
+import AdminShell from '@/components/admin/AdminShell';
 
 interface Order {
   _id: string;
@@ -53,7 +53,6 @@ interface OrderDetail {
 }
 
 export default function OrdersPage() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [search, setSearch] = useState('');
   const [dateFrom, setDateFrom] = useState('');
@@ -124,21 +123,7 @@ export default function OrdersPage() {
   const fmtDate = (d: string) => new Date(d).toLocaleDateString();
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <Sidebar isOpen={sidebarOpen} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white shadow-sm">
-          <div className="flex items-center px-6 py-4 gap-4">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-500 hover:text-gray-700">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <h1 className="text-2xl font-semibold text-gray-800">Orders Management</h1>
-          </div>
-        </header>
-
-        <main className="flex-1 overflow-y-auto p-6">
+    <AdminShell title="Orders Management">
           {/* Filters toolbar */}
           <div className="mb-6 flex flex-wrap items-center gap-3">
             {/* Status dropdown */}
@@ -254,8 +239,6 @@ export default function OrdersPage() {
               </div>
             </div>
           </div>
-        </main>
-      </div>
 
       {/* Detail Modal */}
       {(selectedOrder || detailLoading) && (
@@ -450,7 +433,7 @@ export default function OrdersPage() {
           </div>
         </div>
       )}
-    </div>
+    </AdminShell>
   );
 }
 
