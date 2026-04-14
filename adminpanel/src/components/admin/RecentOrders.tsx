@@ -1,119 +1,99 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
+
+const STATUS_STYLES: Record<string, string> = {
+  delivered: 'bg-emerald-100 text-emerald-700',
+  in_transit: 'bg-blue-100 text-blue-700',
+  picked_up: 'bg-cyan-100 text-cyan-700',
+  preparing: 'bg-yellow-100 text-yellow-700',
+  confirmed: 'bg-purple-100 text-purple-700',
+  assigned: 'bg-indigo-100 text-indigo-700',
+  ready: 'bg-lime-100 text-lime-700',
+  cancelled: 'bg-red-100 text-red-600',
+  pending: 'bg-orange-100 text-orange-700',
+};
+
+function timeAgo(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
 
 export default function RecentOrders() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchOrders();
+    fetch('/api/orders?limit=8')
+      .then(r => r.json())
+      .then(d => { if (d.success) setOrders(d.data.orders || []); })
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
-  const fetchOrders = async () => {
-    try {
-      const response = await fetch('/api/orders?limit=5');
-      const data = await response.json();
-      
-      if (data.success) {
-        setOrders(data.data.orders || []);
-      }
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'delivered':
-        return 'bg-green-100 text-green-800';
-      case 'in_transit':
-        return 'bg-blue-100 text-blue-800';
-      case 'preparing':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'confirmed':
-        return 'bg-purple-100 text-purple-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const formatStatus = (status: string) => {
-    return status.split('_').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
-  };
-
-  if (loading) {
-    return (
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-1/4 mb-6"></div>
-          <div className="space-y-3">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-12 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-800">Recent Orders</h2>
-        <button className="text-primary-600 hover:text-primary-700 text-sm font-medium">
-          View All
-        </button>
+    <div className="bg-white rounded-xl border border-gray-200 p-6 flex flex-col h-full">
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h2 className="text-base font-bold text-gray-900">Recent Orders</h2>
+          <p className="text-xs text-gray-400 mt-0.5">Latest activity</p>
+        </div>
+        <Link href="/admin/orders" className="text-xs font-semibold text-green-600 hover:text-green-700 flex items-center gap-1">
+          View all
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Order ID</th>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Patient</th>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Pharmacy</th>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Amount</th>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="py-8 text-center text-gray-500">
-                  No orders yet
-                </td>
-              </tr>
-            ) : (
-              orders.map((order) => (
-                <tr key={order._id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-3 px-4 text-sm font-medium text-gray-800">
-                    {order.orderNumber || 'N/A'}
-                  </td>
-                  <td className="py-3 px-4 text-sm text-gray-600">
-                    {order.patientId?.fullName || 'N/A'}
-                  </td>
-                  <td className="py-3 px-4 text-sm text-gray-600">
-                    {order.pharmacyId?.pharmacyName || 'N/A'}
-                  </td>
-                  <td className="py-3 px-4 text-sm font-medium text-gray-800">
-                    {order.totalAmount} MAD
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                      {formatStatus(order.status)}
-                    </span>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      {loading ? (
+        <div className="space-y-3 flex-1">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 animate-pulse">
+              <div className="w-9 h-9 rounded-full bg-gray-200 flex-shrink-0" />
+              <div className="flex-1">
+                <div className="h-3 bg-gray-200 rounded w-3/4 mb-1.5" />
+                <div className="h-2.5 bg-gray-200 rounded w-1/2" />
+              </div>
+              <div className="h-5 bg-gray-200 rounded-full w-16" />
+            </div>
+          ))}
+        </div>
+      ) : orders.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">No orders yet</div>
+      ) : (
+        <div className="space-y-3 flex-1 overflow-y-auto">
+          {orders.map((order) => {
+            const name = order.patientName || order.patientId?.fullName || 'Patient';
+            const initial = name.charAt(0).toUpperCase();
+            const statusStyle = STATUS_STYLES[order.status] || 'bg-gray-100 text-gray-600';
+            const label = order.status.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+            return (
+              <div key={order._id} className="flex items-center gap-3 py-1">
+                <div className="w-9 h-9 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                  {initial}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-800 truncate">{name}</p>
+                  <p className="text-xs text-gray-400 truncate">
+                    {order.orderNumber || order._id.slice(-6).toUpperCase()} · {timeAgo(order.createdAt)}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                  <span className="text-sm font-bold text-gray-800">{order.totalAmount} MAD</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusStyle}`}>{label}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
