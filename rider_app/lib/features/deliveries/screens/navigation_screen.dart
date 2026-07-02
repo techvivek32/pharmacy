@@ -286,7 +286,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
             children: [
               const Icon(Icons.payments_outlined, color: AppTheme.warning, size: 20),
               const SizedBox(width: 8),
-              const Text('Collect Payment (Cash on Delivery)',
+              const Text('Collect Payment (Pay on Delivery)',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
             ],
           ),
