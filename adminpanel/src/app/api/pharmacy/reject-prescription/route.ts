@@ -5,8 +5,7 @@ import Pharmacy from '@/models/Pharmacy';
 import Quote from '@/models/Quote';
 import { authenticateRequest } from '@/lib/auth';
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response';
-import { sendNotificationToUser } from '@/services/notification';
-import Patient from '@/models/Patient';
+import { reassignPrescriptionToNextPharmacy } from '@/services/reassignment';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,56 +39,11 @@ export async function POST(request: NextRequest) {
       rejectionReason: reason || 'Rejected by pharmacy',
     });
 
-    // Get all pharmacies already tried
-    const triedQuotes = await Quote.find({
-      prescriptionId: prescription._id,
-      status: { $in: ['rejected', 'accepted'] },
-    }).lean() as any[];
+    // Reassign to next nearest untried approved pharmacy (notifies the new
+    // pharmacy and the patient)
+    const reassigned = await reassignPrescriptionToNextPharmacy(prescription);
 
-    const triedIds = triedQuotes.map((q: any) => q.pharmacyId.toString());
-
-    // Find next nearest untried approved pharmacy
-    let nextPharmacy = null;
-
-    if (prescription.deliveryAddress?.location?.coordinates?.length === 2) {
-      nextPharmacy = await Pharmacy.findOne({
-        _id: { $nin: triedIds },
-        approvalStatus: 'approved',
-        location: {
-          $near: {
-            $geometry: {
-              type: 'Point',
-              coordinates: prescription.deliveryAddress.location.coordinates,
-            },
-          },
-        },
-      }).lean() as any;
-    } else {
-      nextPharmacy = await Pharmacy.findOne({
-        _id: { $nin: triedIds },
-        approvalStatus: 'approved',
-      }).lean() as any;
-    }
-
-    if (nextPharmacy) {
-      prescription.nearbyPharmacies = [nextPharmacy._id];
-      prescription.assignedAt = new Date();
-      prescription.status = 'pending';
-      await prescription.save();
-
-      // Notify patient
-      try {
-        const patient = await Patient.findById(prescription.patientId).lean() as any;
-        if (patient) {
-          await sendNotificationToUser(
-            patient.userId.toString(),
-            'Prescription Reassigned',
-            'Your prescription has been sent to another nearby pharmacy.',
-            { prescriptionId: prescription._id.toString(), type: 'prescription_reassigned' }
-          );
-        }
-      } catch (_) {}
-
+    if (reassigned) {
       return successResponse({ reassigned: true }, 'Prescription rejected and reassigned to next pharmacy');
     } else {
       prescription.nearbyPharmacies = [];
