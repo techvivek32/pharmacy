@@ -101,7 +101,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_licenseImage == null) return null;
     try {
       final ext = _licenseImage!.path.toLowerCase().split('.').last;
-      final mimeType = ext == 'png' ? 'image/png' : ext == 'webp' ? 'image/webp' : 'image/jpeg';
       final subtype = ext == 'png' ? 'png' : ext == 'webp' ? 'webp' : 'jpeg';
 
       final request = http.MultipartRequest(
@@ -128,13 +127,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _register() async {
     final l10n = AppLocalizations.of(context)!;
     if (!_formKey.currentState!.validate()) return;
-    if (_licenseImage == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.translate('please_upload_licence')),
-            backgroundColor: AppTheme.error),
-      );
-      return;
-    }
 
     setState(() => _isLoading = true);
 
@@ -252,10 +244,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: AppTheme.spacing12),
               InputField(
                 controller: _licenseController,
-                label: l10n.translate('licence_number'),
+                label:
+                    '${l10n.translate('licence_number')} (${l10n.translate('optional')})',
                 hint: l10n.translate('enter_licence'),
                 prefixIcon: const Icon(Icons.badge),
-                validator: (v) => v!.isEmpty ? l10n.translate('required') : null,
               ),
               const SizedBox(height: AppTheme.spacing12),
 
@@ -317,7 +309,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           children: [
                             const Icon(Icons.upload_file, size: 32, color: AppTheme.primary),
                             const SizedBox(height: 8),
-                            Text(l10n.translate('upload_licence_image'),
+                            Text(
+                                '${l10n.translate('upload_licence_image')} (${l10n.translate('optional')})',
                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: AppTheme.primary)),
                             Text(l10n.translate('tap_to_upload'),
