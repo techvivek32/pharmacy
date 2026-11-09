@@ -5,6 +5,7 @@ import Pharmacy from '@/models/Pharmacy';
 import Settings from '@/models/Settings';
 import { authenticateRequest } from '@/lib/auth';
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response';
+import { getPricing, computeDeliveryFee } from '@/lib/pricing';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,9 +41,7 @@ export async function GET(request: NextRequest) {
     if (!prescriptionId) return errorResponse('prescriptionId is required');
 
     const settings = (await Settings.findOne().lean()) as any;
-    const deliveryFeePerKm = settings?.deliveryFee ?? 20;
-    const commissionRate = settings?.commissionRate ?? 15;
-    const minCommission = settings?.minCommission ?? 500;
+    const pricing = getPricing(settings);
 
     const pharmacy = (await Pharmacy.findOne({ userId: auth.userId }).lean()) as any;
     if (!pharmacy) return errorResponse('Pharmacy not found', 404);
@@ -50,7 +49,7 @@ export async function GET(request: NextRequest) {
     const prescription = (await Prescription.findById(prescriptionId).lean()) as any;
     if (!prescription) return errorResponse('Prescription not found', 404);
 
-    let deliveryFee = deliveryFeePerKm; // fallback: 1km minimum
+    let distanceKm: number | null = null;
     try {
       const deliveryCoords = prescription.deliveryAddress?.location?.coordinates;
       const pharmacyCoords = pharmacy.location?.coordinates;
@@ -58,13 +57,22 @@ export async function GET(request: NextRequest) {
         Array.isArray(deliveryCoords) && deliveryCoords.length === 2 &&
         Array.isArray(pharmacyCoords) && pharmacyCoords.length === 2
       ) {
-        const distance = calculateDistance(pharmacyCoords, deliveryCoords);
-        deliveryFee = parseFloat((distance * deliveryFeePerKm).toFixed(2));
-        if (deliveryFee < deliveryFeePerKm) deliveryFee = deliveryFeePerKm;
+        distanceKm = calculateDistance(pharmacyCoords, deliveryCoords);
       }
     } catch (_) {}
+    const deliveryFee = computeDeliveryFee(distanceKm, settings);
 
-    return successResponse({ commissionRate, minCommission, deliveryFee, deliveryFeePerKm });
+    return successResponse({
+      deliveryFee,
+      deliveryFeePerKm: pricing.deliveryFeePerKm,
+      minDeliveryFee: pricing.minDeliveryFee,
+      serviceFeeTiers: pricing.serviceFeeTiers,
+      serviceFeeAbove: pricing.serviceFeeAbove,
+      // Legacy fields so older app builds keep working (they compute
+      // max(minCommission, rate%); zeros make them show just the quote total).
+      commissionRate: 0,
+      minCommission: 0,
+    });
   } catch (error) {
     console.error('Quote preview error:', error);
     return errorResponse('Failed to compute quote preview', 500);

@@ -32,12 +32,21 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
   // Itemized entry stays available as an optional mode.
   bool _isDirectMode = true;
 
-  // Fee breakdown (commission + delivery) fetched from the backend so the
-  // pharmacy can preview what the patient will pay.
-  double _commissionRate = 0;
-  double _minCommission = 0;
+  // Fee breakdown fetched from the backend so the pharmacy can preview what
+  // the patient will pay. The pharmacy (service) fee is a flat amount by
+  // subtotal tier, configured by the admin.
+  List<Map<String, double>> _serviceFeeTiers = [];
+  double _serviceFeeAbove = 0;
   double _deliveryFee = 0;
   bool _previewLoaded = false;
+
+  // Flat pharmacy fee for the given medicine subtotal, by tier.
+  double _serviceFeeFor(double subtotal) {
+    for (final tier in _serviceFeeTiers) {
+      if (subtotal < (tier['maxAmount'] ?? 0)) return tier['fee'] ?? 0;
+    }
+    return _serviceFeeAbove;
+  }
 
   // Payment methods saved in Payment Settings; the pharmacy ticks which ones
   // this quote accepts
@@ -103,8 +112,13 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
     if (!mounted) return;
     if (res.success && res.data != null) {
       setState(() {
-        _commissionRate = (res.data['commissionRate'] as num?)?.toDouble() ?? 0;
-        _minCommission = (res.data['minCommission'] as num?)?.toDouble() ?? 0;
+        _serviceFeeTiers = ((res.data['serviceFeeTiers'] as List?) ?? [])
+            .map((t) => {
+                  'maxAmount': ((t['maxAmount'] as num?) ?? 0).toDouble(),
+                  'fee': ((t['fee'] as num?) ?? 0).toDouble(),
+                })
+            .toList();
+        _serviceFeeAbove = (res.data['serviceFeeAbove'] as num?)?.toDouble() ?? 0;
         _deliveryFee = (res.data['deliveryFee'] as num?)?.toDouble() ?? 0;
         _previewLoaded = true;
       });
@@ -479,7 +493,7 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
                       Text(l10n.translate('total'),
                           style: Theme.of(context).textTheme.titleMedium),
                       Text(
-                        '${double.parse(_directTotalController.text.trim()).toStringAsFixed(2)} MRO',
+                        '${double.parse(_directTotalController.text.trim()).toStringAsFixed(2)} MRU',
                         style: Theme.of(context)
                             .textTheme
                             .titleMedium
@@ -550,7 +564,7 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
-                    '${l10n.translate('total')}: ${(_items[index]['totalPrice'] as num).toStringAsFixed(2)} MRO',
+                    '${l10n.translate('total')}: ${(_items[index]['totalPrice'] as num).toStringAsFixed(2)} MRU',
                     style: TextStyle(
                         color: AppTheme.primary,
                         fontWeight: FontWeight.w500,
@@ -585,9 +599,8 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
     final subtotal = _currentSubtotal;
     if (subtotal <= 0) return const SizedBox.shrink();
 
-    // Service fee = max(minimum commission, rate% of medicines).
-    final pct = subtotal * _commissionRate / 100;
-    final serviceFee = pct > _minCommission ? pct : _minCommission;
+    // Flat pharmacy fee by subtotal tier (admin-configured).
+    final serviceFee = _serviceFeeFor(subtotal);
     final total = subtotal + serviceFee + _deliveryFee;
 
     return AppCard(
@@ -638,7 +651,7 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
                   ? Theme.of(context).textTheme.titleMedium
                   : Theme.of(context).textTheme.bodyMedium),
           Text(
-            '${amount.toStringAsFixed(2)} MRO',
+            '${amount.toStringAsFixed(2)} MRU',
             style: isTotal
                 ? Theme.of(context)
                     .textTheme

@@ -3,10 +3,16 @@
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/admin/Sidebar';
 
+interface ServiceFeeTier {
+  maxAmount: number;
+  fee: number;
+}
+
 interface Settings {
   deliveryFee: number;
-  commissionRate: number;
-  minCommission: number;
+  minDeliveryFee: number;
+  serviceFeeTiers: ServiceFeeTier[];
+  serviceFeeAbove: number;
   minOrderAmount: number;
   maxDeliveryRadius: number;
   minWithdrawalAmount: number;
@@ -19,9 +25,14 @@ interface Settings {
 export default function SettingsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [settings, setSettings] = useState<Settings>({
-    deliveryFee: 20,
-    commissionRate: 15,
-    minCommission: 500,
+    deliveryFee: 25,
+    minDeliveryFee: 100,
+    serviceFeeTiers: [
+      { maxAmount: 500, fee: 50 },
+      { maxAmount: 1000, fee: 70 },
+      { maxAmount: 2000, fee: 100 },
+    ],
+    serviceFeeAbove: 150,
     minOrderAmount: 50,
     maxDeliveryRadius: 10,
     minWithdrawalAmount: 100,
@@ -116,7 +127,7 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Delivery Fee (MRO/km)
+                      Delivery Fee (MRU/km)
                     </label>
                     <input
                       type="number"
@@ -128,39 +139,23 @@ export default function SettingsPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Commission Rate (%)
+                      Minimum Delivery Fee (MRU)
                     </label>
                     <input
                       type="number"
-                      value={settings.commissionRate}
-                      readOnly
-                      disabled
-                      className="w-full px-4 py-2 border border-gray-200 bg-gray-100 text-gray-500 rounded-lg cursor-not-allowed"
+                      min={0}
+                      value={settings.minDeliveryFee}
+                      onChange={(e) => setSettings({ ...settings, minDeliveryFee: Number(e.target.value) })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                     />
                     <p className="text-xs text-gray-400 mt-1">
-                      Fixed rate. Commission charged = max({settings.minCommission} MRO, {settings.commissionRate}% of medicines).
+                      The customer never pays less than this for delivery (distance counted pharmacy → customer only).
                     </p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Minimum Commission (MRO)
-                    </label>
-                    <input
-                      type="number"
-                      value={settings.minCommission}
-                      readOnly
-                      disabled
-                      className="w-full px-4 py-2 border border-gray-200 bg-gray-100 text-gray-500 rounded-lg cursor-not-allowed"
-                    />
-                    <p className="text-xs text-gray-400 mt-1">
-                      The pharmacy is never charged less than this per order.
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Minimum Order Amount (MRO)
+                      Minimum Order Amount (MRU)
                     </label>
                     <input
                       type="number"
@@ -184,6 +179,83 @@ export default function SettingsPage() {
                 </div>
               </div>
 
+              {/* Pharmacy Fee Tiers */}
+              <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <h2 className="text-lg font-semibold text-gray-800 mb-1">Pharmacy Fee (Service Fee)</h2>
+                <p className="text-sm text-gray-500 mb-4">
+                  Flat fee charged per order based on the medicine subtotal. Orders below each &quot;Up to&quot; amount pay that tier&apos;s fee.
+                </p>
+                <div className="space-y-3">
+                  {settings.serviceFeeTiers.map((tier, i) => (
+                    <div key={i} className="flex items-center space-x-3">
+                      <span className="text-sm text-gray-500 w-32">{i === 0 ? 'Order under' : 'Up to'}</span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={tier.maxAmount}
+                        onChange={(e) => {
+                          const tiers = [...settings.serviceFeeTiers];
+                          tiers[i] = { ...tiers[i], maxAmount: Number(e.target.value) };
+                          setSettings({ ...settings, serviceFeeTiers: tiers });
+                        }}
+                        className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      />
+                      <span className="text-sm text-gray-500">MRU &nbsp;→&nbsp; fee</span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={tier.fee}
+                        onChange={(e) => {
+                          const tiers = [...settings.serviceFeeTiers];
+                          tiers[i] = { ...tiers[i], fee: Number(e.target.value) };
+                          setSettings({ ...settings, serviceFeeTiers: tiers });
+                        }}
+                        className="w-28 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      />
+                      <span className="text-sm text-gray-500">MRU</span>
+                      {settings.serviceFeeTiers.length > 1 && (
+                        <button
+                          onClick={() => setSettings({
+                            ...settings,
+                            serviceFeeTiers: settings.serviceFeeTiers.filter((_, j) => j !== i),
+                          })}
+                          className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded-lg hover:bg-red-100"
+                        >
+                          ✕ Remove
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <div className="flex items-center space-x-3 pt-2 border-t border-gray-100">
+                    <span className="text-sm font-medium text-gray-700 w-32">Above last tier</span>
+                    <span className="text-sm text-gray-500">fee</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={settings.serviceFeeAbove}
+                      onChange={(e) => setSettings({ ...settings, serviceFeeAbove: Number(e.target.value) })}
+                      className="w-28 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                    <span className="text-sm text-gray-500">MRU</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const last = settings.serviceFeeTiers[settings.serviceFeeTiers.length - 1];
+                      setSettings({
+                        ...settings,
+                        serviceFeeTiers: [
+                          ...settings.serviceFeeTiers,
+                          { maxAmount: (last?.maxAmount || 0) + 1000, fee: (last?.fee || 0) + 50 },
+                        ],
+                      });
+                    }}
+                    className="mt-1 px-4 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 font-medium"
+                  >
+                    + Add Tier
+                  </button>
+                </div>
+              </div>
+
               {/* Withdrawal Settings */}
               <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                 <h2 className="text-lg font-semibold text-gray-800 mb-1">Withdrawal Settings</h2>
@@ -191,7 +263,7 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Minimum Withdrawal Amount (MRO)
+                      Minimum Withdrawal Amount (MRU)
                     </label>
                     <input
                       type="number"

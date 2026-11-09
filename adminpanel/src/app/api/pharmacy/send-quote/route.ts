@@ -7,6 +7,7 @@ import Settings from '@/models/Settings';
 import { authenticateRequest } from '@/lib/auth';
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response';
 import { sendNotificationToPatient } from '@/services/notification';
+import { computeServiceFee, computeDeliveryFee } from '@/lib/pricing';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,12 +83,10 @@ export async function POST(request: NextRequest) {
 
     // Fetch admin settings for delivery fee per km and commission
     const settings = await Settings.findOne().lean() as any;
-    const deliveryFeePerKm = settings?.deliveryFee ?? 20;
-    const commissionRate = settings?.commissionRate ?? 15;
-    const minCommission = settings?.minCommission ?? 500;
 
-    // Calculate distance-based delivery fee
-    let deliveryFee = deliveryFeePerKm; // fallback: 1km minimum
+    // Delivery fee: per-km rate for the pharmacy→customer distance only,
+    // with an admin-configured minimum. Unknown distance pays the minimum.
+    let distanceKm: number | null = null;
     try {
       const pharmacyDoc = await Pharmacy.findOne({ userId: auth.userId }).lean() as any;
       const deliveryCoords = prescription.deliveryAddress?.location?.coordinates;
@@ -97,17 +96,14 @@ export async function POST(request: NextRequest) {
         deliveryCoords && Array.isArray(deliveryCoords) && deliveryCoords.length === 2 &&
         pharmacyCoords && Array.isArray(pharmacyCoords) && pharmacyCoords.length === 2
       ) {
-        const distance = calculateDistance(pharmacyCoords, deliveryCoords);
-        deliveryFee = parseFloat((distance * deliveryFeePerKm).toFixed(2));
-        if (deliveryFee < deliveryFeePerKm) deliveryFee = deliveryFeePerKm; // minimum 1km charge
+        distanceKm = calculateDistance(pharmacyCoords, deliveryCoords);
       }
     } catch (_) {}
+    const deliveryFee = computeDeliveryFee(distanceKm, settings);
 
     const subtotal = items.reduce((sum: number, item: any) => sum + item.totalPrice, 0);
-    // Commission = max(minimum commission, rate% of medicine subtotal).
-    const commissionAmount = parseFloat(
-      Math.max(minCommission, (subtotal * commissionRate) / 100).toFixed(2),
-    );
+    // Pharmacy/service fee: flat amount by admin-configured subtotal tier.
+    const commissionAmount = computeServiceFee(subtotal, settings);
     const totalAmount = parseFloat((subtotal + commissionAmount + deliveryFee).toFixed(2));
 
     // Check if quote already exists from this pharmacy
@@ -122,7 +118,7 @@ export async function POST(request: NextRequest) {
     if (existingQuote) {
       existingQuote.items = items;
       existingQuote.subtotal = subtotal;
-      existingQuote.commissionRate = commissionRate;
+      existingQuote.commissionRate = 0; // legacy field; fee is tier-based now
       existingQuote.commissionAmount = commissionAmount;
       existingQuote.deliveryFee = deliveryFee;
       existingQuote.totalAmount = totalAmount;
@@ -138,7 +134,7 @@ export async function POST(request: NextRequest) {
         patientId: prescription.patientId,
         items,
         subtotal,
-        commissionRate,
+        commissionRate: 0, // legacy field; fee is tier-based now
         commissionAmount,
         deliveryFee,
         totalAmount,
@@ -155,7 +151,7 @@ export async function POST(request: NextRequest) {
       await sendNotificationToPatient(
         prescription.patientId.toString(),
         isEdit ? 'Quote Updated' : 'Quote Received',
-        `${isEdit ? 'Updated quote' : 'New quote'} of ${totalAmount} MRO`,
+        `${isEdit ? 'Updated quote' : 'New quote'} of ${totalAmount} MRU`,
         { quoteId: quote._id.toString(), type: 'quote_received' }
       );
     } catch (_) {}
