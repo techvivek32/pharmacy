@@ -5,6 +5,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../services/api_service.dart';
@@ -587,9 +588,41 @@ class _MapNavigationScreenState extends State<MapNavigationScreen>
               ),
             ),
           ),
+          // Real turn-by-turn with voice guidance via Google Maps.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _openGoogleMaps,
+                icon: const Icon(Icons.navigation, size: 20),
+                label: Text(l10n.translate('open_in_google_maps'),
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.w600)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(AppTheme.radiusMedium)),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  /// Opens the phone's Google Maps app (or browser) with turn-by-turn
+  /// navigation to the destination — voice guidance, live traffic included.
+  Future<void> _openGoogleMaps() async {
+    final uri = Uri.parse(
+        'https://www.google.com/maps/dir/?api=1&destination=${widget.destinationLat},${widget.destinationLng}&travelmode=driving');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {}
   }
 
   Widget _mapFab({

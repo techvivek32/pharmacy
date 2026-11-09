@@ -11,6 +11,7 @@ class AppLocalizations {
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': {
+      'open_in_google_maps': 'Navigate with Google Maps',
       // Auth
       'login': 'Login',
       'register': 'Register',
@@ -254,6 +255,7 @@ class AppLocalizations {
       'privacy_s6_body': 'If you have any questions about this Privacy Policy, please contact us at support@ordogo.com.',
     },
     'fr': {
+      'open_in_google_maps': 'Naviguer avec Google Maps',
       // Auth
       'login': 'Connexion',
       'register': 'S\'inscrire',
@@ -497,6 +499,7 @@ class AppLocalizations {
       'privacy_s6_body': 'Si vous avez des questions concernant cette politique de confidentialité, veuillez nous contacter à support@ordogo.com.',
     },
     'ar': {
+      'open_in_google_maps': 'التنقل عبر خرائط جوجل',
       // Auth
       'login': 'تسجيل الدخول',
       'register': 'تسجيل',

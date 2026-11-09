@@ -57,6 +57,18 @@ class _NavigationScreenState extends State<NavigationScreen> {
     if (await canLaunchUrl(uri)) await launchUrl(uri);
   }
 
+  /// Opens Google Maps turn-by-turn navigation to the given coordinates.
+  Future<void> _openGoogleMaps(List? coords) async {
+    if (coords == null || coords.length < 2) return;
+    final lat = (coords[1] as num).toDouble();
+    final lng = (coords[0] as num).toDouble();
+    final uri = Uri.parse(
+        'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {}
+  }
+
   Future<void> _openMaps(String address, List? coords) async {
     final l10n = AppLocalizations.of(context)!;
     if (coords == null || coords.length < 2) return;
@@ -457,9 +469,10 @@ class _NavigationScreenState extends State<NavigationScreen> {
                       tooltip: l10n.translate('call'),
                     ),
                   ),
-                // Navigate button
+                // In-app map button
                 Container(
                   width: 38, height: 38,
+                  margin: const EdgeInsets.only(right: 6),
                   decoration: BoxDecoration(
                     color: AppTheme.primary.withOpacity(0.1),
                     shape: BoxShape.circle,
@@ -467,8 +480,22 @@ class _NavigationScreenState extends State<NavigationScreen> {
                   child: IconButton(
                     padding: EdgeInsets.zero,
                     onPressed: () => _openMaps(address, coords),
-                    icon: const Icon(Icons.navigation, color: AppTheme.primary, size: 18),
+                    icon: const Icon(Icons.map_outlined, color: AppTheme.primary, size: 18),
                     tooltip: l10n.translate('navigate'),
+                  ),
+                ),
+                // Google Maps turn-by-turn navigation
+                Container(
+                  width: 38, height: 38,
+                  decoration: BoxDecoration(
+                    color: AppTheme.success.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () => _openGoogleMaps(coords),
+                    icon: const Icon(Icons.navigation, color: AppTheme.success, size: 18),
+                    tooltip: l10n.translate('open_in_google_maps'),
                   ),
                 ),
               ],
