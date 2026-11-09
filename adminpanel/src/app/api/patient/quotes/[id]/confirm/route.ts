@@ -104,7 +104,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
           await sendNotificationToUser(
             rider.userId.toString(),
             'New Delivery Available',
-            `Delivery fee: ${order.deliveryFee} MRO`,
+            `Delivery fee: ${order.deliveryFee} MRU`,
             { orderId: order._id.toString(), type: 'delivery_available' }
           );
         }

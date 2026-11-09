@@ -56,7 +56,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const updated = await incRiderEarnings(rider._id, action === 'deduct' ? -amount : amount);
     if (!updated) {
       return errorResponse(
-        `Cannot deduct ${amount} MRO: earnings are only ${rider.totalEarnings || 0} MRO`
+        `Cannot deduct ${amount} MRU: earnings are only ${rider.totalEarnings || 0} MRU`
       );
     }
 
@@ -73,8 +73,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         rider.userId.toString(),
         action === 'deduct' ? 'Earnings Deducted' : 'Earnings Added',
         action === 'deduct'
-          ? `${amount.toFixed(2)} MRO was deducted from your earnings.${note ? ` Reason: ${note}` : ''}`
-          : `${amount.toFixed(2)} MRO was added to your earnings.${note ? ` Note: ${note}` : ''}`,
+          ? `${amount.toFixed(2)} MRU was deducted from your earnings.${note ? ` Reason: ${note}` : ''}`
+          : `${amount.toFixed(2)} MRU was added to your earnings.${note ? ` Note: ${note}` : ''}`,
         { type: action === 'deduct' ? 'earnings_deduct' : 'earnings_credit', amount: String(amount) }
       );
     } catch (_) {}

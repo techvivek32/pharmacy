@@ -142,7 +142,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   Text(
-                    '${order.totalAmount.toStringAsFixed(2)} MRO',
+                    '${order.totalAmount.toStringAsFixed(2)} MRU',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: AppTheme.primary,
                         ),

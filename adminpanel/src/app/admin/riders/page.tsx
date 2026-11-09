@@ -95,7 +95,7 @@ export default function RidersPage() {
       return;
     }
     const verb = walletAction === 'deduct' ? 'Deduct' : 'Add';
-    if (!confirm(`${verb} ${amount.toLocaleString()} MRO ${walletAction === 'deduct' ? 'from' : 'to'} ${walletRider.userId?.fullName}'s earnings?`)) return;
+    if (!confirm(`${verb} ${amount.toLocaleString()} MRU ${walletAction === 'deduct' ? 'from' : 'to'} ${walletRider.userId?.fullName}'s earnings?`)) return;
     setWalletSaving(true);
     setWalletError('');
     try {
@@ -151,7 +151,7 @@ export default function RidersPage() {
               { label: 'Total Riders', value: riders.length, icon: '🏍️', color: 'bg-blue-500' },
               { label: 'Online Now', value: onlineCount, icon: '✅', color: 'bg-green-500' },
               { label: 'Avg Rating', value: avgRating, icon: '⭐', color: 'bg-yellow-500' },
-              { label: 'Total Earnings', value: `${totalEarnings.toLocaleString()} MRO`, icon: '💰', color: 'bg-purple-500' },
+              { label: 'Total Earnings', value: `${totalEarnings.toLocaleString()} MRU`, icon: '💰', color: 'bg-purple-500' },
             ].map(stat => (
               <div key={stat.label} className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                 <div className="flex items-center justify-between">
@@ -218,7 +218,7 @@ export default function RidersPage() {
                         </td>
                         <td className="py-4 px-6 font-medium text-gray-800">{rider.totalDeliveries}</td>
                         <td className="py-4 px-6">
-                          <div className="font-medium text-gray-800">{rider.totalEarnings.toLocaleString()} MRO</div>
+                          <div className="font-medium text-gray-800">{rider.totalEarnings.toLocaleString()} MRU</div>
                         </td>
                         <td className="py-4 px-6">
                           <div className="flex items-center">
@@ -283,7 +283,7 @@ export default function RidersPage() {
               <div className="grid grid-cols-3 gap-3 mb-5">
                 {[
                   { label: 'Total Deliveries', value: selectedRider.totalDeliveries, icon: '📦' },
-                  { label: 'Total Earnings', value: `${selectedRider.totalEarnings.toLocaleString()} MRO`, icon: '💰' },
+                  { label: 'Total Earnings', value: `${selectedRider.totalEarnings.toLocaleString()} MRU`, icon: '💰' },
                   { label: 'Rating', value: `${selectedRider.rating.toFixed(1)} ⭐`, icon: '⭐' },
                 ].map(s => (
                   <div key={s.label} className="bg-gray-50 rounded-xl p-3 text-center border border-gray-100">
@@ -340,7 +340,7 @@ export default function RidersPage() {
               <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 mb-5 text-center">
                 <div className="text-sm text-purple-700 mb-1">Current Earnings</div>
                 <div className="text-3xl font-bold text-purple-800">
-                  {walletData ? `${walletData.totalEarnings.toLocaleString()} MRO` : walletLoading ? '...' : '—'}
+                  {walletData ? `${walletData.totalEarnings.toLocaleString()} MRU` : walletLoading ? '...' : '—'}
                 </div>
               </div>
 
@@ -356,7 +356,7 @@ export default function RidersPage() {
                     </button>
                   ))}
                 </div>
-                <input type="number" min="0" step="0.01" placeholder="Amount (MRO)"
+                <input type="number" min="0" step="0.01" placeholder="Amount (MRU)"
                   value={walletAmount} onChange={e => setWalletAmount(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" />
                 <input type="text" maxLength={300} placeholder="Reason / note (optional)"
@@ -388,9 +388,9 @@ export default function RidersPage() {
                       </div>
                       <div className="text-right">
                         <div className={`font-semibold ${t.type === 'add' ? 'text-green-600' : 'text-red-600'}`}>
-                          {t.type === 'add' ? '+' : '−'}{t.amount.toLocaleString()} MRO
+                          {t.type === 'add' ? '+' : '−'}{t.amount.toLocaleString()} MRU
                         </div>
-                        <div className="text-xs text-gray-400">Bal: {t.balanceAfter.toLocaleString()} MRO</div>
+                        <div className="text-xs text-gray-400">Bal: {t.balanceAfter.toLocaleString()} MRU</div>
                       </div>
                     </div>
                   ))}

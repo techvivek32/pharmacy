@@ -75,7 +75,7 @@ class _MyQuotesScreenState extends State<MyQuotesScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${l10n.translate('confirm_order_desc')} ${totalAmount.toStringAsFixed(2)} MRO?'),
+            Text('${l10n.translate('confirm_order_desc')} ${totalAmount.toStringAsFixed(2)} MRU?'),
             if (paymentMethod != null) ...[
               const SizedBox(height: 16),
               PaymentMethodsList(paymentMethod: paymentMethod),
@@ -321,7 +321,7 @@ class _MyQuotesScreenState extends State<MyQuotesScreen> {
                     border: Border.all(color: AppTheme.success.withValues(alpha: 0.3)),
                   ),
                   child: Text(
-                    '${totalAmount.toStringAsFixed(2)} MRO',
+                    '${totalAmount.toStringAsFixed(2)} MRU',
                     style: const TextStyle(
                         color: AppTheme.success, fontWeight: FontWeight.bold, fontSize: 14),
                   ),
@@ -351,12 +351,12 @@ class _MyQuotesScreenState extends State<MyQuotesScreen> {
                           children: [
                             Text('${item['medicineName']} × ${item['quantity']}',
                                 style: const TextStyle(fontSize: 14)),
-                            Text('${item['quantity']} × ${(item['unitPrice'] as num).toStringAsFixed(2)} MRO',
+                            Text('${item['quantity']} × ${(item['unitPrice'] as num).toStringAsFixed(2)} MRU',
                                 style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
                           ],
                         ),
                       ),
-                      Text('${(item['totalPrice'] as num).toStringAsFixed(2)} MRO',
+                      Text('${(item['totalPrice'] as num).toStringAsFixed(2)} MRU',
                           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                     ],
                   ),
@@ -433,7 +433,7 @@ class _MyQuotesScreenState extends State<MyQuotesScreen> {
                   fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
                   fontSize: isTotal ? 15 : 13,
                   color: isTotal ? AppTheme.textPrimary : AppTheme.textSecondary)),
-          Text('${amount.toStringAsFixed(2)} MRO',
+          Text('${amount.toStringAsFixed(2)} MRU',
               style: TextStyle(
                   fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
                   fontSize: isTotal ? 15 : 13,

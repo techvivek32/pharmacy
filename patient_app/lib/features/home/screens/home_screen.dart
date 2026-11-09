@@ -314,7 +314,7 @@ class _HomeTab extends StatelessWidget {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  Text('${o.totalAmount.toStringAsFixed(0)} MRO',
+                                  Text('${o.totalAmount.toStringAsFixed(0)} MRU',
                                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -501,7 +501,7 @@ class _OrdersTab extends StatelessWidget {
                                 '${o.createdAt.day.toString().padLeft(2, '0')}/${o.createdAt.month.toString().padLeft(2, '0')}/${o.createdAt.year}',
                                 style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                               ),
-                              Text('${o.totalAmount.toStringAsFixed(2)} MRO',
+                              Text('${o.totalAmount.toStringAsFixed(2)} MRU',
                                   style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary, fontSize: 14)),
                             ],
                           ),

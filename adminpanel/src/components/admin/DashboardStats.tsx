@@ -22,8 +22,8 @@ interface Overview {
 const cards = (o: Overview) => [
   {
     title: 'Total Revenue',
-    value: `${o.totalRevenue.toLocaleString()} MRO`,
-    sub: `This month: ${o.thisMonthRevenue.toLocaleString()} MRO`,
+    value: `${o.totalRevenue.toLocaleString()} MRU`,
+    sub: `This month: ${o.thisMonthRevenue.toLocaleString()} MRU`,
     growth: o.revenueGrowth,
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -120,7 +120,7 @@ const cards = (o: Overview) => [
   },
   {
     title: 'Avg Order Value',
-    value: `${o.avgOrderValue} MRO`,
+    value: `${o.avgOrderValue} MRU`,
     sub: `${o.cancelledOrders} cancelled`,
     growth: null,
     icon: (

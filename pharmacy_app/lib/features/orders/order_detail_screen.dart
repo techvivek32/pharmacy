@@ -447,7 +447,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                               .textTheme
                                               .bodyMedium),
                                       Text(
-                                        '${l10n.translate('qty')}: ${item['quantity'] ?? 1} × ${(item['unitPrice'] ?? 0).toStringAsFixed(2)} MRO',
+                                        '${l10n.translate('qty')}: ${item['quantity'] ?? 1} × ${(item['unitPrice'] ?? 0).toStringAsFixed(2)} MRU',
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodySmall
@@ -458,7 +458,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                   ),
                                 ),
                                 Text(
-                                  '${(item['totalPrice'] ?? 0).toStringAsFixed(2)} MRO',
+                                  '${(item['totalPrice'] ?? 0).toStringAsFixed(2)} MRU',
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodyMedium
@@ -469,14 +469,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           )),
                       const Divider(height: AppTheme.spacing24),
                       _summaryRow(context, l10n.translate('medicine_subtotal'),
-                          '${subtotal.toStringAsFixed(2)} MRO'),
+                          '${subtotal.toStringAsFixed(2)} MRU'),
                       _summaryRow(context, l10n.translate('service_fee'),
-                          '${serviceFee.toStringAsFixed(2)} MRO'),
+                          '${serviceFee.toStringAsFixed(2)} MRU'),
                       _summaryRow(context, l10n.translate('delivery_fee'),
-                          '${deliveryFee.toStringAsFixed(2)} MRO'),
+                          '${deliveryFee.toStringAsFixed(2)} MRU'),
                       const Divider(height: AppTheme.spacing16),
                       _summaryRow(context, l10n.translate('total'),
-                          '${totalAmount.toStringAsFixed(2)} MRO',
+                          '${totalAmount.toStringAsFixed(2)} MRU',
                           isTotal: true),
                     ],
                   ),

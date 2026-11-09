@@ -382,18 +382,18 @@ export default function PrescriptionsPage() {
                             {q.items.map((item, j) => (
                               <div key={j} className="flex justify-between text-sm">
                                 <span className="text-gray-700">{item.medicineName} × {item.quantity}</span>
-                                <span className="text-gray-600">{item.totalPrice} MRO</span>
+                                <span className="text-gray-600">{item.totalPrice} MRU</span>
                               </div>
                             ))}
                             <div className="flex justify-between text-sm font-semibold text-green-700 pt-1 border-t border-green-200 mt-1">
-                              <span>Total</span><span>{q.totalAmount} MRO</span>
+                              <span>Total</span><span>{q.totalAmount} MRU</span>
                             </div>
                           </div>
                         )}
 
                         {/* Pending quote amount */}
                         {q.status === 'pending' && q.totalAmount > 0 && (
-                          <p className="text-sm text-gray-600 mt-1">Quote: <span className="font-medium">{q.totalAmount} MRO</span></p>
+                          <p className="text-sm text-gray-600 mt-1">Quote: <span className="font-medium">{q.totalAmount} MRU</span></p>
                         )}
                       </div>
                     ))}

@@ -75,7 +75,7 @@ export default function PharmacyDetailPage() {
       alert('No outstanding due to clear.');
       return;
     }
-    if (!confirm(`Clear the full outstanding due of ${due.toLocaleString()} MRO? This records a payment for the full amount.`)) {
+    if (!confirm(`Clear the full outstanding due of ${due.toLocaleString()} MRU? This records a payment for the full amount.`)) {
       return;
     }
     await recordSettlement(due, 'Cleared full outstanding due', 'payment');
@@ -243,19 +243,19 @@ export default function PharmacyDetailPage() {
                   <div className="rounded-xl border border-green-200 bg-green-50 p-4">
                     <p className="text-xs text-gray-600 mb-1">Commission owed to us</p>
                     <h3 className="text-2xl font-bold text-green-700">
-                      {currentEarnings.commission.toLocaleString()} MRO
+                      {currentEarnings.commission.toLocaleString()} MRU
                     </h3>
                   </div>
                   <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
                     <p className="text-xs text-gray-500 mb-1">Pharmacy earnings</p>
                     <h3 className="text-2xl font-bold text-gray-800">
-                      {currentEarnings.subtotal.toLocaleString()} MRO
+                      {currentEarnings.subtotal.toLocaleString()} MRU
                     </h3>
                   </div>
                   <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
                     <p className="text-xs text-gray-500 mb-1">Delivery charges</p>
                     <h3 className="text-2xl font-bold text-gray-800">
-                      {(currentEarnings.deliveryFee || 0).toLocaleString()} MRO
+                      {(currentEarnings.deliveryFee || 0).toLocaleString()} MRU
                     </h3>
                   </div>
                   <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
@@ -265,7 +265,7 @@ export default function PharmacyDetailPage() {
                   <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
                     <p className="text-xs text-gray-500 mb-1">Total collected</p>
                     <h3 className="text-2xl font-bold text-gray-800">
-                      {currentEarnings.totalAmount.toLocaleString()} MRO
+                      {currentEarnings.totalAmount.toLocaleString()} MRU
                     </h3>
                   </div>
                 </div>
@@ -288,10 +288,10 @@ export default function PharmacyDetailPage() {
                           >
                             <td className="py-2 px-4 text-sm font-medium text-gray-800">{monthLabel(m.month)}</td>
                             <td className="py-2 px-4 text-sm text-gray-600">{m.orders}</td>
-                            <td className="py-2 px-4 text-sm text-gray-800">{m.subtotal.toLocaleString()} MRO</td>
-                            <td className="py-2 px-4 text-sm text-gray-800">{(m.deliveryFee || 0).toLocaleString()} MRO</td>
-                            <td className="py-2 px-4 text-sm font-semibold text-green-700">{m.commission.toLocaleString()} MRO</td>
-                            <td className="py-2 px-4 text-sm text-gray-800">{m.totalAmount.toLocaleString()} MRO</td>
+                            <td className="py-2 px-4 text-sm text-gray-800">{m.subtotal.toLocaleString()} MRU</td>
+                            <td className="py-2 px-4 text-sm text-gray-800">{(m.deliveryFee || 0).toLocaleString()} MRU</td>
+                            <td className="py-2 px-4 text-sm font-semibold text-green-700">{m.commission.toLocaleString()} MRU</td>
+                            <td className="py-2 px-4 text-sm text-gray-800">{m.totalAmount.toLocaleString()} MRU</td>
                           </tr>
                         ))}
                       </tbody>
@@ -320,7 +320,7 @@ export default function PharmacyDetailPage() {
                           : 'bg-green-100 text-green-700'
                       }`}
                     >
-                      Due: {(settlement.due || 0).toLocaleString()} MRO
+                      Due: {(settlement.due || 0).toLocaleString()} MRU
                     </span>
                     <svg
                       className={`w-5 h-5 text-gray-400 transition-transform ${duesOpen ? 'rotate-180' : ''}`}
@@ -355,13 +355,13 @@ export default function PharmacyDetailPage() {
                   <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
                     <p className="text-xs text-gray-500 mb-1">Total commission (all time)</p>
                     <h3 className="text-2xl font-bold text-gray-800">
-                      {(settlement.totalCommission || 0).toLocaleString()} MRO
+                      {(settlement.totalCommission || 0).toLocaleString()} MRU
                     </h3>
                   </div>
                   <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
                     <p className="text-xs text-gray-500 mb-1">Total paid</p>
                     <h3 className="text-2xl font-bold text-gray-800">
-                      {(settlement.totalPaid || 0).toLocaleString()} MRO
+                      {(settlement.totalPaid || 0).toLocaleString()} MRU
                     </h3>
                   </div>
                   <div
@@ -377,7 +377,7 @@ export default function PharmacyDetailPage() {
                         (settlement.due || 0) > 0 ? 'text-red-600' : 'text-green-700'
                       }`}
                     >
-                      {(settlement.due || 0).toLocaleString()} MRO
+                      {(settlement.due || 0).toLocaleString()} MRU
                     </h3>
                   </div>
                 </div>
@@ -399,7 +399,7 @@ export default function PharmacyDetailPage() {
                             <td className="py-2 px-4 text-sm text-gray-600">{new Date(s.createdAt).toLocaleDateString()}</td>
                             <td className="py-2 px-4 text-sm capitalize text-gray-700">{s.type}</td>
                             <td className="py-2 px-4 text-sm text-gray-600">{s.note || '-'}</td>
-                            <td className="py-2 px-4 text-sm font-semibold text-gray-800">{(s.amount || 0).toLocaleString()} MRO</td>
+                            <td className="py-2 px-4 text-sm font-semibold text-gray-800">{(s.amount || 0).toLocaleString()} MRU</td>
                             <td className="py-2 px-4 text-right">
                               <button onClick={() => deleteSettlement(s.id)} className="text-red-500 hover:text-red-700 text-xs">Remove</button>
                             </td>
@@ -417,7 +417,7 @@ export default function PharmacyDetailPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
                 {[
                   { label: 'Total Orders', value: data.stats.totalOrders, icon: '📦', color: 'bg-blue-500' },
-                  { label: 'Total Revenue', value: `${data.stats.totalRevenue.toLocaleString()} MRO`, icon: '💰', color: 'bg-green-500' },
+                  { label: 'Total Revenue', value: `${data.stats.totalRevenue.toLocaleString()} MRU`, icon: '💰', color: 'bg-green-500' },
                   { label: 'Delivered', value: data.stats.deliveredOrders, icon: '✅', color: 'bg-emerald-500' },
                   { label: 'Acceptance Rate', value: `${data.stats.acceptanceRate}%`, icon: '📊', color: 'bg-purple-500' },
                   { label: 'Pending Orders', value: data.stats.pendingOrders, icon: '⏳', color: 'bg-yellow-500' },
@@ -458,7 +458,7 @@ export default function PharmacyDetailPage() {
                               />
                             </div>
                             <span className="text-sm font-medium text-gray-800 w-24 text-right">
-                              {m.revenue.toLocaleString()} MRO
+                              {m.revenue.toLocaleString()} MRU
                             </span>
                             <span className="text-xs text-gray-400">{m.count} orders</span>
                           </div>
@@ -517,7 +517,7 @@ export default function PharmacyDetailPage() {
                         {data.recentOrders.map((o: any) => (
                           <tr key={o.id} className="border-b border-gray-100 hover:bg-gray-50">
                             <td className="py-3 px-6 font-medium text-gray-800 text-sm">{o.orderNumber}</td>
-                            <td className="py-3 px-6 font-medium text-gray-800">{o.totalAmount?.toLocaleString()} MRO</td>
+                            <td className="py-3 px-6 font-medium text-gray-800">{o.totalAmount?.toLocaleString()} MRU</td>
                             <td className="py-3 px-6 text-gray-600 capitalize text-sm">{o.paymentMethod || 'cash'}</td>
                             <td className="py-3 px-6">
                               <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${statusColor(o.status)}`}>
@@ -547,7 +547,7 @@ export default function PharmacyDetailPage() {
                   >
                     <h3 className="text-lg font-semibold text-gray-800 mb-1">Record payment</h3>
                     <p className="text-sm text-gray-500 mb-4">
-                      Outstanding due: {(settlement.due || 0).toLocaleString()} MRO
+                      Outstanding due: {(settlement.due || 0).toLocaleString()} MRU
                     </p>
 
                     <label className="block text-xs text-gray-500 mb-1">Type</label>
@@ -560,7 +560,7 @@ export default function PharmacyDetailPage() {
                       <option value="adjustment">Adjustment / discount</option>
                     </select>
 
-                    <label className="block text-xs text-gray-500 mb-1">Amount (MRO)</label>
+                    <label className="block text-xs text-gray-500 mb-1">Amount (MRU)</label>
                     <input
                       type="number"
                       value={payAmount}

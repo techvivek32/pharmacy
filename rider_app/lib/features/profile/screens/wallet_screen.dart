@@ -111,7 +111,7 @@ class _WalletScreenState extends State<WalletScreen> {
                             style: const TextStyle(color: Colors.white70, fontSize: 14)),
                         const SizedBox(height: AppTheme.spacing8),
                         Text(
-                          '${_totalEarnings.toStringAsFixed(2)} MRO',
+                          '${_totalEarnings.toStringAsFixed(2)} MRU',
                           style: const TextStyle(
                               color: Colors.white,
                               fontSize: 32,
@@ -217,7 +217,7 @@ class _WalletScreenState extends State<WalletScreen> {
                                   style: Theme.of(context).textTheme.bodySmall,
                                 ),
                                 trailing: Text(
-                                  '$sign${amount.abs().toStringAsFixed(2)} MRO',
+                                  '$sign${amount.abs().toStringAsFixed(2)} MRU',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: color,
