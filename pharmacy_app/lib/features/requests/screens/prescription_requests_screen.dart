@@ -66,21 +66,104 @@ class _PrescriptionRequestsScreenState
                       ],
                     ),
                   )
-                : provider.prescriptions.isEmpty
+                : provider.prescriptions.isEmpty && provider.missed.isEmpty
                     ? _buildEmptyState(l10n)
                     : ListView.separated(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.all(AppTheme.spacing16),
-                        itemCount: provider.prescriptions.length,
+                        itemCount: provider.prescriptions.length +
+                            (provider.missed.isEmpty
+                                ? 0
+                                : provider.missed.length + 1),
                         separatorBuilder: (_, __) =>
                             const SizedBox(height: AppTheme.spacing12),
                         itemBuilder: (context, index) {
-                          final request = provider.prescriptions[index];
-                          return _buildRequestCard(context, request, l10n);
+                          if (index < provider.prescriptions.length) {
+                            final request = provider.prescriptions[index];
+                            return _buildRequestCard(context, request, l10n);
+                          }
+                          final mIndex =
+                              index - provider.prescriptions.length;
+                          if (mIndex == 0) {
+                            return _buildMissedHeader(l10n);
+                          }
+                          return _buildMissedCard(
+                              provider.missed[mIndex - 1], l10n);
                         },
                       ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildMissedHeader(AppLocalizations l10n) {
+    return Padding(
+      padding: const EdgeInsets.only(top: AppTheme.spacing8),
+      child: Row(
+        children: [
+          const Icon(Icons.history_toggle_off,
+              size: 18, color: AppTheme.textSecondary),
+          const SizedBox(width: 8),
+          Text(l10n.translate('missed_requests'),
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: AppTheme.textSecondary)),
+        ],
+      ),
+    );
+  }
+
+  String _formatMovedAt(dynamic raw) {
+    try {
+      final dt = DateTime.parse(raw.toString()).toLocal();
+      return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} '
+          '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  Widget _buildMissedCard(dynamic missed, AppLocalizations l10n) {
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacing12),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        border: Border.all(color: AppTheme.divider),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppTheme.warning.withOpacity(0.12),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.swap_horiz,
+                size: 18, color: AppTheme.warning),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.translate('moved_to_another_pharmacy'),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 13)),
+                const SizedBox(height: 2),
+                Text(l10n.translate('moved_no_quote_desc'),
+                    style: const TextStyle(
+                        color: AppTheme.textSecondary, fontSize: 11)),
+                const SizedBox(height: 2),
+                Text(_formatMovedAt(missed['movedAt']),
+                    style: const TextStyle(
+                        color: AppTheme.textSecondary, fontSize: 11)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
@@ -91,19 +93,8 @@ class ProfileScreen extends StatelessWidget {
               l10n.translate('payment_settings'),
               () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentSettingsScreen())),
             ),
-            _buildMenuItem(
-              context,
-              Icons.lock,
-              l10n.translate('change_password'),
-              () => _showChangePassword(context),
-            ),
-            _buildMenuItem(context, Icons.help, l10n.translate('help_support'), () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: Text(
-                        '${l10n.translate('contact')}: support@mediexpress.com')),
-              );
-            }),
+            _buildMenuItem(context, Icons.help, l10n.translate('help_support'),
+                () => _showSupportSheet(context, l10n)),
             const SizedBox(height: AppTheme.spacing16),
             AppCard(
               child: InkWell(
@@ -245,6 +236,47 @@ class ProfileScreen extends StatelessWidget {
               trailing: languageProvider.locale.languageCode == 'ar'
                   ? const Icon(Icons.check, color: AppTheme.primary)
                   : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static const _supportEmail = 'support@mediexpress.com';
+
+  void _showSupportSheet(BuildContext context, AppLocalizations l10n) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.email_outlined, color: AppTheme.primary),
+              title: Text(l10n.translate('email_support')),
+              subtitle: const Text(_supportEmail),
+              onTap: () async {
+                Navigator.pop(context);
+                final uri = Uri(scheme: 'mailto', path: _supportEmail);
+                try {
+                  await launchUrl(uri);
+                } catch (_) {}
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.copy, color: AppTheme.primary),
+              title: Text(l10n.translate('copy_email')),
+              onTap: () {
+                Clipboard.setData(const ClipboardData(text: _supportEmail));
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(l10n.translate('email_copied'))),
+                );
+              },
             ),
           ],
         ),

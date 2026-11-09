@@ -11,6 +11,12 @@ class AppLocalizations {
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': {
+      'missed_requests': 'Missed Requests',
+      'moved_to_another_pharmacy': 'Moved to another pharmacy',
+      'moved_no_quote_desc': 'No quote was sent within 15 minutes',
+      'email_support': 'Email Support',
+      'copy_email': 'Copy email address',
+      'email_copied': 'Email address copied',
       // Registration documents
       'documents': 'Documents',
       'upload_license_image': 'Upload Pharmacy License Image',
@@ -287,6 +293,12 @@ class AppLocalizations {
       'registration_failed': 'Registration failed',
     },
     'fr': {
+      'missed_requests': 'Demandes manquées',
+      'moved_to_another_pharmacy': 'Transférée à une autre pharmacie',
+      'moved_no_quote_desc': 'Aucun devis envoyé dans les 15 minutes',
+      'email_support': 'Contacter par e-mail',
+      'copy_email': 'Copier l\'adresse e-mail',
+      'email_copied': 'Adresse e-mail copiée',
       // Registration documents
       'documents': 'Documents',
       'upload_license_image': 'Télécharger l\'image de la licence de pharmacie',
@@ -563,6 +575,12 @@ class AppLocalizations {
       'registration_failed': 'Échec de l\'inscription',
     },
     'ar': {
+      'missed_requests': 'الطلبات الفائتة',
+      'moved_to_another_pharmacy': 'تم نقله إلى صيدلية أخرى',
+      'moved_no_quote_desc': 'لم يتم إرسال عرض سعر خلال 15 دقيقة',
+      'email_support': 'التواصل عبر البريد الإلكتروني',
+      'copy_email': 'نسخ عنوان البريد الإلكتروني',
+      'email_copied': 'تم نسخ عنوان البريد الإلكتروني',
       // Registration documents
       'documents': 'المستندات',
       'upload_license_image': 'تحميل صورة رخصة الصيدلية',

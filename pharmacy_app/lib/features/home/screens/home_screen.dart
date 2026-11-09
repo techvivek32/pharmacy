@@ -90,6 +90,12 @@ class _DashboardTabState extends State<_DashboardTab> {
   void initState() {
     super.initState();
     _fetchRecentOrders();
+    // Keep the request counters/badges in sync with the requests list.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<PrescriptionProvider>().fetchPrescriptionRequests(silent: true);
+      }
+    });
   }
 
   Future<void> _fetchRecentOrders() async {
@@ -227,29 +233,6 @@ class _DashboardTabState extends State<_DashboardTab> {
                             ],
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 20),
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusMedium),
-                        ),
-                        child: Row(
-                          children: [
-                            _headerStat(l10n.translate('pending'), '$pending',
-                                Icons.pending_actions_outlined),
-                            Container(
-                                width: 1, height: 40, color: Colors.white30),
-                            _headerStat(l10n.translate('active_requests'),
-                                '$confirmed', Icons.local_shipping_outlined),
-                            Container(
-                                width: 1, height: 40, color: Colors.white30),
-                            _headerStat(l10n.translate('completed_orders'),
-                                '$completed', Icons.check_circle_outline),
-                          ],
-                        ),
                       ),
                     ],
                   ),
@@ -490,19 +473,6 @@ class _DashboardTabState extends State<_DashboardTab> {
           ),
         );
       },
-    );
-  }
-
-  Widget _headerStat(String label, String value, IconData icon) {
-    return Expanded(
-      child: Column(
-        children: [
-          Icon(icon, color: Colors.white70, size: 18),
-          const SizedBox(height: 4),
-          Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-          Text(label, style: const TextStyle(color: Colors.white60, fontSize: 10)),
-        ],
-      ),
     );
   }
 

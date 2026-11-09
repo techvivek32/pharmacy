@@ -4,12 +4,14 @@ import '../services/api_service.dart';
 
 class PrescriptionProvider with ChangeNotifier {
   List<dynamic> _prescriptions = [];
+  List<dynamic> _missed = [];
   bool _isLoading = false;
   String? _error;
   int _confirmedCount = 0;
   int _completedCount = 0;
 
   List<dynamic> get prescriptions => _prescriptions;
+  List<dynamic> get missed => _missed;
   bool get isLoading => _isLoading;
   String? get error => _error;
   int get confirmedCount => _confirmedCount;
@@ -34,6 +36,10 @@ class PrescriptionProvider with ChangeNotifier {
         } else {
           _prescriptions = [];
         }
+        // Requests that were auto-moved to another pharmacy (no quote in time)
+        _missed = data != null && data['missed'] is List
+            ? List<dynamic>.from(data['missed'])
+            : [];
       } else if (!silent) {
         _error = result.message;
       }

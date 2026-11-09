@@ -115,7 +115,25 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    return successResponse({ prescriptions: formatted });
+    // Requests that were auto-moved to another pharmacy because this one
+    // didn't quote in time — listed so requests never silently disappear.
+    const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+    const missedQuotes = await Quote.find({
+      pharmacyId: pharmacy._id,
+      status: 'rejected',
+      rejectionReason: { $regex: /^Auto-reassigned/ },
+      createdAt: { $gte: since },
+    })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean() as any[];
+
+    const missed = missedQuotes.map((q: any) => ({
+      id: q.prescriptionId,
+      movedAt: q.createdAt,
+    }));
+
+    return successResponse({ prescriptions: formatted, missed });
   } catch (error: any) {
     console.error('Get requests error:', error);
     return errorResponse('Failed to fetch requests', 500);
