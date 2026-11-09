@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../localization/app_localizations.dart';
 
 class OrderStatusWidget extends StatelessWidget {
   final String status;
@@ -13,7 +14,7 @@ class OrderStatusWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusInfo = _getStatusInfo(status);
+    final statusInfo = _getStatusInfo(status, AppLocalizations.of(context)!);
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -48,59 +49,59 @@ class OrderStatusWidget extends StatelessWidget {
     );
   }
 
-  _StatusInfo _getStatusInfo(String status) {
+  _StatusInfo _getStatusInfo(String status, AppLocalizations l10n) {
     switch (status.toLowerCase()) {
       case 'confirmed':
         return _StatusInfo(
-          label: 'Confirmed',
+          label: l10n.translate('status_confirmed'),
           color: AppTheme.info,
           icon: Icons.check_circle_outline,
         );
       case 'preparing':
         return _StatusInfo(
-          label: 'Preparing',
+          label: l10n.translate('status_preparing'),
           color: AppTheme.warning,
           icon: Icons.hourglass_empty,
         );
       case 'ready':
         return _StatusInfo(
-          label: 'Ready',
+          label: l10n.translate('status_ready'),
           color: AppTheme.success,
           icon: Icons.done_all,
         );
       case 'assigned':
         return _StatusInfo(
-          label: 'Rider Assigned',
+          label: l10n.translate('status_rider_assigned'),
           color: AppTheme.info,
           icon: Icons.person_outline,
         );
       case 'picked_up':
         return _StatusInfo(
-          label: 'Picked Up',
+          label: l10n.translate('status_picked_up'),
           color: AppTheme.primary,
           icon: Icons.local_shipping_outlined,
         );
       case 'in_transit':
         return _StatusInfo(
-          label: 'On the Way',
+          label: l10n.translate('status_on_the_way'),
           color: AppTheme.primary,
           icon: Icons.delivery_dining,
         );
       case 'delivered':
         return _StatusInfo(
-          label: 'Delivered',
+          label: l10n.translate('status_delivered'),
           color: AppTheme.success,
           icon: Icons.check_circle,
         );
       case 'cancelled':
         return _StatusInfo(
-          label: 'Cancelled',
+          label: l10n.translate('status_cancelled'),
           color: AppTheme.error,
           icon: Icons.cancel_outlined,
         );
       default:
         return _StatusInfo(
-          label: 'Pending',
+          label: l10n.translate('status_pending'),
           color: AppTheme.textSecondary,
           icon: Icons.pending_outlined,
         );

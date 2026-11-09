@@ -4,6 +4,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../providers/order_provider.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class PaymentSelectionScreen extends StatefulWidget {
   const PaymentSelectionScreen({super.key});
@@ -31,8 +32,8 @@ class _PaymentSelectionScreenState extends State<PaymentSelectionScreen> {
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Order confirmed successfully!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.translate('order_confirmed_success')),
           backgroundColor: AppTheme.success,
         ),
       );
@@ -44,7 +45,7 @@ class _PaymentSelectionScreenState extends State<PaymentSelectionScreen> {
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(context.read<OrderProvider>().error ?? 'Failed to confirm order'),
+          content: Text(context.read<OrderProvider>().error ?? AppLocalizations.of(context)!.translate('failed_confirm_order')),
           backgroundColor: AppTheme.error,
         ),
       );
@@ -53,9 +54,10 @@ class _PaymentSelectionScreenState extends State<PaymentSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Payment Method'),
+        title: Text(l10n.translate('payment_method')),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTheme.spacing16),
@@ -63,40 +65,40 @@ class _PaymentSelectionScreenState extends State<PaymentSelectionScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Select Payment Method',
+              l10n.translate('select_payment_method'),
               style: Theme.of(context).textTheme.displaySmall,
             ),
             const SizedBox(height: AppTheme.spacing8),
             Text(
-              'Choose how you want to pay',
+              l10n.translate('choose_how_to_pay'),
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: AppTheme.spacing32),
             _buildPaymentOption(
               value: 'cash',
-              title: 'Cash on Delivery',
-              subtitle: 'Pay when you receive your order',
+              title: l10n.translate('cash_on_delivery'),
+              subtitle: l10n.translate('pay_when_receive'),
               icon: Icons.money,
             ),
             const SizedBox(height: AppTheme.spacing16),
             _buildPaymentOption(
               value: 'card',
-              title: 'Credit/Debit Card',
-              subtitle: 'Pay securely with your card',
+              title: l10n.translate('credit_debit_card'),
+              subtitle: l10n.translate('pay_securely_card'),
               icon: Icons.credit_card,
               isDisabled: true,
             ),
             const SizedBox(height: AppTheme.spacing16),
             _buildPaymentOption(
               value: 'mobile',
-              title: 'Mobile Payment',
-              subtitle: 'Pay with mobile money',
+              title: l10n.translate('mobile_payment'),
+              subtitle: l10n.translate('pay_mobile_money'),
               icon: Icons.phone_android,
               isDisabled: true,
             ),
             const SizedBox(height: AppTheme.spacing32),
             PrimaryButton(
-              text: _isProcessing ? 'Processing...' : 'Confirm Order',
+              text: _isProcessing ? l10n.translate('processing') : l10n.translate('confirm_order'),
               onPressed: _isProcessing ? null : _confirmOrder,
               isLoading: _isProcessing,
             ),
@@ -176,7 +178,7 @@ class _PaymentSelectionScreenState extends State<PaymentSelectionScreen> {
                     borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                   ),
                   child: Text(
-                    'Coming Soon',
+                    AppLocalizations.of(context)!.translate('coming_soon'),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppTheme.textHint,
                           fontSize: 10,

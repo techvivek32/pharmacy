@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/api_service.dart';
+import '../../core/localization/app_localizations.dart';
 
 class PharmacyWalletScreen extends StatefulWidget {
   const PharmacyWalletScreen({super.key});
@@ -76,9 +77,10 @@ class _PharmacyWalletScreenState extends State<PharmacyWalletScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Wallet'),
+        title: Text(l10n.translate('wallet')),
         actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: _fetchData)],
       ),
       body: _loading
@@ -103,7 +105,8 @@ class _PharmacyWalletScreenState extends State<PharmacyWalletScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Total Revenue', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                        Text(l10n.translate('total_revenue'),
+                            style: const TextStyle(color: Colors.white70, fontSize: 14)),
                         const SizedBox(height: AppTheme.spacing8),
                         Text(
                           '${_totalRevenue.toStringAsFixed(2)} MRO',
@@ -112,11 +115,11 @@ class _PharmacyWalletScreenState extends State<PharmacyWalletScreen> {
                         const SizedBox(height: AppTheme.spacing16),
                         Row(
                           children: [
-                            Expanded(child: _miniStat('Today', '${_todayRevenue.toStringAsFixed(0)} MRO', Icons.today)),
+                            Expanded(child: _miniStat(l10n.translate('today'), '${_todayRevenue.toStringAsFixed(0)} MRO', Icons.today)),
                             Container(width: 1, height: 32, color: Colors.white30),
-                            Expanded(child: _miniStat('Total Orders', '$_totalOrders', Icons.check_circle_outline)),
+                            Expanded(child: _miniStat(l10n.translate('total_orders'), '$_totalOrders', Icons.check_circle_outline)),
                             Container(width: 1, height: 32, color: Colors.white30),
-                            Expanded(child: _miniStat('Today Orders', '$_todayOrders', Icons.delivery_dining)),
+                            Expanded(child: _miniStat(l10n.translate('today_orders'), '$_todayOrders', Icons.delivery_dining)),
                           ],
                         ),
                       ],
@@ -129,8 +132,9 @@ class _PharmacyWalletScreenState extends State<PharmacyWalletScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Completed Orders', style: Theme.of(context).textTheme.titleMedium),
-                        Text('${_deliveredOrders.length} orders',
+                        Text(l10n.translate('completed_orders'),
+                            style: Theme.of(context).textTheme.titleMedium),
+                        Text('${_deliveredOrders.length} ${l10n.translate('orders')}',
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary)),
                       ],
                     ),
@@ -146,10 +150,10 @@ class _PharmacyWalletScreenState extends State<PharmacyWalletScreen> {
                                 Icon(Icons.account_balance_wallet_outlined,
                                     size: 64, color: AppTheme.textSecondary.withOpacity(0.4)),
                                 const SizedBox(height: AppTheme.spacing12),
-                                const Text('No completed orders yet',
-                                    style: TextStyle(fontWeight: FontWeight.w600)),
+                                Text(l10n.translate('no_completed_orders'),
+                                    style: const TextStyle(fontWeight: FontWeight.w600)),
                                 const SizedBox(height: AppTheme.spacing4),
-                                Text('Revenue from delivered orders will appear here',
+                                Text(l10n.translate('revenue_will_appear'),
                                     style: Theme.of(context).textTheme.bodySmall,
                                     textAlign: TextAlign.center),
                               ],

@@ -199,7 +199,7 @@ class _DashboardTabState extends State<_DashboardTab> {
                                   style: const TextStyle(
                                       color: Colors.white70, fontSize: 14)),
                               const SizedBox(height: 2),
-                              Text(user?.fullName ?? 'Pharmacy',
+                              Text(user?.fullName ?? l10n.translate('pharmacy'),
                                   style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 20,

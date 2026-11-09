@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
+import '../localization/app_localizations.dart';
 
 class InputField extends StatelessWidget {
   final String? label;
@@ -138,7 +139,7 @@ class SearchField extends StatelessWidget {
       controller: controller,
       onChanged: onChanged,
       decoration: InputDecoration(
-        hintText: hint ?? 'Search...',
+        hintText: hint ?? AppLocalizations.of(context)!.translate('search_hint'),
         prefixIcon: const Icon(Icons.search),
         suffixIcon: controller?.text.isNotEmpty == true
             ? IconButton(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../services/api_service.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
@@ -62,18 +63,18 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     }
   }
 
-  String _statusLabel(String status) {
+  String _statusLabel(AppLocalizations l10n, String status) {
     switch (status) {
       case 'delivered':
-        return 'Delivered';
+        return l10n.translate('delivered');
       case 'picked_up':
-        return 'Picked Up';
+        return l10n.translate('picked_up');
       case 'in_transit':
-        return 'In Transit';
+        return l10n.translate('in_transit');
       case 'assigned':
-        return 'Assigned';
+        return l10n.translate('assigned');
       case 'cancelled':
-        return 'Cancelled';
+        return l10n.translate('cancelled');
       default:
         return status;
     }
@@ -97,9 +98,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Order History'),
+        title: Text(l10n.translate('order_history')),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _fetchHistory),
         ],
@@ -115,10 +117,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                           size: 80,
                           color: AppTheme.textSecondary.withOpacity(0.4)),
                       const SizedBox(height: AppTheme.spacing16),
-                      Text('No order history yet',
+                      Text(l10n.translate('no_order_history'),
                           style: Theme.of(context).textTheme.titleLarge),
                       const SizedBox(height: AppTheme.spacing8),
-                      Text('Completed deliveries will appear here',
+                      Text(l10n.translate('completed_deliveries_appear_here'),
                           style: Theme.of(context).textTheme.bodyMedium),
                     ],
                   ),
@@ -177,7 +179,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                             size: 12, color: color),
                                         const SizedBox(width: 4),
                                         Text(
-                                          _statusLabel(status),
+                                          _statusLabel(l10n, status),
                                           style: TextStyle(
                                               fontSize: 11,
                                               fontWeight: FontWeight.w600,
@@ -195,7 +197,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                 context,
                                 Icons.store,
                                 AppTheme.primary,
-                                'Pickup',
+                                l10n.translate('pickup'),
                                 o['pickupAddress']?.toString() ?? '',
                               ),
                               const SizedBox(height: AppTheme.spacing8),
@@ -205,7 +207,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                 context,
                                 Icons.location_on,
                                 AppTheme.error,
-                                'Delivery',
+                                l10n.translate('delivery'),
                                 o['deliveryAddress']?.toString() ?? '',
                               ),
 

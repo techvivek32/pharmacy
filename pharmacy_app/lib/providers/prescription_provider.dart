@@ -46,7 +46,8 @@ class PrescriptionProvider with ChangeNotifier {
         _completedCount = orders.where((o) => o['status'] == 'delivered').length;
       }
     } catch (e) {
-      if (!silent) _error = 'Connection error. Pull down to retry.';
+      // Localization key; translated at the display site.
+      if (!silent) _error = 'connection_error_retry';
     }
 
     _isLoading = false;
@@ -82,7 +83,7 @@ class PrescriptionProvider with ChangeNotifier {
         return false;
       }
     } catch (e) {
-      _error = 'Failed to send quote: ${e.toString()}';
+      _error = 'failed_send_quote';
       _isLoading = false;
       notifyListeners();
       return false;

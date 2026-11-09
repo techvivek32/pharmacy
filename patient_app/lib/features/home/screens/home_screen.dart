@@ -66,9 +66,9 @@ class _HomeTab extends StatelessWidget {
 
   String _greeting(AppLocalizations l10n) {
     final h = DateTime.now().hour;
-    if (h < 12) return 'Good Morning'; // Could add these to l10n later
-    if (h < 17) return 'Good Afternoon';
-    return 'Good Evening';
+    if (h < 12) return l10n.translate('good_morning');
+    if (h < 17) return l10n.translate('good_afternoon');
+    return l10n.translate('good_evening');
   }
 
   Color _statusColor(String s) {
@@ -139,7 +139,7 @@ class _HomeTab extends StatelessWidget {
                             children: [
                               Text(_greeting(l10n), style: const TextStyle(color: Colors.white70, fontSize: 14)),
                               const SizedBox(height: 2),
-                              Text(user?.fullName ?? 'User',
+                              Text(user?.fullName ?? l10n.translate('user'),
                                   style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
                             ],
                           ),
@@ -215,7 +215,7 @@ class _HomeTab extends StatelessWidget {
                                 children: [
                                   Text(l10n.translate('upload_prescription'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                                   const SizedBox(height: 2),
-                                  const Text('Get quotes from nearby pharmacies', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                                  Text(l10n.translate('get_quotes_nearby'), style: const TextStyle(color: Colors.white70, fontSize: 13)),
                                 ],
                               ),
                             ),

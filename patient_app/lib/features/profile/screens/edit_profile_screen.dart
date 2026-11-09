@@ -11,6 +11,7 @@ import '../../../core/widgets/primary_button.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../services/profile_service.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/localization/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -60,7 +61,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to pick image')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.translate('failed_pick_image'))),
         );
       }
     }
@@ -201,18 +202,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             final shouldContinue = await showDialog<bool>(
               context: context,
               builder: (context) => AlertDialog(
-                title: const Text('Image Upload Failed'),
+                title: Text(AppLocalizations.of(context)!.translate('image_upload_failed')),
                 content: Text(
-                  'Failed to upload profile image:\n\n${uploadError.toString().replaceAll('Exception: ', '')}\n\nDo you want to save profile without image?',
+                  '${AppLocalizations.of(context)!.translate('image_upload_failed_desc')}:\n\n${uploadError.toString().replaceAll('Exception: ', '')}\n\n${AppLocalizations.of(context)!.translate('save_without_image_q')}',
                 ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context, false),
-                    child: const Text('Cancel'),
+                    child: Text(AppLocalizations.of(context)!.translate('cancel')),
                   ),
                   ElevatedButton(
                     onPressed: () => Navigator.pop(context, true),
-                    child: const Text('Save Without Image'),
+                    child: Text(AppLocalizations.of(context)!.translate('save_without_image')),
                   ),
                 ],
               ),
@@ -244,14 +245,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result.message ?? 'Profile updated successfully'),
+            content: Text(result.message ?? AppLocalizations.of(context)!.translate('profile_updated')),
             backgroundColor: Colors.green,
           ),
         );
         Navigator.pop(context, true);
       } else {
         // Check if error message contains HTML
-        String errorMessage = result.message ?? 'Failed to update profile';
+        String errorMessage = result.message ?? AppLocalizations.of(context)!.translate('failed_update_profile');
         if (errorMessage.contains('<!DOCTYPE') || errorMessage.contains('<html')) {
           errorMessage = 'Server error: The API endpoint is not responding correctly. Please check if the backend is deployed properly.';
         }
@@ -276,7 +277,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $errorMessage'),
+            content: Text('${AppLocalizations.of(context)!.translate('error')}: $errorMessage'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 7),
           ),
@@ -287,9 +288,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Profile'),
+        title: Text(l10n.translate('edit_profile')),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTheme.spacing16),
@@ -301,27 +303,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               const SizedBox(height: AppTheme.spacing32),
               InputField(
                 controller: _nameController,
-                label: 'Full Name',
+                label: l10n.translate('full_name'),
                 prefixIcon: const Icon(Icons.person),
                 validator: (value) {
-                  if (value?.isEmpty ?? true) return 'Name is required';
+                  if (value?.isEmpty ?? true) return l10n.translate('name_required');
                   return null;
                 },
               ),
               const SizedBox(height: AppTheme.spacing16),
               InputField(
                 controller: _phoneController,
-                label: 'Phone Number',
+                label: l10n.translate('phone_number'),
                 prefixIcon: const Icon(Icons.phone),
                 keyboardType: TextInputType.phone,
                 validator: (value) {
-                  if (value?.isEmpty ?? true) return 'Phone is required';
+                  if (value?.isEmpty ?? true) return l10n.translate('phone_required');
                   return null;
                 },
               ),
               const SizedBox(height: AppTheme.spacing32),
               PrimaryButton(
-                text: 'Save Changes',
+                text: l10n.translate('save_changes'),
                 onPressed: _saveProfile,
                 isLoading: _isLoading,
               ),

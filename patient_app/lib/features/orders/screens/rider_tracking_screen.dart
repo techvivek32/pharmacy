@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../services/api_service.dart';
 import '../../../core/constants/map_tiles.dart';
 
@@ -215,13 +216,13 @@ class _RiderTrackingScreenState extends State<RiderTrackingScreen>
                         size: 64,
                         color: AppTheme.textSecondary.withValues(alpha: 0.4)),
                     const SizedBox(height: 12),
-                    const Text('Rider location not available yet',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    Text(AppLocalizations.of(context)!.translate('rider_location_unavailable'),
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 4),
-                    const Text(
-                      "We'll show the rider here once they start moving.",
+                    Text(
+                      AppLocalizations.of(context)!.translate('rider_location_unavailable_desc'),
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                      style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
                     ),
                   ],
                 ),
@@ -278,8 +279,8 @@ class _RiderTrackingScreenState extends State<RiderTrackingScreen>
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Rider Location',
-                                      style: TextStyle(
+                                  Text(AppLocalizations.of(context)!.translate('rider_location'),
+                                      style: const TextStyle(
                                           fontSize: 11,
                                           color: AppTheme.textSecondary)),
                                   Text(
@@ -317,7 +318,7 @@ class _RiderTrackingScreenState extends State<RiderTrackingScreen>
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    _riderOffline ? 'Offline' : 'Live',
+                                    _riderOffline ? AppLocalizations.of(context)!.translate('offline') : AppLocalizations.of(context)!.translate('live'),
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
@@ -398,12 +399,12 @@ class _RiderTrackingScreenState extends State<RiderTrackingScreen>
                       children: [
                         Text(
                           _orderStatus == 'in_transit'
-                              ? 'Rider is on the way'
+                              ? AppLocalizations.of(context)!.translate('rider_on_way')
                               : _orderStatus == 'picked_up'
-                                  ? 'Order picked up'
+                                  ? AppLocalizations.of(context)!.translate('order_picked_up')
                                   : _orderStatus == 'delivered'
-                                      ? 'Order delivered!'
-                                      : 'Tracking rider...',
+                                      ? AppLocalizations.of(context)!.translate('order_delivered_msg')
+                                      : AppLocalizations.of(context)!.translate('tracking_rider'),
                           style: const TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 15),
                         ),

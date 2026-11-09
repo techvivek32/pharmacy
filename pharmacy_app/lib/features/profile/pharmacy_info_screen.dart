@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/api_service.dart';
+import '../../core/localization/app_localizations.dart';
 
 class PharmacyInfoScreen extends StatefulWidget {
   const PharmacyInfoScreen({super.key});
@@ -42,8 +43,9 @@ class _PharmacyInfoScreenState extends State<PharmacyInfoScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Pharmacy Info')),
+      appBar: AppBar(title: Text(l10n.translate('pharmacy_info'))),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
           : _error != null
@@ -58,7 +60,7 @@ class _PharmacyInfoScreenState extends State<PharmacyInfoScreen> {
                       TextButton.icon(
                         onPressed: _fetchProfile,
                         icon: const Icon(Icons.refresh),
-                        label: const Text('Retry'),
+                        label: Text(l10n.translate('retry')),
                       ),
                     ],
                   ),
@@ -76,24 +78,29 @@ class _PharmacyInfoScreenState extends State<PharmacyInfoScreen> {
                         const SizedBox(height: AppTheme.spacing16),
                         // Pharmacy details
                         if (_pharmacy != null) ...[
-                          _buildSection('Pharmacy Details', Icons.store, [
-                            _buildRow(Icons.badge_outlined, 'Pharmacy Name', _pharmacy!['pharmacyName']),
-                            _buildRow(Icons.numbers, 'License Number', _pharmacy!['licenseNumber']),
-                            _buildRow(Icons.location_on_outlined, 'Address', _pharmacy!['address']),
+                          _buildSection(l10n.translate('pharmacy_details'), Icons.store, [
+                            _buildRow(Icons.badge_outlined, l10n.translate('pharmacy_name'), _pharmacy!['pharmacyName']),
+                            _buildRow(Icons.numbers, l10n.translate('license_number'), _pharmacy!['licenseNumber']),
+                            _buildRow(Icons.location_on_outlined, l10n.translate('address'), _pharmacy!['address']),
                           ]),
                           const SizedBox(height: AppTheme.spacing16),
-                          _buildSection('Status & Performance', Icons.bar_chart, [
+                          _buildSection(l10n.translate('status_performance'), Icons.bar_chart, [
                             _buildStatusRow(_pharmacy!['isOpen'] == true),
-                            _buildRow(Icons.star_outline, 'Rating', '${(_pharmacy!['rating'] ?? 0.0).toStringAsFixed(1)} / 5.0'),
-                            _buildRow(Icons.shopping_bag_outlined, 'Total Orders', '${_pharmacy!['totalOrders'] ?? 0}'),
+                            _buildRow(Icons.star_outline, l10n.translate('rating'), '${(_pharmacy!['rating'] ?? 0.0).toStringAsFixed(1)} / 5.0'),
+                            _buildRow(Icons.shopping_bag_outlined, l10n.translate('total_orders'), '${_pharmacy!['totalOrders'] ?? 0}'),
                           ]),
                           const SizedBox(height: AppTheme.spacing16),
                         ],
                         // Account details
-                        _buildSection('Account Details', Icons.person_outline, [
-                          _buildRow(Icons.person_outline, 'Owner Name', _user?['fullName']),
-                          _buildRow(Icons.phone_outlined, 'Phone', _user?['phone']),
-                          _buildRow(Icons.verified_outlined, 'Verified', _user?['isVerified'] == true ? 'Yes' : 'No'),
+                        _buildSection(l10n.translate('account_details'), Icons.person_outline, [
+                          _buildRow(Icons.person_outline, l10n.translate('owner_name'), _user?['fullName']),
+                          _buildRow(Icons.phone_outlined, l10n.translate('phone'), _user?['phone']),
+                          _buildRow(
+                              Icons.verified_outlined,
+                              l10n.translate('verified'),
+                              _user?['isVerified'] == true
+                                  ? l10n.translate('yes')
+                                  : l10n.translate('no')),
                         ]),
                         const SizedBox(height: AppTheme.spacing24),
                       ],
@@ -104,7 +111,9 @@ class _PharmacyInfoScreenState extends State<PharmacyInfoScreen> {
   }
 
   Widget _buildHeaderCard() {
-    final name = _pharmacy?['pharmacyName'] ?? _user?['fullName'] ?? 'Pharmacy';
+    final name = _pharmacy?['pharmacyName'] ??
+        _user?['fullName'] ??
+        AppLocalizations.of(context)!.translate('pharmacy');
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppTheme.spacing24),
@@ -199,6 +208,7 @@ class _PharmacyInfoScreenState extends State<PharmacyInfoScreen> {
   }
 
   Widget _buildStatusRow(bool isOpen) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(
           horizontal: AppTheme.spacing16, vertical: AppTheme.spacing12),
@@ -210,7 +220,8 @@ class _PharmacyInfoScreenState extends State<PharmacyInfoScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Status', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                Text(l10n.translate('status'),
+                    style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
                 const SizedBox(height: 2),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
@@ -219,7 +230,7 @@ class _PharmacyInfoScreenState extends State<PharmacyInfoScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    isOpen ? 'Open' : 'Closed',
+                    isOpen ? l10n.translate('open') : l10n.translate('closed'),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,

@@ -37,8 +37,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
   }
 
   String get _orderId => widget.delivery['orderId']?.toString() ?? '';
-  String get _pickupAddress => widget.delivery['pickupAddress']?.toString() ?? 'Pharmacy';
-  String get _deliveryAddress => widget.delivery['deliveryAddress']?.toString() ?? 'Patient';
+  String? get _rawPickupAddress => widget.delivery['pickupAddress']?.toString();
+  String? get _rawDeliveryAddress => widget.delivery['deliveryAddress']?.toString();
   String get _orderNumber => widget.delivery['orderNumber']?.toString() ?? '';
   num get _deliveryFee => widget.delivery['deliveryFee'] ?? 0;
   List? get _pharmacyCoords => widget.delivery['pharmacyCoords'] as List?;
@@ -199,6 +199,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
     final isToPharmacy = _phase == 'to_pharmacy';
     final showCollection = !isToPharmacy && _isCod;
+    final pickupAddress = _rawPickupAddress ?? l10n.translate('pharmacy');
+    final deliveryAddress = _rawDeliveryAddress ?? l10n.translate('patient');
 
     return Column(
       children: [
@@ -213,7 +215,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                   icon: isToPharmacy ? Icons.store : Icons.location_on,
                   color: isToPharmacy ? AppTheme.primary : AppTheme.error,
                   title: isToPharmacy ? l10n.translate('pickup_location') : l10n.translate('delivery_location'),
-                  address: isToPharmacy ? _pickupAddress : _deliveryAddress,
+                  address: isToPharmacy ? pickupAddress : deliveryAddress,
                   coords: isToPharmacy ? _pharmacyCoords : _deliveryCoords,
                   phone: isToPharmacy ? _pharmacyPhone : _patientPhone,
                 ),
@@ -223,7 +225,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                   icon: isToPharmacy ? Icons.location_on : Icons.check_circle,
                   color: AppTheme.textSecondary,
                   title: isToPharmacy ? l10n.translate('then_deliver_to') : l10n.translate('completed'),
-                  address: isToPharmacy ? _deliveryAddress : l10n.translate('delivery_done'),
+                  address: isToPharmacy ? deliveryAddress : l10n.translate('delivery_done'),
                   coords: isToPharmacy ? _deliveryCoords : null,
                   phone: '',
                 ),
@@ -257,7 +259,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                       isToPharmacy
                           ? l10n.translate('arrived_at_pharmacy')
                           : (showCollection
-                              ? 'Payment Collected — Complete'
+                              ? l10n.translate('payment_collected_complete')
                               : l10n.translate('arrived_at_patient')),
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
@@ -286,16 +288,18 @@ class _NavigationScreenState extends State<NavigationScreen> {
             children: [
               const Icon(Icons.payments_outlined, color: AppTheme.warning, size: 20),
               const SizedBox(width: 8),
-              const Text('Collect Payment (Pay on Delivery)',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              Expanded(
+                child: Text(l10n.translate('collect_payment_pod'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              ),
             ],
           ),
           const SizedBox(height: AppTheme.spacing12),
-          _amountRow('Medicine', _subtotal, mad),
-          _amountRow('Service Fee', _serviceFee, mad),
-          _amountRow('Delivery Fee', _deliveryFee.toDouble(), mad),
+          _amountRow(l10n.translate('medicine'), _subtotal, mad),
+          _amountRow(l10n.translate('service_fee'), _serviceFee, mad),
+          _amountRow(l10n.translate('delivery_fee'), _deliveryFee.toDouble(), mad),
           const Divider(height: 20),
-          _amountRow('Total', _totalAmount, mad, isTotal: true),
+          _amountRow(l10n.translate('total'), _totalAmount, mad, isTotal: true),
           const SizedBox(height: AppTheme.spacing12),
           Container(
             width: double.infinity,
@@ -306,8 +310,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
             ),
             child: Column(
               children: [
-                const Text('Collect from patient',
-                    style: TextStyle(color: Colors.white70, fontSize: 12)),
+                Text(l10n.translate('collect_from_patient'),
+                    style: const TextStyle(color: Colors.white70, fontSize: 12)),
                 const SizedBox(height: 2),
                 Text('${_totalAmount.toStringAsFixed(2)} $mad',
                     style: const TextStyle(
@@ -394,6 +398,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
     required String phone,
     List? coords,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     return Opacity(
       opacity: isActive ? 1.0 : 0.45,
       child: Card(
@@ -449,7 +454,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                       padding: EdgeInsets.zero,
                       onPressed: () => _callNumber(phone),
                       icon: const Icon(Icons.call, color: AppTheme.success, size: 18),
-                      tooltip: 'Call',
+                      tooltip: l10n.translate('call'),
                     ),
                   ),
                 // Navigate button
@@ -463,7 +468,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                     padding: EdgeInsets.zero,
                     onPressed: () => _openMaps(address, coords),
                     icon: const Icon(Icons.navigation, color: AppTheme.primary, size: 18),
-                    tooltip: 'Navigate',
+                    tooltip: l10n.translate('navigate'),
                   ),
                 ),
               ],

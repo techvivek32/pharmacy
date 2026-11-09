@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../services/api_service.dart';
 
 class WalletScreen extends StatefulWidget {
@@ -44,7 +45,8 @@ class _WalletScreenState extends State<WalletScreen> {
         final isDeduct = a['type'] == 'deduct';
         final note = a['note']?.toString() ?? '';
         return <String, dynamic>{
-          'title': isDeduct ? 'Deducted by admin' : 'Added by admin',
+          'title': null,
+          'titleKey': isDeduct ? 'deducted_by_admin' : 'added_by_admin',
           'subtitle': note.isEmpty ? null : note,
           'date': a['createdAt'],
           'amount': isDeduct ? -amount : amount,
@@ -75,9 +77,10 @@ class _WalletScreenState extends State<WalletScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Wallet'),
+        title: Text(l10n.translate('wallet')),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _fetchData),
         ],
@@ -104,8 +107,8 @@ class _WalletScreenState extends State<WalletScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Total Earnings',
-                            style: TextStyle(color: Colors.white70, fontSize: 14)),
+                        Text(l10n.translate('total_earnings'),
+                            style: const TextStyle(color: Colors.white70, fontSize: 14)),
                         const SizedBox(height: AppTheme.spacing8),
                         Text(
                           '${_totalEarnings.toStringAsFixed(2)} MRO',
@@ -121,7 +124,7 @@ class _WalletScreenState extends State<WalletScreen> {
                                 color: Colors.white70, size: 16),
                             const SizedBox(width: 6),
                             Text(
-                              '$_totalDeliveries deliveries completed',
+                              '$_totalDeliveries ${l10n.translate('deliveries_completed')}',
                               style: const TextStyle(
                                   color: Colors.white70, fontSize: 13),
                             ),
@@ -138,9 +141,9 @@ class _WalletScreenState extends State<WalletScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Earnings History',
+                        Text(l10n.translate('earnings_history'),
                             style: Theme.of(context).textTheme.titleMedium),
-                        Text('${_history.length} entries',
+                        Text('${_history.length} ${l10n.translate('entries')}',
                             style: Theme.of(context)
                                 .textTheme
                                 .bodySmall
@@ -162,12 +165,12 @@ class _WalletScreenState extends State<WalletScreen> {
                                     color: AppTheme.textSecondary
                                         .withOpacity(0.4)),
                                 const SizedBox(height: AppTheme.spacing12),
-                                Text('No earnings yet',
+                                Text(l10n.translate('no_earnings_yet'),
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleMedium),
                                 const SizedBox(height: AppTheme.spacing4),
-                                Text('Complete deliveries to earn',
+                                Text(l10n.translate('complete_deliveries_to_earn'),
                                     style: Theme.of(context)
                                         .textTheme
                                         .bodySmall),
@@ -200,7 +203,9 @@ class _WalletScreenState extends State<WalletScreen> {
                                       size: 20),
                                 ),
                                 title: Text(
-                                  h['title'] as String,
+                                  h['titleKey'] != null
+                                      ? l10n.translate(h['titleKey'] as String)
+                                      : (h['title'] as String? ?? ''),
                                   style: const TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14),

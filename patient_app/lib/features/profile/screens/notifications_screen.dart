@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -19,61 +20,62 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text(l10n.translate('notifications')),
       ),
       body: ListView(
         padding: const EdgeInsets.all(AppTheme.spacing16),
         children: [
           Text(
-            'Notification Preferences',
+            l10n.translate('notification_preferences'),
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
           ),
           const SizedBox(height: AppTheme.spacing16),
           _buildNotificationCard(
-            title: 'Order Updates',
-            subtitle: 'Get notified about your order status',
+            title: l10n.translate('order_updates'),
+            subtitle: l10n.translate('order_updates_desc'),
             value: _orderUpdates,
             onChanged: (value) => setState(() => _orderUpdates = value),
           ),
           _buildNotificationCard(
-            title: 'Promotions & Offers',
-            subtitle: 'Receive special offers and discounts',
+            title: l10n.translate('promotions_offers'),
+            subtitle: l10n.translate('promotions_desc'),
             value: _promotions,
             onChanged: (value) => setState(() => _promotions = value),
           ),
           _buildNotificationCard(
-            title: 'New Messages',
-            subtitle: 'Get notified when you receive messages',
+            title: l10n.translate('new_messages'),
+            subtitle: l10n.translate('new_messages_desc'),
             value: _newMessages,
             onChanged: (value) => setState(() => _newMessages = value),
           ),
           const SizedBox(height: AppTheme.spacing24),
           Text(
-            'Notification Channels',
+            l10n.translate('notification_channels'),
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
           ),
           const SizedBox(height: AppTheme.spacing16),
           _buildNotificationCard(
-            title: 'Email Notifications',
-            subtitle: 'Receive notifications via email',
+            title: l10n.translate('email_notifications'),
+            subtitle: l10n.translate('email_notifications_desc'),
             value: _emailNotifications,
             onChanged: (value) => setState(() => _emailNotifications = value),
           ),
           _buildNotificationCard(
-            title: 'Push Notifications',
-            subtitle: 'Receive push notifications on your device',
+            title: l10n.translate('push_notifications'),
+            subtitle: l10n.translate('push_notifications_desc'),
             value: _pushNotifications,
             onChanged: (value) => setState(() => _pushNotifications = value),
           ),
           _buildNotificationCard(
-            title: 'SMS Notifications',
-            subtitle: 'Receive notifications via SMS',
+            title: l10n.translate('sms_notifications'),
+            subtitle: l10n.translate('sms_notifications_desc'),
             value: _smsNotifications,
             onChanged: (value) => setState(() => _smsNotifications = value),
           ),

@@ -9,6 +9,7 @@ import '../../../models/order_model.dart';
 import '../../../services/media_service.dart';
 import '../../../providers/order_provider.dart';
 import '../../../core/widgets/payment_methods_list.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class PaymentProofScreen extends StatefulWidget {
   // Accept either an Order object or raw map (from MyQuotesScreen)
@@ -47,6 +48,7 @@ class _PaymentProofScreenState extends State<PaymentProofScreen> {
   }
 
   void _showPickerSheet() {
+    final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -58,7 +60,7 @@ class _PaymentProofScreenState extends State<PaymentProofScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.camera_alt, color: AppTheme.primary),
-              title: const Text('Take Photo'),
+              title: Text(l10n.translate('take_photo')),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.camera);
@@ -66,7 +68,7 @@ class _PaymentProofScreenState extends State<PaymentProofScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library, color: AppTheme.primary),
-              title: const Text('Choose from Gallery'),
+              title: Text(l10n.translate('choose_gallery')),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.gallery);
@@ -79,9 +81,10 @@ class _PaymentProofScreenState extends State<PaymentProofScreen> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_proofImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please upload your payment receipt first')),
+        SnackBar(content: Text(l10n.translate('upload_receipt_first'))),
       );
       return;
     }
@@ -97,7 +100,7 @@ class _PaymentProofScreenState extends State<PaymentProofScreen> {
         setState(() => _isUploading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(uploadResult.message ?? 'Failed to upload image'),
+            content: Text(uploadResult.message ?? l10n.translate('failed_upload_image')),
             backgroundColor: AppTheme.error,
           ),
         );
@@ -117,8 +120,8 @@ class _PaymentProofScreenState extends State<PaymentProofScreen> {
     if (saved == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to save payment proof. Try again.'),
+          SnackBar(
+            content: Text(l10n.translate('failed_save_payment_proof')),
             backgroundColor: AppTheme.error,
           ),
         );
@@ -137,8 +140,8 @@ class _PaymentProofScreenState extends State<PaymentProofScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(confirmed
-              ? 'Payment proof submitted! Waiting for pharmacy verification 🕐'
-              : 'Failed to submit order'),
+              ? l10n.translate('payment_proof_submitted')
+              : l10n.translate('failed_submit_order')),
           backgroundColor: confirmed ? AppTheme.success : AppTheme.error,
         ),
       );
@@ -154,11 +157,12 @@ class _PaymentProofScreenState extends State<PaymentProofScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final paymentMethod = widget.paymentMethodDetails;
     final isBusy = _isUploading || _isConfirming;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Payment Proof')),
+      appBar: AppBar(title: Text(l10n.translate('payment_proof'))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -180,7 +184,7 @@ class _PaymentProofScreenState extends State<PaymentProofScreen> {
                     children: [
                       const Icon(Icons.info_outline, color: AppTheme.primary, size: 18),
                       const SizedBox(width: 8),
-                      Text('How to pay',
+                      Text(l10n.translate('how_to_pay'),
                           style: Theme.of(context)
                               .textTheme
                               .titleSmall
@@ -188,11 +192,9 @@ class _PaymentProofScreenState extends State<PaymentProofScreen> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    '1. Transfer the amount using the payment details below\n'
-                    '2. Take a screenshot or photo of the receipt\n'
-                    '3. Upload it here — pharmacy will verify and confirm your order',
-                    style: TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.6),
+                  Text(
+                    l10n.translate('payment_instructions'),
+                    style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary, height: 1.6),
                   ),
                 ],
               ),
@@ -203,8 +205,8 @@ class _PaymentProofScreenState extends State<PaymentProofScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Amount to pay',
-                    style: TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
+                Text(l10n.translate('amount_to_pay'),
+                    style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
                 Text(
                   '${widget.totalAmount.toStringAsFixed(2)} MRO',
                   style: const TextStyle(
@@ -216,7 +218,7 @@ class _PaymentProofScreenState extends State<PaymentProofScreen> {
 
             // Payment method details with copy button
             if (paymentMethod != null) ...[
-              Text('Payment Details',
+              Text(l10n.translate('payment_details'),
                   style: Theme.of(context)
                       .textTheme
                       .titleMedium
@@ -227,7 +229,7 @@ class _PaymentProofScreenState extends State<PaymentProofScreen> {
             ],
 
             // Upload section
-            Text('Upload Receipt',
+            Text(l10n.translate('upload_receipt'),
                 style: Theme.of(context)
                     .textTheme
                     .titleMedium
@@ -289,13 +291,13 @@ class _PaymentProofScreenState extends State<PaymentProofScreen> {
                                   color: Colors.black54,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.edit, color: Colors.white, size: 13),
-                                    SizedBox(width: 4),
-                                    Text('Change',
-                                        style: TextStyle(color: Colors.white, fontSize: 12)),
+                                    const Icon(Icons.edit, color: Colors.white, size: 13),
+                                    const SizedBox(width: 4),
+                                    Text(l10n.translate('change'),
+                                        style: const TextStyle(color: Colors.white, fontSize: 12)),
                                   ],
                                 ),
                               ),
@@ -309,12 +311,12 @@ class _PaymentProofScreenState extends State<PaymentProofScreen> {
                           Icon(Icons.cloud_upload_outlined,
                               size: 40, color: AppTheme.primary.withValues(alpha: 0.5)),
                           const SizedBox(height: 8),
-                          const Text('Tap to upload receipt',
-                              style: TextStyle(
+                          Text(l10n.translate('tap_to_upload_receipt'),
+                              style: const TextStyle(
                                   fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
                           const SizedBox(height: 4),
-                          const Text('Photo or screenshot of bank transfer',
-                              style: TextStyle(fontSize: 12, color: AppTheme.textHint)),
+                          Text(l10n.translate('receipt_hint'),
+                              style: const TextStyle(fontSize: 12, color: AppTheme.textHint)),
                         ],
                       ),
               ),
@@ -324,10 +326,10 @@ class _PaymentProofScreenState extends State<PaymentProofScreen> {
 
             PrimaryButton(
               text: _isUploading
-                  ? 'Uploading...'
+                  ? l10n.translate('uploading')
                   : _isConfirming
-                      ? 'Submitting...'
-                      : 'Submit Payment Proof',
+                      ? l10n.translate('submitting')
+                      : l10n.translate('submit_payment_proof'),
               icon: Icons.upload_file,
               onPressed: isBusy || _proofImage == null ? null : _submit,
               isLoading: isBusy,

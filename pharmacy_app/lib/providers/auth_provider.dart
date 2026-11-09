@@ -55,7 +55,8 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return result.success;
     } catch (e) {
-      _error = 'Failed to send OTP';
+      // Localization key; translated at the display site.
+      _error = 'failed_send_otp';
       _isLoading = false;
       notifyListeners();
       return false;
@@ -77,7 +78,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return result;
     } catch (e) {
-      _error = 'Login failed';
+      _error = 'login_failed';
       _isLoading = false;
       notifyListeners();
       return null;
@@ -102,7 +103,7 @@ class AuthProvider with ChangeNotifier {
         return false;
       }
     } catch (e) {
-      _error = 'Login failed: ${e.toString()}';
+      _error = 'login_failed';
       _isLoading = false;
       notifyListeners();
       return false;
@@ -148,7 +149,7 @@ class AuthProvider with ChangeNotifier {
         return false;
       }
     } catch (e) {
-      _error = 'Registration failed: ${e.toString()}';
+      _error = 'registration_failed';
       _isLoading = false;
       notifyListeners();
       return false;
@@ -179,7 +180,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return false;
     } catch (e) {
-      _error = 'Failed to delete account';
+      _error = 'delete_account_failed';
       notifyListeners();
       return false;
     }

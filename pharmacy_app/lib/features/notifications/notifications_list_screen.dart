@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/notification_model.dart';
 import '../../services/notification_service.dart';
+import '../../core/localization/app_localizations.dart';
 
 class NotificationsListScreen extends StatefulWidget {
   const NotificationsListScreen({super.key});
@@ -39,7 +40,7 @@ class _NotificationsListScreenState extends State<NotificationsListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text(AppLocalizations.of(context)!.translate('notifications')),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -66,6 +67,7 @@ class _NotificationsListScreenState extends State<NotificationsListScreen> {
   }
 
   Widget _emptyState() {
+    final l10n = AppLocalizations.of(context)!;
     return LayoutBuilder(
       builder: (context, constraints) => SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -78,12 +80,12 @@ class _NotificationsListScreenState extends State<NotificationsListScreen> {
                 Icon(Icons.notifications_none,
                     size: 80, color: AppTheme.textSecondary.withValues(alpha: 0.4)),
                 const SizedBox(height: 16),
-                Text('No notifications yet',
+                Text(l10n.translate('no_notifications_yet'),
                     style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
-                const Text(
-                  "We'll let you know when something happens.",
-                  style: TextStyle(color: AppTheme.textSecondary),
+                Text(
+                  l10n.translate('notifications_empty_desc'),
+                  style: const TextStyle(color: AppTheme.textSecondary),
                 ),
               ],
             ),
@@ -158,11 +160,12 @@ class _NotificationsListScreenState extends State<NotificationsListScreen> {
   }
 
   String _timeAgo(DateTime dt) {
+    final l10n = AppLocalizations.of(context)!;
     final d = DateTime.now().difference(dt);
-    if (d.inSeconds < 60) return 'Just now';
-    if (d.inMinutes < 60) return '${d.inMinutes}m ago';
-    if (d.inHours < 24) return '${d.inHours}h ago';
-    if (d.inDays < 7) return '${d.inDays}d ago';
+    if (d.inSeconds < 60) return l10n.translate('just_now');
+    if (d.inMinutes < 60) return '${d.inMinutes}${l10n.translate('minutes_ago')}';
+    if (d.inHours < 24) return '${d.inHours}${l10n.translate('hours_ago')}';
+    if (d.inDays < 7) return '${d.inDays}${l10n.translate('days_ago')}';
     return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
   }
 

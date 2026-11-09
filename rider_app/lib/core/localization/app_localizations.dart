@@ -168,6 +168,90 @@ class AppLocalizations {
       'on_way': 'On the Way',
       'delivered': 'Delivered',
       'cancelled': 'Cancelled',
+
+      // Splash
+      'medicine_delivery_tagline': 'Medicine delivery at doorstep.',
+
+      // Notifications
+      'notifications': 'Notifications',
+      'no_notifications_yet': 'No notifications yet',
+      'notifications_empty_desc': "We'll let you know when something happens.",
+      'just_now': 'Just now',
+      'minutes_ago': '{n}m ago',
+      'hours_ago': '{n}h ago',
+      'days_ago': '{n}d ago',
+
+      // Order history
+      'order_history': 'Order History',
+      'no_order_history': 'No order history yet',
+      'completed_deliveries_appear_here': 'Completed deliveries will appear here',
+      'picked_up': 'Picked Up',
+      'in_transit': 'In Transit',
+      'assigned': 'Assigned',
+
+      // Edit profile
+      'image_upload_failed': 'Image Upload Failed',
+      'save_without_image': 'Save Without Image',
+      'save_profile_without_image_q': 'Save profile without image?',
+      'profile_updated_success': 'Profile updated successfully',
+      'failed_update_profile': 'Failed to update profile',
+      'name_required': 'Name is required',
+      'phone_required': 'Phone is required',
+      'save_changes': 'Save Changes',
+      'auth_required_login_again': 'Authentication required. Please login again.',
+      'upload_failed': 'Upload failed',
+
+      // Wallet
+      'total_earnings': 'Total Earnings',
+      'deliveries_completed': 'deliveries completed',
+      'earnings_history': 'Earnings History',
+      'entries': 'entries',
+      'no_earnings_yet': 'No earnings yet',
+      'complete_deliveries_to_earn': 'Complete deliveries to earn',
+      'deducted_by_admin': 'Deducted by admin',
+      'added_by_admin': 'Added by admin',
+
+      // Orders
+      'decline': 'Decline',
+      'accept_order': 'Accept Order',
+      'pharmacy': 'Pharmacy',
+      'patient': 'Patient',
+      'pay_on_delivery_collect': 'Pay on Delivery · collect',
+
+      // Navigation / payment collection
+      'payment_collected_complete': 'Payment Collected — Complete',
+      'collect_payment_pod': 'Collect Payment (Pay on Delivery)',
+      'medicine': 'Medicine',
+      'service_fee': 'Service Fee',
+      'total': 'Total',
+      'collect_from_patient': 'Collect from patient',
+      'call': 'Call',
+      'navigate': 'Navigate',
+
+      // Map
+      'getting_route': 'Getting route...',
+      'my_location': 'My location',
+      'full_route': 'Full route',
+      'destination': 'Destination',
+      'error': 'Error',
+      'retry': 'Retry',
+      'view_details': 'View Details',
+      'otp_resent_success': 'OTP resent successfully',
+
+      // Privacy policy
+      'privacy_last_updated': 'Last updated: January 2024',
+      'privacy_s1_title': '1. Information We Collect',
+      'privacy_s1_body': 'We collect information you provide directly to us, such as your name, email address, phone number, and location data when you use our rider application.',
+      'privacy_s2_title': '2. How We Use Your Information',
+      'privacy_s2_body': 'We use the information we collect to provide, maintain, and improve our services, process deliveries, communicate with you, and ensure the safety of our platform.',
+      'privacy_s3_title': '3. Location Data',
+      'privacy_s3_body': 'Our app collects location data to enable delivery tracking and to match you with nearby delivery requests. This data is only collected while the app is in use.',
+      'privacy_s4_title': '4. Data Sharing',
+      'privacy_s4_body': 'We do not sell your personal information. We may share your information with pharmacies and patients only as necessary to complete deliveries.',
+      'privacy_s5_title': '5. Data Security',
+      'privacy_s5_body': 'We implement appropriate security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.',
+      'privacy_s6_title': '6. Contact Us',
+      'privacy_s6_body': 'If you have any questions about this Privacy Policy, please contact us at support@ordogo.com.',
     },
     'fr': {
       // Auth
@@ -327,6 +411,90 @@ class AppLocalizations {
       'on_way': 'En chemin',
       'delivered': 'Livré',
       'cancelled': 'Annulé',
+
+      // Splash
+      'medicine_delivery_tagline': 'Livraison de médicaments à domicile.',
+
+      // Notifications
+      'notifications': 'Notifications',
+      'no_notifications_yet': 'Aucune notification pour le moment',
+      'notifications_empty_desc': 'Nous vous préviendrons dès qu\'il y aura du nouveau.',
+      'just_now': 'À l\'instant',
+      'minutes_ago': 'il y a {n} min',
+      'hours_ago': 'il y a {n} h',
+      'days_ago': 'il y a {n} j',
+
+      // Order history
+      'order_history': 'Historique des commandes',
+      'no_order_history': 'Aucun historique de commandes',
+      'completed_deliveries_appear_here': 'Les livraisons terminées apparaîtront ici',
+      'picked_up': 'Récupérée',
+      'in_transit': 'En cours de livraison',
+      'assigned': 'Assignée',
+
+      // Edit profile
+      'image_upload_failed': 'Échec du téléchargement de l\'image',
+      'save_without_image': 'Enregistrer sans image',
+      'save_profile_without_image_q': 'Enregistrer le profil sans image ?',
+      'profile_updated_success': 'Profil mis à jour avec succès',
+      'failed_update_profile': 'Échec de la mise à jour du profil',
+      'name_required': 'Le nom est requis',
+      'phone_required': 'Le numéro de téléphone est requis',
+      'save_changes': 'Enregistrer les modifications',
+      'auth_required_login_again': 'Authentification requise. Veuillez vous reconnecter.',
+      'upload_failed': 'Échec du téléchargement',
+
+      // Wallet
+      'total_earnings': 'Gains totaux',
+      'deliveries_completed': 'livraisons effectuées',
+      'earnings_history': 'Historique des gains',
+      'entries': 'entrées',
+      'no_earnings_yet': 'Aucun gain pour le moment',
+      'complete_deliveries_to_earn': 'Effectuez des livraisons pour gagner',
+      'deducted_by_admin': 'Déduit par l\'admin',
+      'added_by_admin': 'Ajouté par l\'admin',
+
+      // Orders
+      'decline': 'Refuser',
+      'accept_order': 'Accepter la commande',
+      'pharmacy': 'Pharmacie',
+      'patient': 'Patient',
+      'pay_on_delivery_collect': 'Paiement à la livraison · encaisser',
+
+      // Navigation / payment collection
+      'payment_collected_complete': 'Paiement encaissé — Terminer',
+      'collect_payment_pod': 'Encaisser le paiement (paiement à la livraison)',
+      'medicine': 'Médicaments',
+      'service_fee': 'Frais de service',
+      'total': 'Total',
+      'collect_from_patient': 'À encaisser auprès du patient',
+      'call': 'Appeler',
+      'navigate': 'Naviguer',
+
+      // Map
+      'getting_route': 'Calcul de l\'itinéraire...',
+      'my_location': 'Ma position',
+      'full_route': 'Itinéraire complet',
+      'destination': 'Destination',
+      'error': 'Erreur',
+      'retry': 'Réessayer',
+      'view_details': 'Voir les détails',
+      'otp_resent_success': 'OTP renvoyé avec succès',
+
+      // Privacy policy
+      'privacy_last_updated': 'Dernière mise à jour : janvier 2024',
+      'privacy_s1_title': '1. Informations que nous collectons',
+      'privacy_s1_body': 'Nous collectons les informations que vous nous fournissez directement, telles que votre nom, votre adresse e-mail, votre numéro de téléphone et vos données de localisation lorsque vous utilisez notre application livreur.',
+      'privacy_s2_title': '2. Utilisation de vos informations',
+      'privacy_s2_body': 'Nous utilisons les informations collectées pour fournir, maintenir et améliorer nos services, traiter les livraisons, communiquer avec vous et assurer la sécurité de notre plateforme.',
+      'privacy_s3_title': '3. Données de localisation',
+      'privacy_s3_body': 'Notre application collecte des données de localisation pour permettre le suivi des livraisons et vous proposer les demandes de livraison à proximité. Ces données ne sont collectées que lorsque l\'application est utilisée.',
+      'privacy_s4_title': '4. Partage des données',
+      'privacy_s4_body': 'Nous ne vendons pas vos informations personnelles. Nous pouvons partager vos informations avec les pharmacies et les patients uniquement dans la mesure nécessaire pour effectuer les livraisons.',
+      'privacy_s5_title': '5. Sécurité des données',
+      'privacy_s5_body': 'Nous mettons en œuvre des mesures de sécurité appropriées pour protéger vos informations personnelles contre tout accès, modification, divulgation ou destruction non autorisés.',
+      'privacy_s6_title': '6. Nous contacter',
+      'privacy_s6_body': 'Si vous avez des questions concernant cette politique de confidentialité, veuillez nous contacter à support@ordogo.com.',
     },
     'ar': {
       // Auth
@@ -486,6 +654,90 @@ class AppLocalizations {
       'on_way': 'في الطريق',
       'delivered': 'تم التوصيل',
       'cancelled': 'تم الإلغاء',
+
+      // Splash
+      'medicine_delivery_tagline': 'توصيل الأدوية إلى باب منزلك.',
+
+      // Notifications
+      'notifications': 'الإشعارات',
+      'no_notifications_yet': 'لا توجد إشعارات بعد',
+      'notifications_empty_desc': 'سنعلمك عندما يحدث شيء جديد.',
+      'just_now': 'الآن',
+      'minutes_ago': 'منذ {n} دقيقة',
+      'hours_ago': 'منذ {n} ساعة',
+      'days_ago': 'منذ {n} يوم',
+
+      // Order history
+      'order_history': 'سجل الطلبات',
+      'no_order_history': 'لا يوجد سجل طلبات بعد',
+      'completed_deliveries_appear_here': 'ستظهر التوصيلات المكتملة هنا',
+      'picked_up': 'تم الاستلام',
+      'in_transit': 'قيد التوصيل',
+      'assigned': 'تم التعيين',
+
+      // Edit profile
+      'image_upload_failed': 'فشل تحميل الصورة',
+      'save_without_image': 'حفظ بدون صورة',
+      'save_profile_without_image_q': 'حفظ الملف الشخصي بدون صورة؟',
+      'profile_updated_success': 'تم تحديث الملف الشخصي بنجاح',
+      'failed_update_profile': 'فشل تحديث الملف الشخصي',
+      'name_required': 'الاسم مطلوب',
+      'phone_required': 'رقم الهاتف مطلوب',
+      'save_changes': 'حفظ التغييرات',
+      'auth_required_login_again': 'المصادقة مطلوبة. يرجى تسجيل الدخول مرة أخرى.',
+      'upload_failed': 'فشل التحميل',
+
+      // Wallet
+      'total_earnings': 'إجمالي الأرباح',
+      'deliveries_completed': 'توصيلة مكتملة',
+      'earnings_history': 'سجل الأرباح',
+      'entries': 'عملية',
+      'no_earnings_yet': 'لا توجد أرباح بعد',
+      'complete_deliveries_to_earn': 'أكمل التوصيلات لتربح',
+      'deducted_by_admin': 'خصم من قبل المسؤول',
+      'added_by_admin': 'إضافة من قبل المسؤول',
+
+      // Orders
+      'decline': 'رفض',
+      'accept_order': 'قبول الطلب',
+      'pharmacy': 'الصيدلية',
+      'patient': 'المريض',
+      'pay_on_delivery_collect': 'الدفع عند الاستلام · حصّل',
+
+      // Navigation / payment collection
+      'payment_collected_complete': 'تم تحصيل الدفع — إنهاء',
+      'collect_payment_pod': 'تحصيل الدفع (الدفع عند الاستلام)',
+      'medicine': 'الأدوية',
+      'service_fee': 'رسوم الخدمة',
+      'total': 'الإجمالي',
+      'collect_from_patient': 'المبلغ المطلوب من المريض',
+      'call': 'اتصال',
+      'navigate': 'التوجيه',
+
+      // Map
+      'getting_route': 'جاري تحديد المسار...',
+      'my_location': 'موقعي',
+      'full_route': 'المسار الكامل',
+      'destination': 'الوجهة',
+      'error': 'خطأ',
+      'retry': 'إعادة المحاولة',
+      'view_details': 'عرض التفاصيل',
+      'otp_resent_success': 'تمت إعادة إرسال رمز التحقق بنجاح',
+
+      // Privacy policy
+      'privacy_last_updated': 'آخر تحديث: يناير 2024',
+      'privacy_s1_title': '1. المعلومات التي نجمعها',
+      'privacy_s1_body': 'نجمع المعلومات التي تقدمها لنا مباشرة، مثل اسمك وبريدك الإلكتروني ورقم هاتفك وبيانات موقعك عند استخدام تطبيق السائق الخاص بنا.',
+      'privacy_s2_title': '2. كيفية استخدام معلوماتك',
+      'privacy_s2_body': 'نستخدم المعلومات التي نجمعها لتقديم خدماتنا وصيانتها وتحسينها، ومعالجة التوصيلات، والتواصل معك، وضمان سلامة منصتنا.',
+      'privacy_s3_title': '3. بيانات الموقع',
+      'privacy_s3_body': 'يجمع تطبيقنا بيانات الموقع لتمكين تتبع التوصيل ومطابقتك مع طلبات التوصيل القريبة. تُجمع هذه البيانات فقط أثناء استخدام التطبيق.',
+      'privacy_s4_title': '4. مشاركة البيانات',
+      'privacy_s4_body': 'نحن لا نبيع معلوماتك الشخصية. قد نشارك معلوماتك مع الصيدليات والمرضى فقط بالقدر اللازم لإتمام التوصيلات.',
+      'privacy_s5_title': '5. أمان البيانات',
+      'privacy_s5_body': 'نطبق تدابير أمنية مناسبة لحماية معلوماتك الشخصية من الوصول غير المصرح به أو التعديل أو الإفشاء أو الإتلاف.',
+      'privacy_s6_title': '6. اتصل بنا',
+      'privacy_s6_body': 'إذا كانت لديك أي أسئلة حول سياسة الخصوصية هذه، يرجى التواصل معنا عبر support@ordogo.com.',
     },
   };
 

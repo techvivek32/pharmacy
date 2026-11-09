@@ -152,8 +152,8 @@ class _OrderCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final deliveryFee = (order['deliveryFee'] ?? 0).toDouble();
     final distance = order['distance'];
-    final pickupAddress = order['pickupAddress'] ?? 'Pharmacy';
-    final deliveryAddress = order['deliveryAddress'] ?? 'Patient';
+    final pickupAddress = order['pickupAddress'] ?? l10n.translate('pharmacy');
+    final deliveryAddress = order['deliveryAddress'] ?? l10n.translate('patient');
 
     return Card(
       elevation: 0,
@@ -233,7 +233,7 @@ class _OrderCard extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Pickup', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary)),
+                          Text(l10n.translate('pickup'), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary)),
                           Text(pickupAddress, style: Theme.of(context).textTheme.bodyMedium, maxLines: 2, overflow: TextOverflow.ellipsis),
                         ],
                       ),
@@ -241,7 +241,7 @@ class _OrderCard extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Delivery', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary)),
+                          Text(l10n.translate('delivery'), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary)),
                           Text(deliveryAddress, style: Theme.of(context).textTheme.bodyMedium, maxLines: 2, overflow: TextOverflow.ellipsis),
                         ],
                       ),
@@ -284,7 +284,7 @@ class _OrderCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusMedium)),
                           ),
-                          child: const Text('Decline'),
+                          child: Text(l10n.translate('decline')),
                         ),
                       ),
                       const SizedBox(width: AppTheme.spacing12),
@@ -298,7 +298,7 @@ class _OrderCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusMedium)),
                           ),
-                          child: const Text('Accept Order'),
+                          child: Text(l10n.translate('accept_order')),
                         ),
                       ),
                     ],

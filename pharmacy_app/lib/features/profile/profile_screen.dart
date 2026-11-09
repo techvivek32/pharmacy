@@ -99,7 +99,9 @@ class ProfileScreen extends StatelessWidget {
             ),
             _buildMenuItem(context, Icons.help, l10n.translate('help_support'), () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Contact: support@mediexpress.com')),
+                SnackBar(
+                    content: Text(
+                        '${l10n.translate('contact')}: support@mediexpress.com')),
               );
             }),
             const SizedBox(height: AppTheme.spacing16),
@@ -189,7 +191,7 @@ class ProfileScreen extends StatelessWidget {
                 final error = context.read<AuthProvider>().error;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(error ?? l10n.translate('delete_account_failed')),
+                    content: Text(l10n.translate(error ?? 'delete_account_failed')),
                     backgroundColor: AppTheme.error,
                   ),
                 );
@@ -322,7 +324,9 @@ class ProfileScreen extends StatelessWidget {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                        content: Text(ok ? 'Profile updated' : 'Update failed'),
+                        content: Text(ok
+                            ? l10n.translate('profile_updated')
+                            : l10n.translate('update_failed')),
                         backgroundColor: ok ? AppTheme.success : AppTheme.error),
                   );
                 }
@@ -374,14 +378,16 @@ class ProfileScreen extends StatelessWidget {
               onPressed: () async {
                 if (newCtrl.text.length < 6) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Password must be at least 6 characters')),
+                    SnackBar(
+                        content: Text(l10n.translate('password_min_6_chars'))),
                   );
                   return;
                 }
                 if (currentCtrl.text.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Enter current password')),
+                    SnackBar(
+                        content:
+                            Text(l10n.translate('enter_current_password'))),
                   );
                   return;
                 }
@@ -393,7 +399,9 @@ class ProfileScreen extends StatelessWidget {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                        content: Text(ok ? 'Password updated' : 'Incorrect current password'),
+                        content: Text(ok
+                            ? l10n.translate('password_updated')
+                            : l10n.translate('incorrect_current_password')),
                         backgroundColor: ok ? AppTheme.success : AppTheme.error),
                   );
                 }

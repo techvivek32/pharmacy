@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import '../../../core/theme/app_theme.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/constants/map_tiles.dart';
 
 class MapPickerScreen extends StatefulWidget {
@@ -26,7 +27,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   final MapController _mapController = MapController();
 
   LatLng _centerLocation = const LatLng(31.7917, -7.0926);
-  String _address = 'Move the map to select location';
+  String _address = '';
   bool _loadingAddress = false;
   bool _loadingLocation = false;
   bool _isDragging = false;
@@ -138,13 +139,13 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Select Location'),
+        title: Text(AppLocalizations.of(context)!.translate('select_location')),
         actions: [
           TextButton(
             onPressed: _confirm,
-            child: const Text(
-              'Confirm',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            child: Text(
+              AppLocalizations.of(context)!.translate('confirm'),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -224,12 +225,12 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.location_on, color: Colors.red, size: 16),
-                      SizedBox(width: 6),
-                      Text('Selected Address',
-                          style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      const Icon(Icons.location_on, color: Colors.red, size: 16),
+                      const SizedBox(width: 6),
+                      Text(AppLocalizations.of(context)!.translate('selected_address'),
+                          style: const TextStyle(fontSize: 12, color: Colors.grey)),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -243,7 +244,9 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : Text(
-                            _address,
+                            _address.isEmpty
+                                ? AppLocalizations.of(context)!.translate('move_map_select')
+                                : _address,
                             key: ValueKey(_address),
                             style: const TextStyle(
                                 fontSize: 14, fontWeight: FontWeight.w500),
@@ -261,8 +264,8 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text('Confirm Location',
-                          style: TextStyle(fontSize: 16)),
+                      child: Text(AppLocalizations.of(context)!.translate('confirm_location'),
+                          style: const TextStyle(fontSize: 16)),
                     ),
                   ),
                 ],

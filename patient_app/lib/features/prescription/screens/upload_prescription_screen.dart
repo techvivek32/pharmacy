@@ -56,7 +56,7 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
     } catch (_) {
       if (mounted) setState(() => _isScanning = false);
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to pick image')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.translate('failed_pick_image'))),
       );
     }
   }
@@ -140,7 +140,7 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
         final uploadResult = await MediaService.uploadImage(_imageFile!);
         if (!uploadResult.success) {
           if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(uploadResult.message ?? 'Failed to upload image')),
+            SnackBar(content: Text(uploadResult.message ?? AppLocalizations.of(context)!.translate('failed_upload_image'))),
           );
           setState(() => _isUploading = false);
           return;
@@ -172,13 +172,13 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
         Navigator.pushNamed(context, '/address-selection', arguments: result.prescriptionId);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result.message ?? 'Failed to submit prescription')),
+          SnackBar(content: Text(result.message ?? AppLocalizations.of(context)!.translate('failed_submit_prescription'))),
         );
       }
     } catch (_) {
       setState(() => _isUploading = false);
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to submit prescription')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.translate('failed_submit_prescription'))),
       );
     }
   }
@@ -238,14 +238,14 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
                       Positioned.fill(
                         child: Container(
                           color: Colors.black45,
-                          child: const Column(
+                          child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              CircularProgressIndicator(color: Colors.white),
-                              SizedBox(height: 16),
+                              const CircularProgressIndicator(color: Colors.white),
+                              const SizedBox(height: 16),
                               Text(
-                                'Analyzing prescription...',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                l10n.translate('analyzing_prescription'),
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
@@ -263,14 +263,14 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
                     borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
                     border: Border.all(color: AppTheme.error),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.error_outline, color: AppTheme.error),
-                      SizedBox(width: 12),
+                      const Icon(Icons.error_outline, color: AppTheme.error),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'AI could not identify this as a prescription. Please try again with a clearer photo.',
-                          style: TextStyle(color: AppTheme.error, fontWeight: FontWeight.w500),
+                          l10n.translate('ai_not_prescription'),
+                          style: const TextStyle(color: AppTheme.error, fontWeight: FontWeight.w500),
                         ),
                       ),
                     ],
@@ -284,14 +284,14 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
                     borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
                     border: Border.all(color: AppTheme.success),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.check_circle_outline, color: AppTheme.success),
-                      SizedBox(width: 12),
+                      const Icon(Icons.check_circle_outline, color: AppTheme.success),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Prescription verified!',
-                          style: TextStyle(color: AppTheme.success, fontWeight: FontWeight.w500),
+                          l10n.translate('prescription_verified'),
+                          style: const TextStyle(color: AppTheme.success, fontWeight: FontWeight.w500),
                         ),
                       ),
                     ],
@@ -299,7 +299,7 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
                 ),
               const SizedBox(height: AppTheme.spacing12),
               SecondaryButton(
-                text: 'Change Image', // Could add this to l10n
+                text: l10n.translate('change_image'),
                 icon: Icons.refresh,
                 onPressed: _isScanning ? null : _showImageSourceDialog,
               ),
@@ -319,7 +319,7 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
                 const Expanded(child: Divider()),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text('OR', style: Theme.of(context).textTheme.bodySmall),
+                  child: Text(l10n.translate('or'), style: Theme.of(context).textTheme.bodySmall),
                 ),
                 const Expanded(child: Divider()),
               ],
@@ -335,7 +335,7 @@ class _UploadPrescriptionScreenState extends State<UploadPrescriptionScreen> {
                   _imageFile = null;
                 }),
                 icon: const Icon(Icons.medication_outlined),
-                label: const Text('Enter Medicine Names'),
+                label: Text(l10n.translate('enter_medicine_names')),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppTheme.primary,
                   side: const BorderSide(color: AppTheme.primary),

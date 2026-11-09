@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/primary_button.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class SimpleLocationPicker extends StatefulWidget {
   final double? initialLatitude;
@@ -21,7 +22,7 @@ class SimpleLocationPicker extends StatefulWidget {
 class _SimpleLocationPickerState extends State<SimpleLocationPicker> {
   double? _latitude;
   double? _longitude;
-  String _address = 'No location selected';
+  String _address = '';
   bool _isLoading = false;
   bool _isFetchingAddress = false;
 
@@ -43,7 +44,7 @@ class _SimpleLocationPickerState extends State<SimpleLocationPicker> {
       if (!serviceEnabled) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please enable location services')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.translate('enable_location_services'))),
           );
         }
         setState(() => _isLoading = false);
@@ -56,7 +57,7 @@ class _SimpleLocationPickerState extends State<SimpleLocationPicker> {
         if (permission == LocationPermission.denied) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Location permission denied')),
+              SnackBar(content: Text(AppLocalizations.of(context)!.translate('location_permission_denied'))),
             );
           }
           setState(() => _isLoading = false);
@@ -79,7 +80,7 @@ class _SimpleLocationPickerState extends State<SimpleLocationPicker> {
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
+          SnackBar(content: Text('${AppLocalizations.of(context)!.translate('error')}: ${e.toString()}')),
         );
       }
     }
@@ -99,8 +100,9 @@ class _SimpleLocationPickerState extends State<SimpleLocationPicker> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
-        _address = 'Unable to fetch address';
+        _address = AppLocalizations.of(context)!.translate('unable_fetch_address');
         _isFetchingAddress = false;
       });
     }
@@ -118,9 +120,10 @@ class _SimpleLocationPickerState extends State<SimpleLocationPicker> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Select Location'),
+        title: Text(l10n.translate('select_location')),
       ),
       body: Padding(
         padding: const EdgeInsets.all(AppTheme.spacing20),
@@ -134,7 +137,7 @@ class _SimpleLocationPickerState extends State<SimpleLocationPicker> {
             ),
             const SizedBox(height: AppTheme.spacing32),
             Text(
-              _latitude != null ? 'Location Selected' : 'No Location Selected',
+              _latitude != null ? l10n.translate('location_selected') : l10n.translate('no_location_selected'),
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -155,9 +158,9 @@ class _SimpleLocationPickerState extends State<SimpleLocationPicker> {
                         const SizedBox(width: AppTheme.spacing8),
                         Expanded(
                           child: _isFetchingAddress
-                              ? const Text('Fetching address...')
+                              ? Text(l10n.translate('fetching_address'))
                               : Text(
-                                  _address,
+                                  _address.isEmpty ? l10n.translate('no_location_selected') : _address,
                                   style: Theme.of(context).textTheme.bodyMedium,
                                 ),
                         ),
@@ -165,13 +168,13 @@ class _SimpleLocationPickerState extends State<SimpleLocationPicker> {
                     ),
                     const SizedBox(height: AppTheme.spacing12),
                     Text(
-                      'Latitude: ${_latitude!.toStringAsFixed(6)}',
+                      '${l10n.translate('latitude')}: ${_latitude!.toStringAsFixed(6)}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: AppTheme.textSecondary,
                           ),
                     ),
                     Text(
-                      'Longitude: ${_longitude!.toStringAsFixed(6)}',
+                      '${l10n.translate('longitude')}: ${_longitude!.toStringAsFixed(6)}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: AppTheme.textSecondary,
                           ),
@@ -181,7 +184,7 @@ class _SimpleLocationPickerState extends State<SimpleLocationPicker> {
               ),
             ] else ...[
               Text(
-                'Use GPS to get your current location',
+                l10n.translate('use_gps_desc'),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: AppTheme.textSecondary,
                     ),
@@ -191,7 +194,7 @@ class _SimpleLocationPickerState extends State<SimpleLocationPicker> {
             const SizedBox(height: AppTheme.spacing32),
             if (_latitude == null)
               PrimaryButton(
-                text: 'Get Current Location',
+                text: l10n.translate('get_current_location'),
                 onPressed: _isLoading ? null : _getCurrentLocation,
                 isLoading: _isLoading,
                 icon: Icons.my_location,
@@ -200,7 +203,7 @@ class _SimpleLocationPickerState extends State<SimpleLocationPicker> {
               Column(
                 children: [
                   PrimaryButton(
-                    text: 'Confirm Location',
+                    text: l10n.translate('confirm_location'),
                     onPressed: _confirmLocation,
                     icon: Icons.check,
                   ),
@@ -208,7 +211,7 @@ class _SimpleLocationPickerState extends State<SimpleLocationPicker> {
                   OutlinedButton.icon(
                     onPressed: _getCurrentLocation,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Get Location Again'),
+                    label: Text(l10n.translate('get_location_again')),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.primary,
                       minimumSize: const Size(double.infinity, 48),

@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import '../../../core/theme/app_theme.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../services/api_service.dart';
 import '../../../core/constants/map_tiles.dart';
 
@@ -301,6 +302,7 @@ class _MapNavigationScreenState extends State<MapNavigationScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: Stack(
         children: [
@@ -397,16 +399,17 @@ class _MapNavigationScreenState extends State<MapNavigationScreen>
                       BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 6)
                     ],
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      SizedBox(
+                      const SizedBox(
                         width: 14,
                         height: 14,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
-                      SizedBox(width: 8),
-                      Text('Getting route...', style: TextStyle(fontSize: 13)),
+                      const SizedBox(width: 8),
+                      Text(l10n.translate('getting_route'),
+                          style: const TextStyle(fontSize: 13)),
                     ],
                   ),
                 ),
@@ -501,21 +504,21 @@ class _MapNavigationScreenState extends State<MapNavigationScreen>
                   icon: Icons.my_location,
                   onTap: _centerOnRider,
                   active: _followRider,
-                  tooltip: 'My location',
+                  tooltip: l10n.translate('my_location'),
                 ),
                 const SizedBox(height: 8),
                 _mapFab(
                   icon: Icons.route,
                   onTap: _fitRoute,
                   active: false,
-                  tooltip: 'Full route',
+                  tooltip: l10n.translate('full_route'),
                 ),
                 const SizedBox(height: 8),
                 _mapFab(
                   icon: Icons.flag,
                   onTap: _centerOnDestination,
                   active: false,
-                  tooltip: 'Destination',
+                  tooltip: l10n.translate('destination'),
                 ),
               ],
             ),

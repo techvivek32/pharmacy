@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('About'),
+        title: Text(l10n.translate('about')),
       ),
       body: ListView(
         padding: const EdgeInsets.all(AppTheme.spacing16),
@@ -39,7 +41,7 @@ class AboutScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppTheme.spacing8),
                 Text(
-                  'Version 1.0.0',
+                  '${l10n.translate('version')} 1.0.0',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppTheme.textSecondary,
                       ),
@@ -55,14 +57,14 @@ class AboutScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'About OrdoGo Medicine app',
+                    l10n.translate('about_app'),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                   ),
                   const SizedBox(height: AppTheme.spacing12),
                   Text(
-                    'OrdoGo Medicine app is your trusted partner for prescription medicine delivery. We connect patients with verified pharmacies and ensure fast, reliable delivery of medications right to your doorstep.',
+                    l10n.translate('about_description'),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppTheme.textSecondary,
                           height: 1.5,
@@ -76,47 +78,47 @@ class AboutScreen extends StatelessWidget {
           _buildInfoCard(
             context,
             icon: Icons.security,
-            title: 'Secure & Private',
-            description: 'Your health data is encrypted and protected',
+            title: l10n.translate('secure_private'),
+            description: l10n.translate('secure_private_desc'),
           ),
           _buildInfoCard(
             context,
             icon: Icons.verified,
-            title: 'Verified Pharmacies',
-            description: 'All pharmacies are licensed and verified',
+            title: l10n.translate('verified_pharmacies'),
+            description: l10n.translate('verified_pharmacies_desc'),
           ),
           _buildInfoCard(
             context,
             icon: Icons.delivery_dining,
-            title: 'Fast Delivery',
-            description: 'Get your medicines delivered in 1-2 hours',
+            title: l10n.translate('fast_delivery'),
+            description: l10n.translate('fast_delivery_desc'),
           ),
           _buildInfoCard(
             context,
             icon: Icons.support_agent,
-            title: '24/7 Support',
-            description: 'Our support team is always here to help',
+            title: l10n.translate('support_247'),
+            description: l10n.translate('support_247_desc'),
           ),
           const SizedBox(height: AppTheme.spacing24),
           _buildLinkCard(
             context,
-            title: 'Terms of Service',
-            onTap: () => _showSnackBar(context, 'Opening Terms of Service...'),
+            title: l10n.translate('terms_of_service'),
+            onTap: () => _showSnackBar(context, l10n.translate('opening_terms')),
           ),
           _buildLinkCard(
             context,
-            title: 'Privacy Policy',
-            onTap: () => _showSnackBar(context, 'Opening Privacy Policy...'),
+            title: l10n.translate('privacy_policy'),
+            onTap: () => _showSnackBar(context, l10n.translate('opening_privacy')),
           ),
           _buildLinkCard(
             context,
-            title: 'Licenses',
-            onTap: () => _showSnackBar(context, 'Opening Licenses...'),
+            title: l10n.translate('licenses'),
+            onTap: () => _showSnackBar(context, l10n.translate('opening_licenses')),
           ),
           const SizedBox(height: AppTheme.spacing24),
           Center(
             child: Text(
-              '© 2024 OrdoGo Medicine app. All rights reserved.',
+              l10n.translate('copyright'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppTheme.textSecondary,
                   ),

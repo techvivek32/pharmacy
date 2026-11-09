@@ -145,7 +145,7 @@ class _NearbyDeliveriesScreenState extends State<NearbyDeliveriesScreen> {
         children: [
           const Icon(Icons.error_outline, size: 60, color: AppTheme.error),
           const SizedBox(height: 12),
-          Text(_error ?? 'Error', style: const TextStyle(color: AppTheme.error)),
+          Text(_error ?? l10n.translate('error'), style: const TextStyle(color: AppTheme.error)),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _loadDeliveries,

@@ -51,7 +51,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   void _onPaymentSuccess(PaymentSuccessResponse response) async {
     if (_pendingOrder == null || !mounted) return;
-    _showLoading('Confirming order...');
+    _showLoading(AppLocalizations.of(context)!.translate('confirming_order'));
     try {
       final provider = context.read<OrderProvider>();
       final res = await provider.confirmQuote(
@@ -61,7 +61,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       if (mounted) Navigator.pop(context);
       if (res && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Payment successful! Order confirmed 🎉'), backgroundColor: Colors.green),
+          SnackBar(content: Text(AppLocalizations.of(context)!.translate('payment_success')), backgroundColor: Colors.green),
         );
         await provider.fetchOrders();
         if (mounted) Navigator.pop(context);
@@ -77,7 +77,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Payment failed: ${response.message ?? 'Try again'}'),
+        content: Text('${AppLocalizations.of(context)!.translate('payment_failed')}: ${response.message ?? AppLocalizations.of(context)!.translate('try_again')}'),
         backgroundColor: AppTheme.error,
       ),
     );
@@ -215,7 +215,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           ),
         ),
         icon: const Icon(Icons.delivery_dining, size: 20),
-        label: const Text('Track Rider'),
+        label: Text(AppLocalizations.of(context)!.translate('track_rider')),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.primary,
           foregroundColor: Colors.white,
@@ -261,8 +261,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     ? 'quote_expired_desc'
                     : 'no_pharmacy_timeout')
                 : isPaymentVerification
-                    ? 'Your payment proof is being reviewed by the pharmacy'
-                    : (order.orderNumber.isNotEmpty ? order.orderNumber : 'Order #${order.id.substring(order.id.length > 6 ? order.id.length - 6 : 0).toUpperCase()}');
+                    ? l10n.translate('payment_review_desc')
+                    : (order.orderNumber.isNotEmpty ? order.orderNumber : '${l10n.translate('order_no')}${order.id.substring(order.id.length > 6 ? order.id.length - 6 : 0).toUpperCase()}');
 
     return Container(
       width: double.infinity,
@@ -298,7 +298,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               child: OutlinedButton.icon(
                 onPressed: () => _cancelOrder(order),
                 icon: const Icon(Icons.close, size: 18, color: Colors.white),
-                label: const Text('Cancel Request', style: TextStyle(color: Colors.white)),
+                label: Text(l10n.translate('cancel_request'), style: const TextStyle(color: Colors.white)),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Colors.white, width: 1.5),
                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -313,24 +313,25 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }
 
   Future<void> _cancelOrder(Order order) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Cancel Request'),
-        content: const Text('Are you sure you want to cancel this pharmacy search?'),
+        title: Text(l10n.translate('cancel_request')),
+        content: Text(l10n.translate('cancel_search_confirm')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('No, keep searching')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.translate('no_keep_searching'))),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Yes, Cancel', style: TextStyle(color: Colors.red)),
+            child: Text(l10n.translate('yes_cancel'), style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
     if (confirm != true || !mounted) return;
 
-    _showLoading('Cancelling...');
+    _showLoading(l10n.translate('cancelling'));
     try {
       final provider = context.read<OrderProvider>();
       final res = await provider.cancelOrder(orderId: order.id);
@@ -338,7 +339,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(res ? 'Request cancelled successfully' : 'Failed to cancel request'),
+            content: Text(res ? l10n.translate('request_cancelled') : l10n.translate('failed_cancel_request')),
             backgroundColor: res ? Colors.orange : Colors.red,
           ),
         );
@@ -353,6 +354,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }
 
   Widget _buildRejectionHistory(List<QuoteHistoryItem> history) {
+    final l10n = AppLocalizations.of(context)!;
     final rejections = history.where((q) => q.status == 'rejected' && q.rejectionReason.isNotEmpty).toList();
     if (rejections.isEmpty) return const SizedBox.shrink();
 
@@ -367,7 +369,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 const Icon(Icons.info_outline, color: AppTheme.error, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'Order Rejected ${rejections.length} ${rejections.length == 1 ? 'time' : 'times'}',
+                  '${l10n.translate('order_rejected')} ${rejections.length} ${rejections.length == 1 ? l10n.translate('time_once') : l10n.translate('times')}',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppTheme.error,
@@ -498,7 +500,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              child: const Text('Pay Now'),
+              child: Text(l10n.translate('pay_now')),
             ),
           ),
           const SizedBox(height: 8),
@@ -507,7 +509,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             child: OutlinedButton.icon(
               onPressed: () => Navigator.pop(_, 'cod'),
               icon: const Icon(Icons.local_shipping_outlined, size: 20),
-              label: const Text('Pay on Delivery'),
+              label: Text(l10n.translate('pay_on_delivery')),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.primary,
                 side: const BorderSide(color: AppTheme.primary),
@@ -537,7 +539,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   // Cash on delivery: confirm the order immediately, no payment proof needed.
   Future<void> _confirmCod(Order order) async {
-    _showLoading('Confirming order...');
+    final l10n = AppLocalizations.of(context)!;
+    _showLoading(l10n.translate('confirming_order'));
     try {
       final provider = context.read<OrderProvider>();
       final ok = await provider.confirmQuote(
@@ -548,8 +551,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       if (!mounted) return;
       if (ok) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Order confirmed! Pay on delivery.'),
+          SnackBar(
+            content: Text(l10n.translate('order_confirmed_cod')),
             backgroundColor: Colors.green,
           ),
         );
@@ -558,7 +561,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(provider.error ?? 'Failed to confirm order'),
+            content: Text(provider.error ?? l10n.translate('failed_confirm_order')),
             backgroundColor: AppTheme.error,
           ),
         );
@@ -613,24 +616,25 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }
 
   Future<void> _cancelQuote(Order order) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Cancel Quote'),
-        content: const Text("Cancel this quote? We'll send your request to the next nearest pharmacy."),
+        title: Text(l10n.translate('cancel_quote')),
+        content: Text(l10n.translate('cancel_quote_desc')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Keep')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.translate('keep'))),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Cancel Quote', style: TextStyle(color: Colors.red)),
+            child: Text(l10n.translate('cancel_quote'), style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
     if (confirm != true || !mounted) return;
 
-    _showLoading('Cancelling...');
+    _showLoading(l10n.translate('cancelling'));
     try {
       final provider = context.read<OrderProvider>();
       final res = await provider.cancelQuote(quoteId: order.quoteId!);
@@ -638,7 +642,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(res ? 'Quote cancelled. Request sent to next pharmacy!' : 'Quote cancelled.'),
+            content: Text(res ? l10n.translate('quote_cancelled_success') : l10n.translate('quote_cancelled_generic')),
             backgroundColor: Colors.orange,
           ),
         );
@@ -665,6 +669,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }
 
   Widget _buildPaymentProof(String proofUrl, String status) {
+    final l10n = AppLocalizations.of(context)!;
     final isVerified = status != 'payment_verification';
     return AppCard(
       child: Column(
@@ -679,7 +684,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 const Icon(Icons.receipt, color: AppTheme.primary, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text('Payment Proof',
+                  child: Text(l10n.translate('payment_proof'),
                       style: Theme.of(context)
                           .textTheme
                           .titleMedium
@@ -703,7 +708,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        isVerified ? 'Verified' : 'Pending',
+                        isVerified ? l10n.translate('verified') : l10n.translate('status_pending'),
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -830,9 +835,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           children: [
             Text(l10n.translate('order_information'), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: AppTheme.spacing12),
-            _infoRow(Icons.calendar_today, 'Date', _formatDate(order.createdAt)),
+            _infoRow(Icons.calendar_today, l10n.translate('date'), _formatDate(order.createdAt)),
             if (order.paymentMethod != null)
-              _infoRow(Icons.payment, 'Payment', order.paymentMethod!.toUpperCase()),
+              _infoRow(Icons.payment, l10n.translate('payment'), order.paymentMethod!.toUpperCase()),
             if (order.estimatedDeliveryTime != null)
               _infoRow(Icons.access_time, l10n.translate('est_delivery'), _formatDate(order.estimatedDeliveryTime!)),
           ],
@@ -937,13 +942,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }
 
   Widget _buildPrescriptionImage(String imageUrl) {
+    final l10n = AppLocalizations.of(context)!;
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(AppTheme.spacing16, AppTheme.spacing16, AppTheme.spacing16, AppTheme.spacing12),
-            child: Text('Prescription', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            child: Text(l10n.translate('prescription'), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
           ),
           ClipRRect(
             borderRadius: const BorderRadius.only(
@@ -1121,13 +1127,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }
 
   Widget _buildItemsList(Order order) {
+    final l10n = AppLocalizations.of(context)!;
     return AppCard(
       child: Padding(
         padding: const EdgeInsets.all(AppTheme.spacing16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Items', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text(l10n.translate('items'), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: AppTheme.spacing12),
             ...order.items.map((item) => Padding(
                   padding: const EdgeInsets.only(bottom: AppTheme.spacing8),
@@ -1147,7 +1154,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(item.medicineName, style: Theme.of(context).textTheme.bodyMedium),
-                            Text('Qty: ${item.quantity}', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary)),
+                            Text('${l10n.translate('quantity')}: ${item.quantity}', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary)),
                           ],
                         ),
                       ),
@@ -1168,7 +1175,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Payment Summary', // Could localize
+            Text(l10n.translate('payment_summary'),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: AppTheme.spacing12),
             if (order.subtotal > 0) _summaryRow(l10n.translate('subtotal'), order.subtotal),
@@ -1271,16 +1278,17 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       case 'picked_up': return l10n.translate('order_picked_up');
       case 'assigned': return l10n.translate('order_ready');
       case 'confirmed': return l10n.translate('order_confirmed');
-      case 'payment_verification': return 'Payment Verification';
+      case 'payment_verification': return l10n.translate('payment_verification');
       case 'searching': return l10n.translate('searching_pharmacy');
       default: return l10n.translate('status');
     }
   }
 
   String _formatDate(DateTime date) {
-    final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    final l10n = AppLocalizations.of(context)!;
+    final months = l10n.translate('months_short').split(',');
     final hour = date.hour > 12 ? date.hour - 12 : date.hour == 0 ? 12 : date.hour;
-    final ampm = date.hour >= 12 ? 'PM' : 'AM';
+    final ampm = date.hour >= 12 ? l10n.translate('pm') : l10n.translate('am');
     final min = date.minute.toString().padLeft(2, '0');
     return '${date.day} ${months[date.month - 1]} ${date.year}, $hour:$min $ampm';
   }

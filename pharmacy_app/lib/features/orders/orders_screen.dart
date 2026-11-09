@@ -119,7 +119,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
     final orderId = order['id']?.toString() ?? order['_id']?.toString() ?? '$status$status';
     final items = (order['items'] as List?) ?? [];
     final subtotal = (order['subtotal'] ?? 0).toDouble();
-    final statusLabel = _statusLabel(status);
+    final statusLabel = _statusLabel(status, l10n);
 
     return Card(
       child: InkWell(
@@ -203,21 +203,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 
-  String _statusLabel(String status) {
-    switch (status) {
-      case 'payment_verification': return 'VERIFYING';
-      case 'confirmed': return 'CONFIRMED';
-      case 'preparing': return 'PREPARING';
-      case 'ready': return 'READY';
-      case 'assigned': return 'ASSIGNED';
-      case 'picked_up': return 'PICKED UP';
-      case 'in_transit': return 'IN TRANSIT';
-      case 'delivered': return 'DELIVERED';
-      case 'cancelled': return 'CANCELLED';
-      case 'rejected': return 'REJECTED';
-      case 'expired': return 'EXPIRED';
-      default: return status.toUpperCase();
-    }
+  String _statusLabel(String status, AppLocalizations l10n) {
+    final key = status == 'payment_verification' ? 'verifying' : status;
+    return l10n.translate(key).toUpperCase();
   }
 
   Color _statusColor(String status) {

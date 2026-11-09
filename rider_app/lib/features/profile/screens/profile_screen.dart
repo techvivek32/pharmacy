@@ -99,7 +99,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(user?.fullName ?? 'Rider', style: Theme.of(context).textTheme.titleLarge),
+                Text(user?.fullName ?? AppLocalizations.of(context)!.translate('rider'), style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: AppTheme.spacing4),
                 Text(user?.phone ?? '', style: Theme.of(context).textTheme.bodySmall),
               ],

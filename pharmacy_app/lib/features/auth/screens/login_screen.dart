@@ -58,7 +58,8 @@ class _LoginScreenState extends State<LoginScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(context.read<AuthProvider>().error ?? l10n.translate('failed_send_otp')),
+          content: Text(l10n.translate(
+              context.read<AuthProvider>().error ?? 'failed_send_otp')),
           backgroundColor: AppTheme.error,
         ),
       );
@@ -79,7 +80,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (result == null || !result.success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(context.read<AuthProvider>().error ?? l10n.translate('login_failed')),
+          content: Text(l10n.translate(
+              context.read<AuthProvider>().error ?? 'login_failed')),
           backgroundColor: AppTheme.error,
         ),
       );

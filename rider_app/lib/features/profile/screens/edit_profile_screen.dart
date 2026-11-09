@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/widgets/input_field.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../providers/auth_provider.dart';
@@ -49,9 +50,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<Map<String, String>?> _uploadImage(File imageFile) async {
+    final l10n = AppLocalizations.of(context)!;
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString(AppConstants.tokenKey);
-    if (token == null) throw Exception('Authentication required. Please login again.');
+    if (token == null) throw Exception(l10n.translate('auth_required_login_again'));
 
     final ext = imageFile.path.toLowerCase().split('.').last;
     final subtype = ext == 'png' ? 'png' : ext == 'webp' ? 'webp' : 'jpeg';
@@ -66,11 +68,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (response.statusCode == 200 && body['success'] == true) {
       return {'imageUrl': body['data']['imageUrl'], 'publicId': body['data']['publicId'] ?? ''};
     }
-    throw Exception(body['message'] ?? 'Upload failed');
+    throw Exception(body['message'] ?? l10n.translate('upload_failed'));
   }
 
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _isLoading = true);
 
     try {
@@ -86,11 +89,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           final cont = await showDialog<bool>(
             context: context,
             builder: (_) => AlertDialog(
-              title: const Text('Image Upload Failed'),
-              content: Text('${e.toString().replaceAll('Exception: ', '')}\n\nSave profile without image?'),
+              title: Text(l10n.translate('image_upload_failed')),
+              content: Text('${e.toString().replaceAll('Exception: ', '')}\n\n${l10n.translate('save_profile_without_image_q')}'),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-                ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Save Without Image')),
+                TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.translate('cancel'))),
+                ElevatedButton(onPressed: () => Navigator.pop(context, true), child: Text(l10n.translate('save_without_image'))),
               ],
             ),
           );
@@ -111,12 +114,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (result.success) {
         context.read<AuthProvider>().updateUser(result.user!);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully'), backgroundColor: AppTheme.success),
+          SnackBar(content: Text(l10n.translate('profile_updated_success')), backgroundColor: AppTheme.success),
         );
         Navigator.pop(context, true);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result.message ?? 'Failed to update profile'), backgroundColor: AppTheme.error),
+          SnackBar(content: Text(result.message ?? l10n.translate('failed_update_profile')), backgroundColor: AppTheme.error),
         );
       }
     } catch (e) {
@@ -131,8 +134,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Profile')),
+      appBar: AppBar(title: Text(l10n.translate('edit_profile'))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTheme.spacing24),
         child: Form(
@@ -143,20 +147,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               const SizedBox(height: AppTheme.spacing32),
               InputField(
                 controller: _nameController,
-                label: 'Full Name',
+                label: l10n.translate('full_name'),
                 prefixIcon: const Icon(Icons.person_outline),
-                validator: (v) => v == null || v.isEmpty ? 'Name is required' : null,
+                validator: (v) => v == null || v.isEmpty ? l10n.translate('name_required') : null,
               ),
               const SizedBox(height: AppTheme.spacing16),
               InputField(
                 controller: _phoneController,
-                label: 'Phone Number',
+                label: l10n.translate('phone_number'),
                 prefixIcon: const Icon(Icons.phone_outlined),
                 keyboardType: TextInputType.phone,
-                validator: (v) => v == null || v.isEmpty ? 'Phone is required' : null,
+                validator: (v) => v == null || v.isEmpty ? l10n.translate('phone_required') : null,
               ),
               const SizedBox(height: AppTheme.spacing32),
-              PrimaryButton(text: 'Save Changes', onPressed: _saveProfile, isLoading: _isLoading),
+              PrimaryButton(text: l10n.translate('save_changes'), onPressed: _saveProfile, isLoading: _isLoading),
             ],
           ),
         ),

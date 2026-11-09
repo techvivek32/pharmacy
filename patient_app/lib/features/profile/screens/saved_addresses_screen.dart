@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/primary_button.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../services/address_service.dart';
 import 'add_address_screen.dart';
 
@@ -36,16 +37,17 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
 
     if (!result.success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.message ?? 'Failed to load addresses')),
+        SnackBar(content: Text(result.message ?? AppLocalizations.of(context)!.translate('failed_load_addresses'))),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Saved Addresses'),
+        title: Text(l10n.translate('saved_addresses')),
       ),
       body: Column(
         children: [
@@ -65,7 +67,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
           Padding(
             padding: const EdgeInsets.all(AppTheme.spacing16),
             child: PrimaryButton(
-              text: 'Add New Address',
+              text: l10n.translate('add_new_address'),
               onPressed: _addNewAddress,
               icon: Icons.add,
             ),
@@ -130,7 +132,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                         borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                       ),
                       child: Text(
-                        'Default',
+                        AppLocalizations.of(context)!.translate('default_label'),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: AppTheme.success,
                             ),
@@ -197,12 +199,12 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
           ),
           const SizedBox(height: AppTheme.spacing16),
           Text(
-            'No saved addresses',
+            AppLocalizations.of(context)!.translate('no_saved_addresses'),
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: AppTheme.spacing8),
           Text(
-            'Add your delivery addresses for faster checkout',
+            AppLocalizations.of(context)!.translate('add_addresses_desc'),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppTheme.textSecondary,
                 ),
@@ -240,15 +242,16 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
   }
 
   void _deleteAddress(Map<String, dynamic> address) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Address'),
-        content: Text('Are you sure you want to delete ${address['label']} address?'),
+        title: Text(l10n.translate('delete_address')),
+        content: Text('${l10n.translate('delete_address_confirm')} (${address['label']})'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(l10n.translate('cancel')),
           ),
           TextButton(
             onPressed: () async {
@@ -260,18 +263,18 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                 _loadAddresses();
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Address deleted')),
+                    SnackBar(content: Text(l10n.translate('address_deleted'))),
                   );
                 }
               } else {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(result.message ?? 'Failed to delete address')),
+                    SnackBar(content: Text(result.message ?? l10n.translate('failed_delete_address'))),
                   );
                 }
               }
             },
-            child: const Text('Delete', style: TextStyle(color: AppTheme.error)),
+            child: Text(l10n.translate('delete'), style: const TextStyle(color: AppTheme.error)),
           ),
         ],
       ),

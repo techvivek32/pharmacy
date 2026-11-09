@@ -5,6 +5,7 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../services/address_service.dart';
 import '../../../providers/order_provider.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../profile/screens/add_address_screen.dart';
 
 class AddressSelectionScreen extends StatefulWidget {
@@ -56,7 +57,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
 
     if (!result.success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.message ?? 'Failed to load addresses')),
+        SnackBar(content: Text(result.message ?? AppLocalizations.of(context)!.translate('failed_load_addresses'))),
       );
     }
   }
@@ -94,8 +95,8 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Order placed successfully!'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.translate('order_placed_success')),
           backgroundColor: Colors.green,
         ),
       );
@@ -105,7 +106,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
     } else {
       final error = context.read<OrderProvider>().error;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error ?? 'Failed to place order')),
+        SnackBar(content: Text(error ?? AppLocalizations.of(context)!.translate('failed_place_order'))),
       );
     }
   }
@@ -114,7 +115,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Select Delivery Address'),
+        title: Text(AppLocalizations.of(context)!.translate('select_delivery_address')),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -188,7 +189,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                               borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                             ),
                             child: Text(
-                              address['label'] ?? 'Address',
+                              address['label'] ?? AppLocalizations.of(context)!.translate('address'),
                               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                     color: AppTheme.primary,
                                     fontWeight: FontWeight.bold,
@@ -207,7 +208,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                                 borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                               ),
                               child: Text(
-                                'Default',
+                                AppLocalizations.of(context)!.translate('default_label'),
                                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                       color: AppTheme.success,
                                     ),
@@ -248,12 +249,12 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
             ),
             const SizedBox(height: AppTheme.spacing16),
             Text(
-              'No Delivery Address',
+              AppLocalizations.of(context)!.translate('no_delivery_address'),
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: AppTheme.spacing8),
             Text(
-              'You need to add a delivery address before placing an order',
+              AppLocalizations.of(context)!.translate('add_address_before_order'),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppTheme.textSecondary,
                   ),
@@ -261,7 +262,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
             ),
             const SizedBox(height: AppTheme.spacing24),
             PrimaryButton(
-              text: 'Add Address',
+              text: AppLocalizations.of(context)!.translate('add_address'),
               onPressed: _navigateToAddAddress,
               icon: Icons.add_location,
             ),
@@ -293,7 +294,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                 OutlinedButton.icon(
                   onPressed: _navigateToAddAddress,
                   icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Add New'),
+                  label: Text(AppLocalizations.of(context)!.translate('add_new')),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppTheme.primary,
                     padding: const EdgeInsets.symmetric(
@@ -305,7 +306,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                 const SizedBox(width: AppTheme.spacing12),
                 Expanded(
                   child: PrimaryButton(
-                    text: 'Confirm Address',
+                    text: AppLocalizations.of(context)!.translate('confirm_address'),
                     onPressed: (_selectedAddressId == null || _isCreatingOrder) ? null : _confirmAddress,
                     isLoading: _isCreatingOrder,
                   ),

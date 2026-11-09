@@ -142,7 +142,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    user?.fullName ?? 'User',
+                    user?.fullName ?? AppLocalizations.of(context)!.translate('user'),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: AppTheme.spacing4),

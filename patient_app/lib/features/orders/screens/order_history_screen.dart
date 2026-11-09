@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../providers/order_provider.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -26,7 +27,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Order History'),
+        title: Text(AppLocalizations.of(context)!.translate('order_history')),
       ),
       body: Consumer<OrderProvider>(
         builder: (context, orderProvider, _) {
@@ -69,12 +70,12 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           ),
           const SizedBox(height: AppTheme.spacing16),
           Text(
-            'No orders yet',
+            AppLocalizations.of(context)!.translate('no_orders_yet'),
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: AppTheme.spacing8),
           Text(
-            'Your order history will appear here',
+            AppLocalizations.of(context)!.translate('order_history_desc'),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
@@ -137,7 +138,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Total Amount',
+                    AppLocalizations.of(context)!.translate('total_amount'),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   Text(
@@ -195,25 +196,26 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   }
 
   String _getStatusText(String status) {
+    final l10n = AppLocalizations.of(context)!;
     switch (status) {
       case 'delivered':
-        return 'Delivered';
+        return l10n.translate('status_delivered');
       case 'in_transit':
-        return 'On the way';
+        return l10n.translate('status_on_the_way');
       case 'picked_up':
-        return 'Picked up';
+        return l10n.translate('status_picked_up');
       case 'confirmed':
-        return 'Confirmed';
+        return l10n.translate('status_confirmed');
       case 'cancelled':
-        return 'Cancelled';
+        return l10n.translate('status_cancelled');
       case 'searching':
-        return 'Finding pharmacy';
+        return l10n.translate('status_finding_pharmacy');
       case 'quote_pending':
-        return 'Quote received';
+        return l10n.translate('status_quote_received');
       case 'expired':
-        return 'Quote expired';
+        return l10n.translate('status_quote_expired');
       case 'rejected':
-        return 'Rejected (No Pharmacy)';
+        return l10n.translate('status_rejected_no_pharmacy');
       default:
         return status;
     }

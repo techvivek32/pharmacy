@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/primary_button.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class PaymentMethodsScreen extends StatefulWidget {
   const PaymentMethodsScreen({super.key});
@@ -32,9 +33,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Payment Methods'),
+        title: Text(l10n.translate('payment_methods')),
       ),
       body: Column(
         children: [
@@ -52,7 +54,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           Padding(
             padding: const EdgeInsets.all(AppTheme.spacing16),
             child: PrimaryButton(
-              text: 'Add Payment Method',
+              text: l10n.translate('add_payment_method'),
               onPressed: _addPaymentMethod,
               icon: Icons.add_card,
             ),
@@ -96,7 +98,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                         ),
                         const SizedBox(height: AppTheme.spacing4),
                         Text(
-                          'Expires ${payment['expiryDate']}',
+                          '${AppLocalizations.of(context)!.translate('expires')} ${payment['expiryDate']}',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                 color: AppTheme.textSecondary,
                               ),
@@ -115,7 +117,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                         borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                       ),
                       child: Text(
-                        'Default',
+                        AppLocalizations.of(context)!.translate('default_label'),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: AppTheme.success,
                             ),
@@ -130,7 +132,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     child: OutlinedButton.icon(
                       onPressed: () => _setDefault(payment),
                       icon: const Icon(Icons.check_circle_outline, size: 18),
-                      label: const Text('Set Default'),
+                      label: Text(AppLocalizations.of(context)!.translate('set_default')),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.primary,
                       ),
@@ -165,12 +167,12 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           ),
           const SizedBox(height: AppTheme.spacing16),
           Text(
-            'No payment methods',
+            AppLocalizations.of(context)!.translate('no_payment_methods'),
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: AppTheme.spacing8),
           Text(
-            'Add a payment method for faster checkout',
+            AppLocalizations.of(context)!.translate('add_payment_desc'),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppTheme.textSecondary,
                 ),
@@ -183,7 +185,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
 
   void _addPaymentMethod() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Add payment method feature coming soon')),
+      SnackBar(content: Text(AppLocalizations.of(context)!.translate('payment_coming_soon'))),
     );
   }
 
@@ -194,20 +196,21 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       }
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Default payment method updated')),
+      SnackBar(content: Text(AppLocalizations.of(context)!.translate('default_payment_updated'))),
     );
   }
 
   void _deletePaymentMethod(Map<String, dynamic> payment) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Payment Method'),
-        content: Text('Are you sure you want to delete ${payment['cardNumber']}?'),
+        title: Text(l10n.translate('delete_payment_method')),
+        content: Text('${l10n.translate('delete_payment_confirm')} ${payment['cardNumber']}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(l10n.translate('cancel')),
           ),
           TextButton(
             onPressed: () {
@@ -216,10 +219,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               });
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Payment method deleted')),
+                SnackBar(content: Text(l10n.translate('payment_method_deleted'))),
               );
             },
-            child: const Text('Delete', style: TextStyle(color: AppTheme.error)),
+            child: Text(l10n.translate('delete'), style: const TextStyle(color: AppTheme.error)),
           ),
         ],
       ),

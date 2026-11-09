@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/input_field.dart';
 import '../../../core/widgets/primary_button.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../services/address_service.dart';
 import 'map_picker_screen.dart';
 
@@ -50,7 +51,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
       if (!serviceEnabled) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please enable location services')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.translate('enable_location_services'))),
           );
         }
         setState(() => _isFetchingLocation = false);
@@ -63,7 +64,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
         if (permission == LocationPermission.denied) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Location permission denied')),
+              SnackBar(content: Text(AppLocalizations.of(context)!.translate('location_permission_denied'))),
             );
           }
           setState(() => _isFetchingLocation = false);
@@ -74,7 +75,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
       if (permission == LocationPermission.deniedForever) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Location permissions are permanently denied')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.translate('location_permission_denied_forever'))),
           );
         }
         setState(() => _isFetchingLocation = false);
@@ -111,7 +112,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
       setState(() => _isFetchingLocation = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
+          SnackBar(content: Text('${AppLocalizations.of(context)!.translate('error')}: ${e.toString()}')),
         );
       }
     }
@@ -151,7 +152,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
     }
 
     final now = DateTime.now();
-    return 'Address ${now.day}/${now.month} '
+    return '${AppLocalizations.of(context)!.translate('address')} ${now.day}/${now.month} '
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
   }
 
@@ -160,8 +161,8 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
 
     if (_latitude == null || _longitude == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please pick your location on the map first'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.translate('pick_location_first')),
           backgroundColor: AppTheme.error,
         ),
       );
@@ -209,7 +210,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
       if (result.success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result.message ?? '${isEditing ? "Updated" : "Saved"} successfully'),
+            content: Text(result.message ?? AppLocalizations.of(context)!.translate(isEditing ? 'updated_successfully' : 'saved_successfully')),
             backgroundColor: AppTheme.success,
           ),
         );
@@ -217,7 +218,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result.message ?? 'Failed to ${isEditing ? "update" : "save"} address'),
+            content: Text(result.message ?? AppLocalizations.of(context)!.translate(isEditing ? 'failed_update_address' : 'failed_save_address')),
             backgroundColor: AppTheme.error,
           ),
         );
@@ -227,7 +228,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to ${widget.address != null ? "update" : "save"} address'),
+            content: Text(AppLocalizations.of(context)!.translate(widget.address != null ? 'failed_update_address' : 'failed_save_address')),
             backgroundColor: AppTheme.error,
           ),
         );
@@ -237,11 +238,12 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isEditing = widget.address != null;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'Edit Address' : 'Add Address'),
+        title: Text(isEditing ? l10n.translate('edit_address') : l10n.translate('add_address')),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTheme.spacing16),
@@ -272,7 +274,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                _latitude != null ? 'Location Selected' : 'Select Location',
+                                _latitude != null ? l10n.translate('location_selected') : l10n.translate('select_location'),
                                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                       color: _latitude != null ? AppTheme.success : AppTheme.primary,
                                       fontWeight: FontWeight.bold,
@@ -281,8 +283,8 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                               const SizedBox(height: AppTheme.spacing4),
                               Text(
                                 _latitude != null
-                                    ? 'Tap below to adjust on map'
-                                    : 'Use GPS or pick on map',
+                                    ? l10n.translate('tap_adjust_map')
+                                    : l10n.translate('use_gps_or_map'),
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ],
@@ -306,7 +308,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                                     ),
                                   )
                                 : const Icon(Icons.my_location),
-                            label: Text(_isFetchingLocation ? 'Loading...' : 'Use GPS'),
+                            label: Text(_isFetchingLocation ? l10n.translate('loading') : l10n.translate('use_gps')),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.primary,
                               foregroundColor: Colors.white,
@@ -318,7 +320,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                           child: OutlinedButton.icon(
                             onPressed: _openMapPicker,
                             icon: const Icon(Icons.map),
-                            label: const Text('Pick on Map'),
+                            label: Text(l10n.translate('pick_on_map')),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppTheme.primary,
                             ),
@@ -331,7 +333,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
               ),
               const SizedBox(height: AppTheme.spacing24),
               Text(
-                'Address Details',
+                l10n.translate('address_details'),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -339,18 +341,18 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
               const SizedBox(height: AppTheme.spacing16),
               InputField(
                 controller: _labelController,
-                label: 'Label (optional, e.g., Home, Work)',
+                label: l10n.translate('address_label_hint'),
                 prefixIcon: const Icon(Icons.label),
               ),
               const SizedBox(height: AppTheme.spacing16),
               InputField(
                 controller: _addressController,
-                label: 'Address',
+                label: l10n.translate('address'),
                 prefixIcon: const Icon(Icons.home),
                 maxLines: 2,
                 enabled: false,
                 validator: (value) {
-                  if (value?.isEmpty ?? true) return 'Address is required';
+                  if (value?.isEmpty ?? true) return l10n.translate('address_required');
                   return null;
                 },
               ),
@@ -358,14 +360,14 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
               CheckboxListTile(
                 value: _isDefault,
                 onChanged: (value) => setState(() => _isDefault = value ?? false),
-                title: const Text('Set as default address'),
+                title: Text(l10n.translate('set_default_address')),
                 contentPadding: EdgeInsets.zero,
                 controlAffinity: ListTileControlAffinity.leading,
                 activeColor: AppTheme.primary,
               ),
               const SizedBox(height: AppTheme.spacing32),
               PrimaryButton(
-                text: isEditing ? 'Update Address' : 'Save Address',
+                text: isEditing ? l10n.translate('update_address') : l10n.translate('save_address'),
                 onPressed: _saveAddress,
                 isLoading: _isLoading,
               ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_card.dart';
 import '../../services/api_service.dart';
+import '../../core/localization/app_localizations.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final dynamic order;
@@ -22,6 +23,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   Future<void> _confirmPayment() async {
+    final l10n = AppLocalizations.of(context)!;
     final orderId = _order['id']?.toString() ?? _order['_id']?.toString();
     if (orderId == null) return;
 
@@ -29,12 +31,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Confirm Payment'),
-        content: const Text('Have you verified the payment receipt? This will mark the payment as received and confirm the order.'),
+        title: Text(l10n.translate('confirm_payment')),
+        content: Text(l10n.translate('confirm_payment_desc')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.translate('cancel')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
@@ -43,7 +45,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('Confirm'),
+            child: Text(l10n.translate('confirm')),
           ),
         ],
       ),
@@ -64,8 +66,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           ..['status'] = 'confirmed';
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Payment confirmed! Order is now confirmed.'),
+        SnackBar(
+          content: Text(l10n.translate('payment_confirmed_order')),
           backgroundColor: AppTheme.success,
         ),
       );
@@ -78,6 +80,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final status = _order['status'] ?? 'confirmed';
     final paymentStatus = _order['paymentStatus']?.toString() ?? 'pending';
     final items = (_order['items'] as List?) ?? [];
@@ -105,7 +108,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         paymentStatus == 'pending';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Order Details')),
+      appBar: AppBar(title: Text(l10n.translate('order_details'))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTheme.spacing16),
         child: Column(
@@ -124,7 +127,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   const Icon(Icons.receipt_long, color: Colors.white, size: 36),
                   const SizedBox(height: AppTheme.spacing8),
                   Text(
-                    status.toString().toUpperCase(),
+                    l10n.translate(_statusKey(status.toString())).toUpperCase(),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: Colors.white, fontWeight: FontWeight.bold),
                   ),
@@ -157,7 +160,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Order Information',
+                    Text(l10n.translate('order_information'),
                         style: Theme.of(context)
                             .textTheme
                             .titleMedium
@@ -167,8 +170,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       _infoRow(context, Icons.calendar_today, _formatDate(createdAt)),
                     if (paymentMethod != null && paymentMethod.isNotEmpty) ...[
                       const SizedBox(height: AppTheme.spacing8),
-                      _infoRow(context, Icons.payment,
-                          paymentMethod == 'cash' ? 'Cash on Delivery' : paymentMethod == 'manual' ? 'Bank Transfer' : 'Online Payment'),
+                      _infoRow(
+                          context,
+                          Icons.payment,
+                          paymentMethod == 'cash'
+                              ? l10n.translate('cash_on_delivery')
+                              : paymentMethod == 'manual'
+                                  ? l10n.translate('bank_transfer')
+                                  : l10n.translate('online_payment')),
                     ],
                     if (!isClosedRequest) ...[
                     const SizedBox(height: AppTheme.spacing8),
@@ -177,7 +186,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         const Icon(Icons.circle, size: 10,
                             color: AppTheme.textSecondary),
                         const SizedBox(width: AppTheme.spacing8),
-                        Text('Payment: ',
+                        Text('${l10n.translate('payment')}: ',
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: AppTheme.textSecondary)),
                         Container(
@@ -189,7 +198,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
-                            paymentStatus.toUpperCase(),
+                            l10n.translate(paymentStatus).toUpperCase(),
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
@@ -210,7 +219,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
             // Prescription image
             if (prescriptionImage != null && prescriptionImage.isNotEmpty) ...[
-              _imageCard(context, 'Prescription', prescriptionImage),
+              _imageCard(context, l10n.translate('prescription'), prescriptionImage),
               const SizedBox(height: AppTheme.spacing16),
             ],
 
@@ -229,7 +238,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           const Icon(Icons.receipt, color: AppTheme.primary, size: 20),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text('Payment Proof',
+                            child: Text(l10n.translate('payment_proof'),
                                 style: Theme.of(context)
                                     .textTheme
                                     .titleMedium
@@ -243,14 +252,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                 color: AppTheme.success.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Row(
+                              child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.check_circle,
+                                  const Icon(Icons.check_circle,
                                       size: 13, color: AppTheme.success),
-                                  SizedBox(width: 4),
-                                  Text('Verified',
-                                      style: TextStyle(
+                                  const SizedBox(width: 4),
+                                  Text(l10n.translate('verified'),
+                                      style: const TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.bold,
                                           color: AppTheme.success)),
@@ -305,8 +314,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                   )
                                 : const Icon(Icons.check_circle_outline, size: 20),
                             label: Text(_isConfirming
-                                ? 'Confirming...'
-                                : 'Confirm Payment Received'),
+                                ? l10n.translate('confirming')
+                                : l10n.translate('confirm_payment_received')),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.primary,
                               foregroundColor: Colors.white,
@@ -336,7 +345,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           const Icon(Icons.medication,
                               color: AppTheme.primary, size: 20),
                           const SizedBox(width: 8),
-                          Text('Requested Medicines',
+                          Text(l10n.translate('requested_medicines'),
                               style: Theme.of(context)
                                   .textTheme
                                   .titleMedium
@@ -382,7 +391,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                     borderRadius: BorderRadius.circular(
                                         AppTheme.radiusSmall),
                                   ),
-                                  child: Text('Qty: ${m['quantity'] ?? 1}',
+                                  child: Text(
+                                      '${l10n.translate('qty')}: ${m['quantity'] ?? 1}',
                                       style: const TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
@@ -406,7 +416,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Order Items',
+                      Text(l10n.translate('order_items'),
                           style: Theme.of(context)
                               .textTheme
                               .titleMedium
@@ -432,12 +442,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(item['medicineName'] ?? 'Unknown',
+                                      Text(item['medicineName'] ?? l10n.translate('unknown'),
                                           style: Theme.of(context)
                                               .textTheme
                                               .bodyMedium),
                                       Text(
-                                        'Qty: ${item['quantity'] ?? 1} × ${(item['unitPrice'] ?? 0).toStringAsFixed(2)} MRO',
+                                        '${l10n.translate('qty')}: ${item['quantity'] ?? 1} × ${(item['unitPrice'] ?? 0).toStringAsFixed(2)} MRO',
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodySmall
@@ -458,14 +468,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             ),
                           )),
                       const Divider(height: AppTheme.spacing24),
-                      _summaryRow(context, 'Medicine (Subtotal)',
+                      _summaryRow(context, l10n.translate('medicine_subtotal'),
                           '${subtotal.toStringAsFixed(2)} MRO'),
-                      _summaryRow(context, 'Service Fee',
+                      _summaryRow(context, l10n.translate('service_fee'),
                           '${serviceFee.toStringAsFixed(2)} MRO'),
-                      _summaryRow(context, 'Delivery Fee',
+                      _summaryRow(context, l10n.translate('delivery_fee'),
                           '${deliveryFee.toStringAsFixed(2)} MRO'),
                       const Divider(height: AppTheme.spacing16),
-                      _summaryRow(context, 'Total',
+                      _summaryRow(context, l10n.translate('total'),
                           '${totalAmount.toStringAsFixed(2)} MRO',
                           isTotal: true),
                     ],
@@ -571,6 +581,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       default: return AppTheme.warning;
     }
   }
+
+  /// Maps a raw order status to its localization key.
+  String _statusKey(String status) =>
+      status == 'payment_verification' ? 'verifying' : status;
 
   String _formatDate(DateTime date) {
     final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];

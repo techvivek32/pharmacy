@@ -55,7 +55,7 @@ class _PrescriptionRequestsScreenState
                       children: [
                         const Icon(Icons.error_outline, size: 60, color: AppTheme.error),
                         const SizedBox(height: 16),
-                        Text(provider.error!,
+                        Text(l10n.translate(provider.error!),
                             style: const TextStyle(color: AppTheme.error),
                             textAlign: TextAlign.center),
                         const SizedBox(height: 16),
@@ -270,7 +270,7 @@ class _PrescriptionRequestsScreenState
                 maxLines: 3,
                 onChanged: (value) => setState(() {}),
                 decoration: InputDecoration(
-                  hintText: 'e.g. Medicine out of stock, closed today...', // Could localize
+                  hintText: l10n.translate('reject_reason_hint'),
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10)),
                   contentPadding: const EdgeInsets.all(12),
@@ -330,8 +330,8 @@ class _PrescriptionRequestsScreenState
           content: Text(
             res.success
                 ? (res.data?['reassigned'] == true
-                    ? 'Rejected. Request sent to next pharmacy!'
-                    : 'Rejected. No more pharmacies available.')
+                    ? l10n.translate('rejected_reassigned')
+                    : l10n.translate('rejected_no_more_pharmacies'))
                 : res.message,
           ),
           backgroundColor: res.success ? AppTheme.success : AppTheme.error,

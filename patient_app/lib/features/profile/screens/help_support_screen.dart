@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Help & Support'),
+        title: Text(l10n.translate('help_support')),
       ),
       body: ListView(
         padding: const EdgeInsets.all(AppTheme.spacing16),
@@ -17,27 +19,27 @@ class HelpSupportScreen extends StatelessWidget {
           _buildContactCard(
             context,
             icon: Icons.phone,
-            title: 'Call Us',
+            title: l10n.translate('call_us'),
             subtitle: '+1 (555) 123-4567',
-            onTap: () => _showSnackBar(context, 'Calling support...'),
+            onTap: () => _showSnackBar(context, l10n.translate('calling_support')),
           ),
           _buildContactCard(
             context,
             icon: Icons.email,
-            title: 'Email Us',
+            title: l10n.translate('email_us'),
             subtitle: 'support@mediexpress.com',
-            onTap: () => _showSnackBar(context, 'Opening email...'),
+            onTap: () => _showSnackBar(context, l10n.translate('opening_email')),
           ),
           _buildContactCard(
             context,
             icon: Icons.chat,
-            title: 'Live Chat',
-            subtitle: 'Chat with our support team',
-            onTap: () => _showSnackBar(context, 'Starting chat...'),
+            title: l10n.translate('live_chat'),
+            subtitle: l10n.translate('chat_support_desc'),
+            onTap: () => _showSnackBar(context, l10n.translate('starting_chat')),
           ),
           const SizedBox(height: AppTheme.spacing24),
           Text(
-            'Frequently Asked Questions',
+            l10n.translate('faq'),
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -45,28 +47,28 @@ class HelpSupportScreen extends StatelessWidget {
           const SizedBox(height: AppTheme.spacing16),
           _buildFAQCard(
             context,
-            question: 'How do I upload a prescription?',
-            answer: 'Go to the home screen and tap on "Upload Prescription". You can take a photo or select from your gallery.',
+            question: l10n.translate('faq_q1'),
+            answer: l10n.translate('faq_a1'),
           ),
           _buildFAQCard(
             context,
-            question: 'How long does delivery take?',
-            answer: 'Standard delivery takes 1-2 hours. Express delivery is available for urgent orders.',
+            question: l10n.translate('faq_q2'),
+            answer: l10n.translate('faq_a2'),
           ),
           _buildFAQCard(
             context,
-            question: 'Can I cancel my order?',
-            answer: 'You can cancel your order before it\'s confirmed by the pharmacy. Go to Order History and select the order.',
+            question: l10n.translate('faq_q3'),
+            answer: l10n.translate('faq_a3'),
           ),
           _buildFAQCard(
             context,
-            question: 'What payment methods are accepted?',
-            answer: 'We accept credit/debit cards, UPI, and cash on delivery.',
+            question: l10n.translate('faq_q4'),
+            answer: l10n.translate('faq_a4'),
           ),
           _buildFAQCard(
             context,
-            question: 'Is my prescription data secure?',
-            answer: 'Yes, all your data is encrypted and stored securely. We comply with healthcare data protection regulations.',
+            question: l10n.translate('faq_q5'),
+            answer: l10n.translate('faq_a5'),
           ),
         ],
       ),

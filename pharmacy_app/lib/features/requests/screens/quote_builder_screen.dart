@@ -5,6 +5,7 @@ import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/input_field.dart';
 import '../../../providers/prescription_provider.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../services/api_service.dart';
 import '../../../services/pharmacy_service.dart';
 import '../../profile/payment_settings_screen.dart';
@@ -214,13 +215,14 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
       : _subtotal;
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
     List<Map<String, dynamic>> itemsToSend;
 
     if (_isDirectMode) {
       final total = double.tryParse(_directTotalController.text.trim());
       if (total == null || total <= 0) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a valid total amount')),
+          SnackBar(content: Text(l10n.translate('please_enter_valid_total'))),
         );
         return;
       }
@@ -235,14 +237,16 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
     } else {
       if (_items.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please add at least one item')),
+          SnackBar(content: Text(l10n.translate('please_add_one_item'))),
         );
         return;
       }
       for (int i = 0; i < _items.length; i++) {
         if (_items[i]['medicineName'].toString().trim().isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Enter medicine name for item ${i + 1}')),
+            SnackBar(
+                content: Text(
+                    '${l10n.translate('enter_medicine_name_for_item')} ${i + 1}')),
           );
           return;
         }
@@ -270,8 +274,8 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_isEdit
-              ? 'Quote updated successfully!'
-              : 'Quote sent successfully!'),
+              ? l10n.translate('quote_updated_success')
+              : l10n.translate('quote_sent_success')),
           backgroundColor: AppTheme.success,
         ),
       );
@@ -282,9 +286,12 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEdit ? 'Edit Quote' : 'Send Quote'),
+        title: Text(_isEdit
+            ? l10n.translate('edit_quote')
+            : l10n.translate('send_quote')),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTheme.spacing16),
@@ -307,7 +314,7 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'You already sent a quote. Edit and update it below.',
+                        l10n.translate('already_sent_quote_edit'),
                         style: TextStyle(
                             color: Colors.blue.shade700, fontSize: 13),
                       ),
@@ -340,7 +347,7 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
                                 size: 16,
                                 color: !_isDirectMode ? Colors.white : AppTheme.textSecondary),
                             const SizedBox(width: 6),
-                            Text('Itemized',
+                            Text(l10n.translate('itemized'),
                                 style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                     color: !_isDirectMode ? Colors.white : AppTheme.textSecondary)),
@@ -365,7 +372,7 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
                                 size: 16,
                                 color: _isDirectMode ? Colors.white : AppTheme.textSecondary),
                             const SizedBox(width: 6),
-                            Text('Direct Total',
+                            Text(l10n.translate('direct_total'),
                                 style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                     color: _isDirectMode ? Colors.white : AppTheme.textSecondary)),
@@ -381,7 +388,8 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
 
             if (_isDirectMode) ..._buildDirectTotalSection()
             else ...[
-              Text('Medicines', style: Theme.of(context).textTheme.titleLarge),
+              Text(l10n.translate('medicines'),
+                  style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: AppTheme.spacing16),
 
               ..._items.asMap().entries.map((entry) =>
@@ -391,7 +399,7 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
               OutlinedButton.icon(
                 onPressed: _addItem,
                 icon: const Icon(Icons.add),
-                label: const Text('Add Medicine'),
+                label: Text(l10n.translate('add_medicine')),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppTheme.primary,
                   side: const BorderSide(color: AppTheme.primary),
@@ -415,7 +423,9 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
             const SizedBox(height: AppTheme.spacing24),
 
             PrimaryButton(
-              text: _isEdit ? 'Update Quote' : 'Send Quote',
+              text: _isEdit
+                  ? l10n.translate('update_quote')
+                  : l10n.translate('send_quote'),
               icon: _isEdit ? Icons.update : Icons.send,
               onPressed: (_isLoading || _selectedMethods.isEmpty) ? null : _submit,
               isLoading: _isLoading,
@@ -428,6 +438,7 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
   }
 
   List<Widget> _buildDirectTotalSection() {
+    final l10n = AppLocalizations.of(context)!;
     return [
       AppCard(
         child: Padding(
@@ -439,7 +450,7 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
                 children: [
                   const Icon(Icons.receipt_long, color: AppTheme.primary, size: 20),
                   const SizedBox(width: 8),
-                  Text('Enter Total Amount',
+                  Text(l10n.translate('enter_total_amount'),
                       style: Theme.of(context)
                           .textTheme
                           .titleMedium
@@ -447,14 +458,14 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
                 ],
               ),
               const SizedBox(height: AppTheme.spacing12),
-              const Text(
-                'Enter the total price for all medicines in this order.',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+              Text(
+                l10n.translate('enter_total_amount_desc'),
+                style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
               ),
               const SizedBox(height: AppTheme.spacing16),
               InputField(
                 controller: _directTotalController,
-                label: 'Total Amount (MRO)',
+                label: l10n.translate('total_amount_mro'),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 onChanged: (_) => setState(() {}),
               ),
@@ -465,7 +476,7 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Total',
+                      Text(l10n.translate('total'),
                           style: Theme.of(context).textTheme.titleMedium),
                       Text(
                         '${double.parse(_directTotalController.text.trim()).toStringAsFixed(2)} MRO',
@@ -485,6 +496,7 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
   }
 
   Widget _buildItemCard(int index) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppTheme.spacing12),
       child: AppCard(
@@ -496,7 +508,7 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Medicine ${index + 1}',
+                  Text('${l10n.translate('medicine')} ${index + 1}',
                       style: const TextStyle(fontWeight: FontWeight.w600)),
                   IconButton(
                     icon: const Icon(Icons.delete_outline, color: AppTheme.error),
@@ -509,7 +521,7 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
               const SizedBox(height: AppTheme.spacing8),
               InputField(
                 controller: _nameControllers[index],
-                label: 'Medicine Name',
+                label: l10n.translate('medicine_name'),
                 onChanged: (_) => _updateItem(index),
               ),
               const SizedBox(height: AppTheme.spacing8),
@@ -518,7 +530,7 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
                   Expanded(
                     child: InputField(
                       controller: _qtyControllers[index],
-                      label: 'Qty',
+                      label: l10n.translate('qty'),
                       keyboardType: TextInputType.number,
                       onChanged: (_) => _updateItem(index),
                     ),
@@ -527,7 +539,7 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
                   Expanded(
                     child: InputField(
                       controller: _priceControllers[index],
-                      label: 'Unit Price',
+                      label: l10n.translate('unit_price'),
                       keyboardType: TextInputType.number,
                       onChanged: (_) => _updateItem(index),
                     ),
@@ -538,7 +550,7 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
-                    'Total: ${(_items[index]['totalPrice'] as num).toStringAsFixed(2)} MRO',
+                    '${l10n.translate('total')}: ${(_items[index]['totalPrice'] as num).toStringAsFixed(2)} MRO',
                     style: TextStyle(
                         color: AppTheme.primary,
                         fontWeight: FontWeight.w500,
@@ -553,12 +565,13 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
   }
 
   Widget _buildSummary() {
+    final l10n = AppLocalizations.of(context)!;
     return AppCard(
       child: Padding(
         padding: const EdgeInsets.all(AppTheme.spacing16),
         child: Column(
           children: [
-            _summaryRow('Total', _total, isTotal: true),
+            _summaryRow(l10n.translate('total'), _total, isTotal: true),
           ],
         ),
       ),
@@ -568,6 +581,7 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
   // Fee breakdown card: medicine subtotal + service (platform) fee + delivery
   // fee => total the patient will pay.
   Widget _buildBreakdown() {
+    final l10n = AppLocalizations.of(context)!;
     final subtotal = _currentSubtotal;
     if (subtotal <= 0) return const SizedBox.shrink();
 
@@ -586,7 +600,7 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
               children: [
                 const Icon(Icons.receipt_long, color: AppTheme.primary, size: 20),
                 const SizedBox(width: 8),
-                Text('Quote Details',
+                Text(l10n.translate('quote_details'),
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
@@ -594,17 +608,17 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
               ],
             ),
             const SizedBox(height: AppTheme.spacing12),
-            _summaryRow('Medicine (Subtotal)', subtotal),
-            _summaryRow('Service Fee', serviceFee),
-            _summaryRow('Delivery Fee', _deliveryFee),
+            _summaryRow(l10n.translate('medicine_subtotal'), subtotal),
+            _summaryRow(l10n.translate('service_fee'), serviceFee),
+            _summaryRow(l10n.translate('delivery_fee'), _deliveryFee),
             const Divider(height: 20),
-            _summaryRow('Total', total, isTotal: true),
+            _summaryRow(l10n.translate('total'), total, isTotal: true),
             if (!_previewLoaded)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
-                  'Calculating fees…',
-                  style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                  l10n.translate('calculating_fees'),
+                  style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
                 ),
               ),
           ],
@@ -650,24 +664,25 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
   }
 
   Widget _buildPaymentSelection() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Payment Methods',
+            Text(l10n.translate('payment_methods'),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             if (_savedMethods.isNotEmpty)
               TextButton.icon(
                 onPressed: _openPaymentSettings,
                 icon: const Icon(Icons.settings, size: 16),
-                label: const Text('Manage'),
+                label: Text(l10n.translate('manage')),
               ),
           ],
         ),
         if (_savedMethods.isNotEmpty)
-          Text('Select the methods the patient can pay with',
+          Text(l10n.translate('select_patient_payment_methods'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary)),
         const SizedBox(height: 12),
         if (!_methodsLoaded)
@@ -684,17 +699,17 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
                   const Icon(Icons.account_balance_wallet_outlined,
                       size: 36, color: AppTheme.textSecondary),
                   const SizedBox(height: 8),
-                  const Text('No payment methods saved yet',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  Text(l10n.translate('no_payment_methods_saved'),
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
-                  Text('Add one in Payment Settings to send quotes.',
+                  Text(l10n.translate('add_payment_method_hint'),
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodySmall),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
                     onPressed: _openPaymentSettings,
                     icon: const Icon(Icons.add),
-                    label: const Text('Add Payment Method'),
+                    label: Text(l10n.translate('add_payment_method')),
                   ),
                 ],
               ),
@@ -726,7 +741,7 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
         if (_methodsLoaded && _savedMethods.isNotEmpty && _selectedMethods.isEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: Text('Select at least one payment method',
+            child: Text(l10n.translate('select_one_payment_method'),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.error)),
           ),
       ],

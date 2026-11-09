@@ -425,8 +425,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _jobCard(Map<String, dynamic> order, AppLocalizations l10n) {
     final fee = (order['deliveryFee'] as num?)?.toDouble() ?? 0;
     final distance = order['distance'];
-    final pickup = order['pickupAddress']?.toString() ?? 'Pharmacy';
-    final delivery = order['deliveryAddress']?.toString() ?? 'Patient';
+    final pickup = order['pickupAddress']?.toString() ?? l10n.translate('pharmacy');
+    final delivery = order['deliveryAddress']?.toString() ?? l10n.translate('patient');
     // Extract pharmacy name from pickup address (first part before comma)
     final pharmacyName = pickup.contains(',') ? pickup.split(',').first.trim() : pickup;
     final patientName = delivery.contains(',') ? delivery.split(',').first.trim() : delivery;
@@ -477,7 +477,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const Icon(Icons.payments_outlined, size: 14, color: AppTheme.warning),
                   const SizedBox(width: 4),
                   Text(
-                    'Pay on Delivery · collect ${((order['totalAmount'] as num?)?.toDouble() ?? 0).toStringAsFixed(0)} ${l10n.translate('mad')}',
+                    '${l10n.translate('pay_on_delivery_collect')} ${((order['totalAmount'] as num?)?.toDouble() ?? 0).toStringAsFixed(0)} ${l10n.translate('mad')}',
                     style: const TextStyle(
                         fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.warning),
                   ),

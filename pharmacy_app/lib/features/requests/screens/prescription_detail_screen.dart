@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/primary_button.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class PrescriptionDetailScreen extends StatelessWidget {
   final dynamic prescription;
@@ -19,6 +20,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final imageUrl = _get('imageUrl');
     final existingQuote = prescription is Map ? prescription['existingQuote'] : null;
     final hasQuote = existingQuote != null;
@@ -29,7 +31,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
     final hasImage = imageUrl.isNotEmpty;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Prescription Details')),
+      appBar: AppBar(title: Text(l10n.translate('prescription_details'))),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,7 +52,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
                         color: Colors.grey.shade100,
                         child: const Center(child: CircularProgressIndicator()),
                       ),
-                      errorWidget: (_, __, ___) => _imagePlaceholder(),
+                      errorWidget: (_, __, ___) => _imagePlaceholder(context),
                     ),
                     Positioned(
                       bottom: 12, right: 12,
@@ -60,12 +62,13 @@ class PrescriptionDetailScreen extends StatelessWidget {
                           color: Colors.black54,
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.zoom_in, color: Colors.white, size: 16),
-                            SizedBox(width: 4),
-                            Text('Tap to zoom', style: TextStyle(color: Colors.white, fontSize: 12)),
+                            const Icon(Icons.zoom_in, color: Colors.white, size: 16),
+                            const SizedBox(width: 4),
+                            Text(l10n.translate('tap_to_zoom'),
+                                style: const TextStyle(color: Colors.white, fontSize: 12)),
                           ],
                         ),
                       ),
@@ -83,7 +86,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
                       children: [
                         const Icon(Icons.medication, color: AppTheme.primary, size: 20),
                         const SizedBox(width: 8),
-                        Text('Requested Medicines',
+                        Text(l10n.translate('requested_medicines'),
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.bold)),
                       ],
@@ -124,7 +127,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
                                 ),
                                 child: Text(
-                                  'Qty: ${m['quantity'] ?? 1}',
+                                  '${l10n.translate('qty')}: ${m['quantity'] ?? 1}',
                                   style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
@@ -138,7 +141,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
                 ),
               )
             else
-              _imagePlaceholder(),
+              _imagePlaceholder(context),
 
             Padding(
               padding: const EdgeInsets.all(AppTheme.spacing16),
@@ -147,7 +150,9 @@ class PrescriptionDetailScreen extends StatelessWidget {
                 children: [
                   const SizedBox(height: AppTheme.spacing8),
                   PrimaryButton(
-                    text: hasQuote ? 'Edit Quote' : 'Send Quote to Patient',
+                    text: hasQuote
+                        ? l10n.translate('edit_quote')
+                        : l10n.translate('send_quote_to_patient'),
                     icon: hasQuote ? Icons.edit : Icons.send,
                     onPressed: () => Navigator.pushNamed(
                       context,
@@ -261,18 +266,19 @@ class PrescriptionDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _imagePlaceholder() {
+  Widget _imagePlaceholder(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       height: 280,
       color: Colors.grey.shade100,
-      child: const Center(
+      child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.image_outlined, size: 64, color: Colors.grey),
-            SizedBox(height: 8),
-            Text('No image available',
-                style: TextStyle(color: Colors.grey)),
+            const Icon(Icons.image_outlined, size: 64, color: Colors.grey),
+            const SizedBox(height: 8),
+            Text(l10n.translate('no_image_available'),
+                style: const TextStyle(color: Colors.grey)),
           ],
         ),
       ),

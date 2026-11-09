@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../services/api_service.dart';
 import '../../../services/auth_service.dart';
 import 'pending_approval_screen.dart';
@@ -89,7 +90,8 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: AppTheme.spacing8),
             Text(
-              'Medicine delivery at doorstep.',
+              AppLocalizations.of(context)?.translate('medicine_delivery_tagline') ??
+                  'Medicine delivery at doorstep.',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: Colors.white70,
                   ),

@@ -45,7 +45,9 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(response.success ? 'Settings saved' : response.message),
+          content: Text(response.success
+              ? l10n.translate('settings_saved')
+              : response.message),
           backgroundColor: response.success ? AppTheme.success : AppTheme.error,
         ),
       );
@@ -135,7 +137,8 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
               Navigator.pop(context);
               _saveSettings();
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+            child: Text(l10n.translate('delete'),
+                style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),

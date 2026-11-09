@@ -38,7 +38,7 @@ class _MyQuotesScreenState extends State<MyQuotesScreen> {
         setState(() => _error = res.message);
       }
     } catch (_) {
-      setState(() => _error = 'Failed to load quotes');
+      setState(() => _error = AppLocalizations.of(context)!.translate('failed_load_quotes'));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -103,7 +103,7 @@ class _MyQuotesScreenState extends State<MyQuotesScreen> {
             child: OutlinedButton.icon(
               onPressed: () => Navigator.pop(_, 'cod'),
               icon: const Icon(Icons.local_shipping_outlined, size: 20),
-              label: const Text('Pay on Delivery'),
+              label: Text(l10n.translate('pay_on_delivery')),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.primary,
                 side: const BorderSide(color: AppTheme.primary),
@@ -134,7 +134,7 @@ class _MyQuotesScreenState extends State<MyQuotesScreen> {
 
   // Cash on delivery: confirm the order immediately, no payment proof needed.
   Future<void> _confirmCod(dynamic quote) async {
-    _showLoading('Confirming order...');
+    _showLoading(AppLocalizations.of(context)!.translate('confirming_order'));
     try {
       final ok = await context.read<OrderProvider>().confirmQuote(
             quoteId: quote['id'].toString(),
@@ -143,12 +143,12 @@ class _MyQuotesScreenState extends State<MyQuotesScreen> {
       if (mounted) Navigator.pop(context); // dismiss loader
       if (!mounted) return;
       if (ok) {
-        _showSuccess('Order confirmed! Pay on delivery.');
+        _showSuccess(AppLocalizations.of(context)!.translate('order_confirmed_cod'));
         _fetchQuotes();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to confirm order'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.translate('failed_confirm_order')),
             backgroundColor: AppTheme.error,
           ),
         );
@@ -166,20 +166,20 @@ class _MyQuotesScreenState extends State<MyQuotesScreen> {
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Cancel Quote'),
-        content: const Text("Cancel this quote? We'll send your request to the next nearest pharmacy."),
+        title: Text(l10n.translate('cancel_quote')),
+        content: Text(l10n.translate('cancel_quote_desc')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Keep')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.translate('keep'))),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Cancel Quote', style: TextStyle(color: Colors.red)),
+            child: Text(l10n.translate('cancel_quote'), style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
     if (confirm != true || !mounted) return;
 
-    _showLoading('Cancelling...');
+    _showLoading(l10n.translate('cancelling'));
     try {
       final res = await context.read<OrderProvider>().cancelQuote(quoteId: quote['id'].toString());
       if (mounted) Navigator.pop(context);
