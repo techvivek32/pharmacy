@@ -1,10 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../services/api_service.dart';
 
-class HelpSupportScreen extends StatelessWidget {
+class HelpSupportScreen extends StatefulWidget {
   const HelpSupportScreen({super.key});
+
+  @override
+  State<HelpSupportScreen> createState() => _HelpSupportScreenState();
+}
+
+class _HelpSupportScreenState extends State<HelpSupportScreen> {
+  // Fallbacks; the real values come from the admin panel (Settings →
+  // Contact Information) so support details can change without an update.
+  String _supportPhone = '+222 00 00 00 00';
+  String _supportEmail = 'support@mediexpress.com';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadContactInfo();
+  }
+
+  Future<void> _loadContactInfo() async {
+    final res = await ApiService.get('/settings');
+    if (!mounted || !res.success || res.data == null) return;
+    setState(() {
+      final phone = (res.data['supportPhone'] ?? '').toString();
+      final email = (res.data['supportEmail'] ?? '').toString();
+      if (phone.isNotEmpty) _supportPhone = phone;
+      if (email.isNotEmpty) _supportEmail = email;
+    });
+  }
+
+  Future<void> _open(Uri uri) async {
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {}
+  }
+
+  /// Digits-only phone for tel:/wa.me links.
+  String get _phoneDigits => _supportPhone.replaceAll(RegExp(r'[^0-9+]'), '');
 
   @override
   Widget build(BuildContext context) {
@@ -20,22 +58,24 @@ class HelpSupportScreen extends StatelessWidget {
             context,
             icon: Icons.phone,
             title: l10n.translate('call_us'),
-            subtitle: '+1 (555) 123-4567',
-            onTap: () => _showSnackBar(context, l10n.translate('calling_support')),
+            subtitle: _supportPhone,
+            onTap: () => _open(Uri(scheme: 'tel', path: _phoneDigits)),
           ),
           _buildContactCard(
             context,
             icon: Icons.email,
             title: l10n.translate('email_us'),
-            subtitle: 'support@mediexpress.com',
-            onTap: () => _showSnackBar(context, l10n.translate('opening_email')),
+            subtitle: _supportEmail,
+            onTap: () => _open(Uri(scheme: 'mailto', path: _supportEmail)),
           ),
           _buildContactCard(
             context,
             icon: Icons.chat,
             title: l10n.translate('live_chat'),
             subtitle: l10n.translate('chat_support_desc'),
-            onTap: () => _showSnackBar(context, l10n.translate('starting_chat')),
+            // Opens a WhatsApp chat with the support number.
+            onTap: () => _open(Uri.parse(
+                'https://wa.me/${_phoneDigits.replaceAll('+', '')}')),
           ),
           const SizedBox(height: AppTheme.spacing24),
           Text(
@@ -173,9 +213,4 @@ class HelpSupportScreen extends StatelessWidget {
     );
   }
 
-  void _showSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
 }
