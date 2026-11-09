@@ -71,12 +71,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               title: l10n.translate('saved_addresses'),
               onTap: () => Navigator.pushNamed(context, '/saved-addresses'),
             ),
-            _buildMenuItem(
-              context,
-              icon: Icons.payment,
-              title: l10n.translate('payment_methods'),
-              onTap: () => Navigator.pushNamed(context, '/payment-methods'),
-            ),
+            // Payment Methods menu entry hidden: the screen is an unfinished
+            // "coming soon" stub. Restore this item when the feature is built.
             _buildMenuItem(
               context,
               icon: Icons.notifications,

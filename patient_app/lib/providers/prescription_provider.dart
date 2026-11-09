@@ -32,10 +32,6 @@ class PrescriptionProvider with ChangeNotifier {
       );
 
       if (result.success) {
-        // Load the prescription details if we have an ID
-        if (result.prescriptionId != null) {
-          await getPrescriptionDetails(result.prescriptionId!);
-        }
         _isLoading = false;
         notifyListeners();
         return true;
@@ -51,39 +47,6 @@ class PrescriptionProvider with ChangeNotifier {
       notifyListeners();
       return false;
     }
-  }
-
-  Future<void> loadPrescriptionHistory() async {
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      _prescriptions = await PrescriptionService.getPrescriptionHistory();
-    } catch (e) {
-      _error = e.toString();
-    }
-
-    _isLoading = false;
-    notifyListeners();
-  }
-
-  Future<void> getPrescriptionDetails(String id) async {
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      final result = await PrescriptionService.getPrescriptionDetails(id);
-      if (result.success) {
-        _currentPrescription = result.prescription;
-      } else {
-        _error = result.message;
-      }
-    } catch (e) {
-      _error = e.toString();
-    }
-
-    _isLoading = false;
-    notifyListeners();
   }
 
   void clearError() {

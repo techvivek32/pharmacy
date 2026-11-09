@@ -89,20 +89,6 @@ class OrderService {
     }
   }
 
-  static Future<List<Quote>> getQuotes(String prescriptionId) async {
-    try {
-      final response = await ApiService.get('/prescriptions/$prescriptionId/quotes');
-
-      if (response.success) {
-        final List<dynamic> data = response.data['quotes'];
-        return data.map((json) => Quote.fromJson(json)).toList();
-      }
-    } catch (e) {
-      return [];
-    }
-    return [];
-  }
-
   static Future<bool> cancelOrder(String orderId) async {
     try {
       final response = await ApiService.post('/orders/$orderId/cancel', {});

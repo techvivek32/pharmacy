@@ -132,20 +132,6 @@ class OrderProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> loadQuotes(String prescriptionId) async {
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      _quotes = await OrderService.getQuotes(prescriptionId);
-    } catch (e) {
-      _error = e.toString();
-    }
-
-    _isLoading = false;
-    notifyListeners();
-  }
-
   void clearError() {
     _error = null;
     notifyListeners();
