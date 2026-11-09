@@ -23,6 +23,7 @@ export default function Sidebar({ isOpen }: SidebarProps) {
     { name: 'Orders', icon: '📦', path: '/admin/orders' },
     { name: 'Patients', icon: '👥', path: '/admin/patients' },
     { name: 'Pharmacies', icon: '🏥', path: '/admin/pharmacies' },
+    { name: 'Pharmacy Revenue', icon: '💰', path: '/admin/pharmacy-revenue' },
     { name: 'Riders', icon: '🏍️', path: '/admin/riders' },
     { name: 'Prescriptions', icon: '📋', path: '/admin/prescriptions' },
     { name: 'Analytics', icon: '📈', path: '/admin/analytics' },
