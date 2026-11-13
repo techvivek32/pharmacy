@@ -44,16 +44,21 @@ export default function RidersPage() {
   const [search, setSearch] = useState('');
   const [selectedRider, setSelectedRider] = useState<Rider | null>(null);
 
-  useEffect(() => { fetchRiders(); }, []);
+  useEffect(() => {
+    fetchRiders();
+    // Refresh every 30s (silently) so online/offline status stays current.
+    const t = setInterval(() => fetchRiders(true), 30000);
+    return () => clearInterval(t);
+  }, []);
 
-  const fetchRiders = async () => {
-    setLoading(true);
+  const fetchRiders = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await fetch('/api/admin/riders');
       const data = await res.json();
       if (data.success) setRiders(data.data?.riders || []);
     } catch (e) { console.error(e); }
-    finally { setLoading(false); }
+    finally { if (!silent) setLoading(false); }
   };
 
 
