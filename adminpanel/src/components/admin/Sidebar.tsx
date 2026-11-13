@@ -51,13 +51,9 @@ export default function Sidebar({ isOpen }: SidebarProps) {
 
       <div className="relative w-64 h-full flex flex-col">
         {/* Brand header */}
-        <div className="flex items-center gap-3 h-[4.5rem] px-5 border-b border-white/10">
-          <div className="bg-white rounded-xl p-1.5 shadow-lg shadow-black/20">
-            <img src="/images/logo-2.png" alt="OrdoGo" className="h-8 w-auto object-contain" />
-          </div>
-          <div className="leading-none">
-            <p className="text-white font-bold tracking-tight">OrdoGo</p>
-            <p className="text-white/50 text-[11px] mt-1">Admin Console</p>
+        <div className="flex items-center justify-center h-20 px-5 border-b border-white/10">
+          <div className="bg-white rounded-2xl px-4 py-2 shadow-lg shadow-black/20">
+            <img src="/images/logo-2.png" alt="OrdoGo" className="h-12 w-auto object-contain" />
           </div>
         </div>
 
