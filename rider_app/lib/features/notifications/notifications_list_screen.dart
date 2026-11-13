@@ -96,9 +96,23 @@ class _NotificationsListScreenState extends State<NotificationsListScreen> {
     );
   }
 
+  // Opens the screen most relevant to the notification.
+  void _handleTap(AppNotification n) {
+    final t = n.type;
+    if (t.startsWith('order') && t.contains('delivered')) {
+      Navigator.pushNamed(context, '/order-history');
+    } else {
+      // New delivery / status notifications: back to home where available
+      // deliveries are listed.
+      Navigator.of(context).popUntil((r) => r.isFirst);
+    }
+  }
+
   Widget _tile(AppNotification n) {
     final (icon, color) = _visual(n.type);
-    return Container(
+    return InkWell(
+      onTap: () => _handleTap(n),
+      child: Container(
       color: n.isRead ? null : AppTheme.primary.withValues(alpha: 0.05),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -156,6 +170,7 @@ class _NotificationsListScreenState extends State<NotificationsListScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

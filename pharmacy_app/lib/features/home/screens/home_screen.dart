@@ -14,6 +14,10 @@ import '../../requests/screens/prescription_requests_screen.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
+  /// Switch the home bottom-nav tab from anywhere (0=Dashboard, 1=Requests,
+  /// 2=Orders, 3=Profile). No-op if home is not currently mounted.
+  static void goToTab(int index) => _HomeScreenState._instance?._goToTab(index);
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -21,9 +25,16 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _currentIndex = 0;
 
+  // Lets other screens (e.g. the notifications list) jump to a home tab.
+  static _HomeScreenState? _instance;
+  void _goToTab(int i) {
+    if (mounted) setState(() => _currentIndex = i);
+  }
+
   @override
   void initState() {
     super.initState();
+    _instance = this;
     WidgetsBinding.instance.addObserver(this);
     PushNotificationService.registerToken();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -34,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    if (_instance == this) _instance = null;
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }

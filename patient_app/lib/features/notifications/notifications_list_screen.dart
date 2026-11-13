@@ -94,9 +94,26 @@ class _NotificationsListScreenState extends State<NotificationsListScreen> {
     );
   }
 
+  // Opens the screen most relevant to the notification.
+  void _handleTap(AppNotification n) {
+    final t = n.type;
+    if (t.startsWith('quote')) {
+      Navigator.pushNamed(context, '/my-quotes');
+    } else if (t.startsWith('order') ||
+        t.startsWith('rider') ||
+        t.startsWith('delivery') ||
+        t.startsWith('payment')) {
+      Navigator.pushNamed(context, '/order-history');
+    } else if (t.startsWith('prescription')) {
+      Navigator.pushNamed(context, '/my-quotes');
+    }
+  }
+
   Widget _tile(AppNotification n) {
     final (icon, color) = _visual(n.type);
-    return Container(
+    return InkWell(
+      onTap: () => _handleTap(n),
+      child: Container(
       color: n.isRead ? null : AppTheme.primary.withValues(alpha: 0.05),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -154,6 +171,7 @@ class _NotificationsListScreenState extends State<NotificationsListScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

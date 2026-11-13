@@ -3,6 +3,7 @@ import '../../core/theme/app_theme.dart';
 import '../../models/notification_model.dart';
 import '../../services/notification_service.dart';
 import '../../core/localization/app_localizations.dart';
+import '../home/screens/home_screen.dart';
 
 class NotificationsListScreen extends StatefulWidget {
   const NotificationsListScreen({super.key});
@@ -95,9 +96,30 @@ class _NotificationsListScreenState extends State<NotificationsListScreen> {
     );
   }
 
+  // Opens the screen most relevant to a notification: Requests tab for
+  // prescription/quote notifications, Orders tab for order/payment/rider ones.
+  void _handleTap(AppNotification n) {
+    final t = n.type;
+    int tab;
+    if (t.startsWith('prescription') || t.startsWith('quote')) {
+      tab = 1; // Requests
+    } else if (t.startsWith('order') ||
+        t.startsWith('payment') ||
+        t.startsWith('rider') ||
+        t.startsWith('delivery')) {
+      tab = 2; // Orders
+    } else {
+      tab = 1;
+    }
+    Navigator.of(context).pop(); // back to home
+    HomeScreen.goToTab(tab);
+  }
+
   Widget _tile(AppNotification n) {
     final (icon, color) = _visual(n.type);
-    return Container(
+    return InkWell(
+      onTap: () => _handleTap(n),
+      child: Container(
       color: n.isRead ? null : AppTheme.primary.withValues(alpha: 0.05),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -155,6 +177,7 @@ class _NotificationsListScreenState extends State<NotificationsListScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
