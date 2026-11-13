@@ -125,8 +125,11 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 children: [
                   _buildStatusBanner(order, l10n),
                   const SizedBox(height: AppTheme.spacing16),
-                  // Track Rider button
-                  if (order.status == 'in_transit' || order.status == 'picked_up') ...[
+                  // Track Rider button — available from the moment a rider is
+                  // assigned (heading to the pharmacy) through delivery.
+                  if (order.status == 'assigned' ||
+                      order.status == 'picked_up' ||
+                      order.status == 'in_transit') ...[
                     _buildTrackRiderButton(order),
                     const SizedBox(height: AppTheme.spacing16),
                   ],

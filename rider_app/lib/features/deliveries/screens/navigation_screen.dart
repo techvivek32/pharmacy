@@ -24,7 +24,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
   @override
   void initState() {
     super.initState();
-    _locationTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+    _locationTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       LocationService.updateLocation();
     });
     LocationService.updateLocation();
