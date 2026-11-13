@@ -79,14 +79,6 @@ export default function LoginPage() {
           }}
         />
 
-        {/* delivery illustration — bottom-right corner */}
-        <img
-          src="/images/delivery-illustration.png"
-          alt=""
-          aria-hidden="true"
-          className="absolute -bottom-2 -right-4 w-72 xl:w-80 opacity-95 drop-shadow-2xl pointer-events-none select-none"
-        />
-
         <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 text-white w-full">
           {/* brand */}
           <div className="flex items-center gap-3">
