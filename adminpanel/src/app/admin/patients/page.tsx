@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/admin/Sidebar';
+import PageHeader from '@/components/admin/PageHeader';
+import StatCard, { si } from '@/components/admin/StatCard';
 
 interface Patient {
   id: string;
@@ -111,110 +113,59 @@ export default function PatientsPage() {
       <Sidebar isOpen={sidebarOpen} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white shadow-sm">
-          <div className="flex items-center justify-between px-6 py-4">
-            <div className="flex items-center">
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-              <h1 className="ml-4 text-2xl font-semibold text-gray-800">Patients Management</h1>
-            </div>
-          </div>
-        </header>
+        <PageHeader
+          title="Patients Management"
+          subtitle={`${patients.length} registered patients`}
+          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        />
 
         <main className="flex-1 overflow-y-auto p-6">
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Total Patients</p>
-                  <h3 className="text-2xl font-bold text-gray-800">{patients.length}</h3>
-                </div>
-                <div className="bg-blue-500 w-12 h-12 rounded-full flex items-center justify-center">
-                  <span className="text-2xl">👥</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Active Patients</p>
-                  <h3 className="text-2xl font-bold text-gray-800">{activePatients}</h3>
-                </div>
-                <div className="bg-green-500 w-12 h-12 rounded-full flex items-center justify-center">
-                  <span className="text-2xl">✅</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Verified</p>
-                  <h3 className="text-2xl font-bold text-gray-800">{verifiedPatients}</h3>
-                </div>
-                <div className="bg-purple-500 w-12 h-12 rounded-full flex items-center justify-center">
-                  <span className="text-2xl">✓</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Total Orders</p>
-                  <h3 className="text-2xl font-bold text-gray-800">
-                    {patients.reduce((sum, p) => sum + p.totalOrders, 0)}
-                  </h3>
-                </div>
-                <div className="bg-yellow-500 w-12 h-12 rounded-full flex items-center justify-center">
-                  <span className="text-2xl">📦</span>
-                </div>
-              </div>
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <StatCard label="Total Patients" value={patients.length} tint="blue" icon={si('M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z')} />
+            <StatCard label="Active Patients" value={activePatients} tint="green" icon={si('M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z')} />
+            <StatCard label="Verified" value={verifiedPatients} tint="purple" icon={si('M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z')} />
+            <StatCard label="Total Orders" value={patients.reduce((sum, p) => sum + p.totalOrders, 0)} tint="orange" icon={si('M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z')} />
           </div>
 
           {/* Patients Table */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-4 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="relative flex-1 max-w-md">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                  </svg>
                   <input
                     type="text"
                     placeholder="Search patients..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-96"
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+                    className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all"
                   />
-                  <button
-                    onClick={handleSearch}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                  >
-                    Search
-                  </button>
                 </div>
+                <button
+                  onClick={handleSearch}
+                  className="px-5 py-2.5 bg-primary-600 text-white rounded-xl hover:bg-primary-700 text-sm font-semibold transition-colors"
+                >
+                  Search
+                </button>
               </div>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Name</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Email</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Phone</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Orders</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Addresses</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Status</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Joined</th>
-                    <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Actions</th>
+                  <tr className="border-b border-gray-100 bg-gray-50/70">
+                    <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Name</th>
+                    <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+                    <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Phone</th>
+                    <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Orders</th>
+                    <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Addresses</th>
+                    <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Joined</th>
+                    <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -232,7 +183,7 @@ export default function PatientsPage() {
                     </tr>
                   ) : (
                     patients.map((patient) => (
-                      <tr key={patient.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                      <tr key={patient.id} className="border-b border-gray-50 hover:bg-primary-50/30 transition-colors">
                         <td className="py-4 px-6">
                           <div className="flex items-center">
                             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold mr-3">

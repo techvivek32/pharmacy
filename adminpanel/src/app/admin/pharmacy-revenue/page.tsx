@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/admin/Sidebar';
+import PageHeader from '@/components/admin/PageHeader';
+import StatCard, { si } from '@/components/admin/StatCard';
 
 interface PharmacyRow {
   pharmacyId: string;
@@ -83,30 +85,26 @@ export default function PharmacyRevenuePage() {
     <div className="flex h-screen bg-gray-50">
       <Sidebar isOpen={sidebarOpen} />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white shadow-sm">
-          <div className="flex items-center justify-between px-6 py-4">
-            <div className="flex items-center">
-              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-500 hover:text-gray-700">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-              <h1 className="ml-4 text-2xl font-semibold text-gray-800">Pharmacy Revenue</h1>
-            </div>
+        <PageHeader
+          title="Pharmacy Revenue"
+          subtitle="Settle platform fees with pharmacies by period"
+          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          actions={
             <button onClick={exportCsv} disabled={rows.length === 0}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium disabled:opacity-50">
-              ⬇ Export CSV
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold shadow-sm shadow-primary-600/20 disabled:opacity-50 transition-colors">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              Export CSV
             </button>
-          </div>
-        </header>
+          }
+        />
 
         <main className="flex-1 overflow-y-auto p-6">
           {/* Period picker */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 flex flex-wrap items-end gap-3">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6 flex flex-wrap items-end gap-3">
             <div className="flex space-x-2">
               {([['thisMonth', 'This Month'], ['lastMonth', 'Last Month'], ['last7', 'Last 7 Days'], ['last30', 'Last 30 Days']] as const).map(([k, label]) => (
                 <button key={k} onClick={() => preset(k)}
-                  className="px-4 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 font-medium">
+                  className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-medium transition-colors">
                   {label}
                 </button>
               ))}
@@ -115,15 +113,15 @@ export default function PharmacyRevenuePage() {
               <div>
                 <label className="block text-xs text-gray-500 mb-1">From</label>
                 <input type="date" value={from} onChange={e => setFrom(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                  className="px-3 py-2 border border-gray-200 bg-gray-50 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all" />
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">To</label>
                 <input type="date" value={to} onChange={e => setTo(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                  className="px-3 py-2 border border-gray-200 bg-gray-50 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all" />
               </div>
               <button onClick={() => fetchData()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+                className="px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 text-sm font-semibold transition-colors">
                 Apply
               </button>
             </div>
@@ -132,25 +130,15 @@ export default function PharmacyRevenuePage() {
           {/* Totals cards */}
           {totals && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              {[
-                { label: 'Delivered Orders', value: totals.orders.toLocaleString(), color: 'bg-blue-500', icon: '📦' },
-                { label: 'Medicines Revenue', value: `${num(totals.medicinesRevenue)} MRU`, color: 'bg-purple-500', icon: '💊' },
-                { label: 'Service Fees Owed to Platform', value: `${num(totals.serviceFees)} MRU`, color: 'bg-green-500', icon: '💰' },
-                { label: 'Delivery Fees', value: `${num(totals.deliveryFees)} MRU`, color: 'bg-orange-500', icon: '🏍️' },
-              ].map(c => (
-                <div key={c.label} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center">
-                  <div className={`w-10 h-10 ${c.color} rounded-lg flex items-center justify-center text-white text-lg mr-3`}>{c.icon}</div>
-                  <div>
-                    <div className="text-lg font-bold text-gray-800">{c.value}</div>
-                    <div className="text-xs text-gray-500">{c.label}</div>
-                  </div>
-                </div>
-              ))}
+              <StatCard label="Delivered Orders" value={totals.orders.toLocaleString()} tint="blue" icon={si('M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z')} />
+              <StatCard label="Medicines Revenue" value={`${num(totals.medicinesRevenue)} MRU`} tint="purple" icon={si('M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z')} />
+              <StatCard label="Service Fees Owed" value={`${num(totals.serviceFees)} MRU`} tint="green" icon={si('M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z')} />
+              <StatCard label="Delivery Fees" value={`${num(totals.deliveryFees)} MRU`} tint="orange" icon={si('M13 10V3L4 14h7v7l9-11h-7z')} />
             </div>
           )}
 
           {/* Table */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             {loading ? (
               <div className="p-10 text-center text-gray-500">Loading...</div>
             ) : rows.length === 0 ? (
@@ -159,18 +147,18 @@ export default function PharmacyRevenuePage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Pharmacy</th>
-                      <th className="text-right py-4 px-6 text-sm font-semibold text-gray-600">Orders</th>
-                      <th className="text-right py-4 px-6 text-sm font-semibold text-gray-600">Medicines Revenue</th>
-                      <th className="text-right py-4 px-6 text-sm font-semibold text-gray-600">Service Fees Owed</th>
-                      <th className="text-right py-4 px-6 text-sm font-semibold text-gray-600">Delivery Fees</th>
-                      <th className="text-right py-4 px-6 text-sm font-semibold text-gray-600">Total Collected</th>
+                    <tr className="border-b border-gray-100 bg-gray-50/70">
+                      <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Pharmacy</th>
+                      <th className="text-right py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Orders</th>
+                      <th className="text-right py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Medicines Revenue</th>
+                      <th className="text-right py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Service Fees Owed</th>
+                      <th className="text-right py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Delivery Fees</th>
+                      <th className="text-right py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Total Collected</th>
                     </tr>
                   </thead>
                   <tbody>
                     {rows.map(r => (
-                      <tr key={r.pharmacyId} className="border-b border-gray-100 hover:bg-gray-50">
+                      <tr key={r.pharmacyId} className="border-b border-gray-50 hover:bg-primary-50/30 transition-colors">
                         <td className="py-4 px-6">
                           <div className="font-medium text-gray-800">{r.pharmacyName}</div>
                           <div className="text-xs text-gray-400">{r.phone}</div>
@@ -183,7 +171,7 @@ export default function PharmacyRevenuePage() {
                       </tr>
                     ))}
                     {totals && (
-                      <tr className="bg-gray-50 font-semibold">
+                      <tr className="bg-gray-50 font-semibold border-t-2 border-gray-200">
                         <td className="py-4 px-6 text-gray-800">Total ({rows.length} pharmacies)</td>
                         <td className="py-4 px-6 text-right">{totals.orders}</td>
                         <td className="py-4 px-6 text-right">{num(totals.medicinesRevenue)} MRU</td>
