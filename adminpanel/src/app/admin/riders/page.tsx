@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/admin/Sidebar';
+import PageHeader from '@/components/admin/PageHeader';
+import StatCard, { si } from '@/components/admin/StatCard';
 
 interface Rider {
   _id: string;
@@ -131,71 +133,53 @@ export default function RidersPage() {
     <div className="flex h-screen bg-gray-50">
       <Sidebar isOpen={sidebarOpen} />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white shadow-sm">
-          <div className="flex items-center justify-between px-6 py-4">
-            <div className="flex items-center">
-              <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-500 hover:text-gray-700">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-              <h1 className="ml-4 text-2xl font-semibold text-gray-800">Riders Management</h1>
-            </div>
-          </div>
-        </header>
+        <PageHeader
+          title="Riders Management"
+          subtitle={`${riders.length} registered riders`}
+          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        />
 
         <main className="flex-1 overflow-y-auto p-6">
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-            {[
-              { label: 'Total Riders', value: riders.length, icon: '🏍️', color: 'bg-blue-500' },
-              { label: 'Online Now', value: onlineCount, icon: '✅', color: 'bg-green-500' },
-              { label: 'Avg Rating', value: avgRating, icon: '⭐', color: 'bg-yellow-500' },
-              { label: 'Total Earnings', value: `${totalEarnings.toLocaleString()} MRU`, icon: '💰', color: 'bg-purple-500' },
-            ].map(stat => (
-              <div key={stat.label} className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
-                    <h3 className="text-2xl font-bold text-gray-800">{stat.value}</h3>
-                  </div>
-                  <div className={`${stat.color} w-12 h-12 rounded-full flex items-center justify-center`}>
-                    <span className="text-2xl">{stat.icon}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <StatCard label="Total Riders" value={riders.length} tint="blue" icon={si('M13 10V3L4 14h7v7l9-11h-7z')} />
+            <StatCard label="Online Now" value={onlineCount} tint="green" icon={si('M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z')} />
+            <StatCard label="Avg Rating" value={avgRating} tint="yellow" icon={si('M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z')} />
+            <StatCard label="Total Earnings" value={`${totalEarnings.toLocaleString()} MRU`} tint="purple" icon={si('M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z')} />
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="p-6 border-b border-gray-200">
-              <input type="text" placeholder="Search riders by name, email or phone..."
-                value={search} onChange={e => setSearch(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-96" />
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-4 border-b border-gray-100">
+              <div className="relative flex-1 max-w-md">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                </svg>
+                <input type="text" placeholder="Search riders by name, email or phone..."
+                  value={search} onChange={e => setSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all" />
+              </div>
             </div>
 
             {loading ? (
               <div className="p-10 text-center text-gray-500">Loading...</div>
             ) : filtered.length === 0 ? (
-              <div className="p-10 text-center text-gray-500">No riders found</div>
+              <div className="p-12 text-center">
+                <div className="w-14 h-14 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400 mb-3">{si('M13 10V3L4 14h7v7l9-11h-7z')}</div>
+                <p className="text-gray-500 font-medium">No riders found</p>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Rider</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Contact</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Vehicle</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Deliveries</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Earnings</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Rating</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Status</th>
-                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Actions</th>
+                    <tr className="border-b border-gray-100 bg-gray-50/70">
+                      {['Rider', 'Contact', 'Vehicle', 'Deliveries', 'Earnings', 'Rating', 'Status', 'Actions'].map(h => (
+                        <th key={h} className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
                     {filtered.map(rider => (
-                      <tr key={rider._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                      <tr key={rider._id} className="border-b border-gray-50 hover:bg-primary-50/30 transition-colors">
                         <td className="py-4 px-6">
                           <div className="flex items-center">
                             {rider.userId?.profileImage ? (
@@ -232,13 +216,13 @@ export default function RidersPage() {
                           </span>
                         </td>
                         <td className="py-4 px-6">
-                          <div className="flex space-x-2">
+                          <div className="flex items-center gap-2">
                             <button onClick={() => setSelectedRider(rider)}
-                              className="px-3 py-1 text-xs bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 font-medium">
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-50 text-primary-600 hover:bg-primary-100 text-xs font-semibold transition-colors">
                               View More
                             </button>
                             <button onClick={() => openWallet(rider)}
-                              className="px-3 py-1 text-xs bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 font-medium">
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-purple-50 text-purple-600 hover:bg-purple-100 text-xs font-semibold transition-colors">
                               💰 Earnings
                             </button>
                           </div>
@@ -257,7 +241,7 @@ export default function RidersPage() {
       {selectedRider && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
-            <div className="flex items-center justify-between p-5 border-b">
+            <div className="flex items-center justify-between p-5 border-b border-gray-100">
               <h2 className="text-lg font-semibold text-gray-800">Rider Details</h2>
               <button onClick={() => setSelectedRider(null)} className="text-gray-400 hover:text-gray-600 text-2xl">×</button>
             </div>
@@ -314,7 +298,7 @@ export default function RidersPage() {
                   <div className="flex justify-between py-2 border-b border-gray-100">
                     <span className="text-gray-500">License Image</span>
                     <a href={selectedRider.licenseImageUrl} target="_blank" rel="noreferrer"
-                      className="text-blue-600 hover:underline font-medium">View Image</a>
+                      className="text-primary-600 hover:underline font-medium">View Image</a>
                   </div>
                 )}
               </div>
@@ -327,7 +311,7 @@ export default function RidersPage() {
       {walletRider && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between p-5 border-b">
+            <div className="flex items-center justify-between p-5 border-b border-gray-100">
               <div>
                 <h2 className="text-lg font-semibold text-gray-800">Earnings Management</h2>
                 <p className="text-sm text-gray-500">{walletRider.userId?.fullName}</p>

@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Sidebar from '@/components/admin/Sidebar';
+import PageHeader from '@/components/admin/PageHeader';
+import StatCard, { si } from '@/components/admin/StatCard';
 
 export default function PharmacyDetailPage() {
   const { id } = useParams();
@@ -148,23 +150,22 @@ export default function PharmacyDetailPage() {
     <div className="flex h-screen bg-gray-50">
       <Sidebar isOpen={sidebarOpen} />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white shadow-sm">
-          <div className="flex items-center px-6 py-4">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-500 hover:text-gray-700">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <button onClick={() => router.back()} className="ml-3 text-gray-500 hover:text-gray-700">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <PageHeader
+          title="Pharmacy Details"
+          subtitle={loading ? 'Loading...' : data?.pharmacy?.name || undefined}
+          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          actions={
+            <button
+              onClick={() => router.back()}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
+              Back
             </button>
-            <h1 className="ml-3 text-2xl font-semibold text-gray-800">
-              {loading ? 'Loading...' : data?.pharmacy?.name || 'Pharmacy Details'}
-            </h1>
-          </div>
-        </header>
+          }
+        />
 
         <main className="flex-1 overflow-y-auto p-6">
           {loading ? (
@@ -176,7 +177,7 @@ export default function PharmacyDetailPage() {
           ) : (
             <>
               {/* Pharmacy Info Card */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center">
                     <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center text-purple-600 text-2xl font-bold mr-4">
@@ -219,7 +220,7 @@ export default function PharmacyDetailPage() {
               </div>
 
               {/* Earnings & Commission */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
                 <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800">Earnings & Commission</h3>
@@ -230,7 +231,7 @@ export default function PharmacyDetailPage() {
                   <select
                     value={selectedMonth}
                     onChange={(e) => setSelectedMonth(e.target.value)}
-                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all"
                   >
                     <option value="all">All time</option>
                     {monthOptions.map((m: string) => (
@@ -274,9 +275,9 @@ export default function PharmacyDetailPage() {
                   <div className="mt-6 overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-gray-200 bg-gray-50">
+                        <tr className="border-b border-gray-100 bg-gray-50/70">
                           {['Month', 'Delivered', 'Pharmacy Earnings', 'Delivery', 'Commission (owed)', 'Total Collected'].map(h => (
-                            <th key={h} className="text-left py-2 px-4 text-xs font-semibold text-gray-600">{h}</th>
+                            <th key={h} className="text-left py-3 px-4 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
                           ))}
                         </tr>
                       </thead>
@@ -284,7 +285,7 @@ export default function PharmacyDetailPage() {
                         {earnings.monthly.map((m: any) => (
                           <tr
                             key={m.month}
-                            className={`border-b border-gray-100 hover:bg-gray-50 ${selectedMonth === m.month ? 'bg-green-50/60' : ''}`}
+                            className={`border-b border-gray-50 transition-colors ${selectedMonth === m.month ? 'bg-primary-50/60' : 'hover:bg-primary-50/30'}`}
                           >
                             <td className="py-2 px-4 text-sm font-medium text-gray-800">{monthLabel(m.month)}</td>
                             <td className="py-2 px-4 text-sm text-gray-600">{m.orders}</td>
@@ -301,7 +302,7 @@ export default function PharmacyDetailPage() {
               </div>
 
               {/* Commission Dues & Payments */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
                 <button
                   onClick={() => setDuesOpen(!duesOpen)}
                   className="w-full flex items-center justify-between text-left gap-3"
@@ -338,14 +339,14 @@ export default function PharmacyDetailPage() {
                 <div className="flex gap-2 justify-end mb-4">
                   <button
                     onClick={() => setModalOpen(true)}
-                    className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    className="px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
                   >
                     Record payment
                   </button>
                   <button
                     onClick={clearDue}
                     disabled={(settlement.due || 0) <= 0}
-                    className="px-4 py-2 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-4 py-2 rounded-xl text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
                     Clear due
                   </button>
@@ -387,15 +388,15 @@ export default function PharmacyDetailPage() {
                     <p className="text-sm font-semibold text-gray-700 mb-2">Payment history</p>
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-gray-200 bg-gray-50">
+                        <tr className="border-b border-gray-100 bg-gray-50/70">
                           {['Date', 'Type', 'Note', 'Amount', ''].map(h => (
-                            <th key={h} className="text-left py-2 px-4 text-xs font-semibold text-gray-600">{h}</th>
+                            <th key={h} className="text-left py-3 px-4 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
                         {settlements.map((s: any) => (
-                          <tr key={s.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <tr key={s.id} className="border-b border-gray-50 hover:bg-primary-50/30 transition-colors">
                             <td className="py-2 px-4 text-sm text-gray-600">{new Date(s.createdAt).toLocaleDateString()}</td>
                             <td className="py-2 px-4 text-sm capitalize text-gray-700">{s.type}</td>
                             <td className="py-2 px-4 text-sm text-gray-600">{s.note || '-'}</td>
@@ -414,34 +415,20 @@ export default function PharmacyDetailPage() {
               </div>
 
               {/* Stats Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
-                {[
-                  { label: 'Total Orders', value: data.stats.totalOrders, icon: '📦', color: 'bg-blue-500' },
-                  { label: 'Total Revenue', value: `${data.stats.totalRevenue.toLocaleString()} MRU`, icon: '💰', color: 'bg-green-500' },
-                  { label: 'Delivered', value: data.stats.deliveredOrders, icon: '✅', color: 'bg-emerald-500' },
-                  { label: 'Acceptance Rate', value: `${data.stats.acceptanceRate}%`, icon: '📊', color: 'bg-purple-500' },
-                  { label: 'Pending Orders', value: data.stats.pendingOrders, icon: '⏳', color: 'bg-yellow-500' },
-                  { label: 'Cancelled', value: data.stats.cancelledOrders, icon: '❌', color: 'bg-red-500' },
-                  { label: 'Prescriptions', value: data.stats.totalPrescriptions, icon: '📋', color: 'bg-indigo-500' },
-                  { label: 'Quotes Sent', value: data.stats.totalQuotes, icon: '💬', color: 'bg-pink-500' },
-                ].map((s, i) => (
-                  <div key={i} className="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">{s.label}</p>
-                        <h3 className="text-xl font-bold text-gray-800">{s.value}</h3>
-                      </div>
-                      <div className={`${s.color} w-10 h-10 rounded-full flex items-center justify-center`}>
-                        <span className="text-lg">{s.icon}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <StatCard label="Total Orders" value={data.stats.totalOrders} tint="blue" icon={si('M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4')} />
+                <StatCard label="Total Revenue" value={`${data.stats.totalRevenue.toLocaleString()} MRU`} tint="green" icon={si('M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z')} />
+                <StatCard label="Delivered" value={data.stats.deliveredOrders} tint="cyan" icon={si('M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z')} />
+                <StatCard label="Acceptance Rate" value={`${data.stats.acceptanceRate}%`} tint="purple" icon={si('M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z')} />
+                <StatCard label="Pending Orders" value={data.stats.pendingOrders} tint="yellow" icon={si('M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z')} />
+                <StatCard label="Cancelled" value={data.stats.cancelledOrders} tint="rose" icon={si('M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z')} />
+                <StatCard label="Prescriptions" value={data.stats.totalPrescriptions} tint="purple" icon={si('M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z')} />
+                <StatCard label="Quotes Sent" value={data.stats.totalQuotes} tint="orange" icon={si('M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z')} />
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 {/* Monthly Revenue */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">Monthly Revenue</h3>
                   {data.monthlyRevenue.length === 0 ? (
                     <p className="text-gray-400 text-sm">No revenue data yet</p>
@@ -453,7 +440,7 @@ export default function PharmacyDetailPage() {
                           <div className="flex items-center gap-3">
                             <div className="w-32 bg-gray-100 rounded-full h-2">
                               <div
-                                className="bg-green-500 h-2 rounded-full"
+                                className="bg-primary-500 h-2 rounded-full"
                                 style={{ width: `${Math.min((m.revenue / (data.stats.totalRevenue || 1)) * 100, 100)}%` }}
                               />
                             </div>
@@ -469,7 +456,7 @@ export default function PharmacyDetailPage() {
                 </div>
 
                 {/* Order Status Breakdown */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">Order Status Breakdown</h3>
                   {data.statusBreakdown.length === 0 ? (
                     <p className="text-gray-400 text-sm">No orders yet</p>
@@ -483,7 +470,7 @@ export default function PharmacyDetailPage() {
                           <div className="flex items-center gap-3">
                             <div className="w-32 bg-gray-100 rounded-full h-2">
                               <div
-                                className="bg-blue-500 h-2 rounded-full"
+                                className="bg-primary-500 h-2 rounded-full"
                                 style={{ width: `${Math.min((s.count / (data.stats.totalOrders || 1)) * 100, 100)}%` }}
                               />
                             </div>
@@ -497,8 +484,8 @@ export default function PharmacyDetailPage() {
               </div>
 
               {/* Recent Orders */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-                <div className="p-6 border-b border-gray-200">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-6 border-b border-gray-100">
                   <h3 className="text-lg font-semibold text-gray-800">Recent Orders</h3>
                 </div>
                 {data.recentOrders.length === 0 ? (
@@ -507,15 +494,15 @@ export default function PharmacyDetailPage() {
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-gray-200 bg-gray-50">
+                        <tr className="border-b border-gray-100 bg-gray-50/70">
                           {['Order #', 'Amount', 'Payment', 'Status', 'Date'].map(h => (
-                            <th key={h} className="text-left py-3 px-6 text-sm font-semibold text-gray-600">{h}</th>
+                            <th key={h} className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
                         {data.recentOrders.map((o: any) => (
-                          <tr key={o.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <tr key={o.id} className="border-b border-gray-50 hover:bg-primary-50/30 transition-colors">
                             <td className="py-3 px-6 font-medium text-gray-800 text-sm">{o.orderNumber}</td>
                             <td className="py-3 px-6 font-medium text-gray-800">{o.totalAmount?.toLocaleString()} MRU</td>
                             <td className="py-3 px-6 text-gray-600 capitalize text-sm">{o.paymentMethod || 'cash'}</td>
@@ -542,7 +529,7 @@ export default function PharmacyDetailPage() {
                   onClick={() => setModalOpen(false)}
                 >
                   <div
-                    className="bg-white rounded-xl shadow-lg w-full max-w-md p-6"
+                    className="bg-white rounded-2xl shadow-lg w-full max-w-md p-6"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <h3 className="text-lg font-semibold text-gray-800 mb-1">Record payment</h3>
@@ -554,7 +541,7 @@ export default function PharmacyDetailPage() {
                     <select
                       value={payType}
                       onChange={(e) => setPayType(e.target.value as 'payment' | 'adjustment')}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm mb-3 focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all"
                     >
                       <option value="payment">Payment (pharmacy paid us)</option>
                       <option value="adjustment">Adjustment / discount</option>
@@ -566,7 +553,7 @@ export default function PharmacyDetailPage() {
                       value={payAmount}
                       onChange={(e) => setPayAmount(e.target.value)}
                       placeholder="0"
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm mb-3 focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all"
                     />
 
                     <label className="block text-xs text-gray-500 mb-1">Note (optional)</label>
@@ -575,20 +562,20 @@ export default function PharmacyDetailPage() {
                       value={payNote}
                       onChange={(e) => setPayNote(e.target.value)}
                       placeholder="e.g. June 2026 settlement"
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm mb-4 focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all"
                     />
 
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => setModalOpen(false)}
-                        className="px-4 py-2 rounded-lg text-sm bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        className="px-4 py-2 rounded-xl text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={submitModal}
                         disabled={saving}
-                        className="px-4 py-2 rounded-lg text-sm bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                        className="px-4 py-2 rounded-xl text-sm bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 transition-colors"
                       >
                         {saving ? 'Saving...' : 'Save'}
                       </button>

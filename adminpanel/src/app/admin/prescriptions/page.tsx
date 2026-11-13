@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/admin/Sidebar';
+import PageHeader from '@/components/admin/PageHeader';
+import StatCard, { si } from '@/components/admin/StatCard';
 
 interface Prescription {
   _id: string;
@@ -40,6 +42,7 @@ export default function PrescriptionsPage() {
   const [dateTo, setDateTo] = useState('');
   const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 1 });
   const [selected, setSelected] = useState<Prescription | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => { fetchPrescriptions(); }, [filterStatus, search, dateFrom, dateTo, pagination.page]);
 
@@ -82,38 +85,23 @@ export default function PrescriptionsPage() {
     <div className="flex h-screen bg-gray-50">
       <Sidebar isOpen={sidebarOpen} />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white shadow-sm">
-          <div className="flex items-center px-6 py-4 gap-4">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-500 hover:text-gray-700">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <h1 className="text-2xl font-semibold text-gray-800">Prescriptions</h1>
-          </div>
-        </header>
+        <PageHeader
+          title="Prescriptions"
+          subtitle={`${pagination.total} prescriptions total`}
+          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        />
 
         <main className="flex-1 overflow-y-auto p-6">
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            {[
-              { label: 'Total', value: pagination.total, color: 'bg-blue-500', emoji: '📋' },
-              { label: 'Pending', value: prescriptions.filter(p => p.status === 'pending').length, color: 'bg-yellow-500', emoji: '⏳' },
-              { label: 'Quoted', value: prescriptions.filter(p => p.status === 'quoted').length, color: 'bg-blue-400', emoji: '💬' },
-              { label: 'Accepted', value: prescriptions.filter(p => p.status === 'accepted').length, color: 'bg-green-500', emoji: '✅' },
-            ].map(s => (
-              <div key={s.label} className="bg-white rounded-xl shadow-sm p-5 border border-gray-100 flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">{s.label}</p>
-                  <p className="text-2xl font-bold text-gray-800">{s.value}</p>
-                </div>
-                <div className={`${s.color} w-11 h-11 rounded-full flex items-center justify-center text-xl`}>{s.emoji}</div>
-              </div>
-            ))}
+            <StatCard label="Total" value={pagination.total} tint="blue" icon={si('M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4')} />
+            <StatCard label="Pending" value={prescriptions.filter(p => p.status === 'pending').length} tint="yellow" icon={si('M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z')} />
+            <StatCard label="Quoted" value={prescriptions.filter(p => p.status === 'quoted').length} tint="cyan" icon={si('M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 3v-3z')} />
+            <StatCard label="Accepted" value={prescriptions.filter(p => p.status === 'accepted').length} tint="green" icon={si('M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z')} />
           </div>
 
           {/* Filters toolbar */}
-          <div className="mb-4 flex flex-wrap items-center gap-3">
+          <div className="mb-6 flex flex-wrap items-center gap-3 bg-white rounded-2xl border border-gray-100 shadow-sm p-3">
             {/* Status dropdown */}
             <select value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPagination(p => ({ ...p, page: 1 })); }}
               className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-green-400">
@@ -147,64 +135,74 @@ export default function PrescriptionsPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
-            {loading ? (
-              <div className="p-8 text-center text-gray-500">Loading prescriptions...</div>
-            ) : prescriptions.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">No prescriptions found</div>
-            ) : (
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
-                    {['ID', 'Patient', 'Phone', 'Prescription', 'Delivery Address', 'Quotes', 'Status', 'Date', 'Actions'].map(h => (
-                      <th key={h} className="text-left py-4 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {prescriptions.map(p => (
-                    <tr key={p._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                      <td className="py-4 px-5 text-sm text-gray-500 font-mono">{p._id.slice(-6).toUpperCase()}</td>
-                      <td className="py-4 px-5">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-sm flex-shrink-0">
-                            {p.patientName.charAt(0).toUpperCase()}
-                          </div>
-                          <span className="font-medium text-gray-800 whitespace-nowrap">{p.patientName}</span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-5 text-gray-600 text-sm whitespace-nowrap">{p.patientPhone || '—'}</td>
-                      <td className="py-4 px-5">
-                        {p.imageUrl ? (
-                          <img src={p.imageUrl} alt="Rx" className="w-12 h-12 object-cover rounded-lg border border-gray-200 cursor-pointer" onClick={() => setSelected(p)} />
-                        ) : p.medicines.length > 0 ? (
-                          <span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full font-medium">
-                            💊 {p.medicines.length} medicine{p.medicines.length > 1 ? 's' : ''}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400 text-sm">—</span>
-                        )}
-                      </td>
-                      <td className="py-4 px-5 text-sm text-gray-600 max-w-[180px] truncate">{p.deliveryAddress || '—'}</td>
-                      <td className="py-4 px-5">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-sm font-medium text-gray-800">{p.quotesCount} total</span>
-                          {p.acceptedQuotes > 0 && <span className="text-xs text-green-600">✓ {p.acceptedQuotes} accepted</span>}
-                          {p.rejectedQuotes > 0 && <span className="text-xs text-red-500">✗ {p.rejectedQuotes} rejected</span>}
-                        </div>
-                      </td>
-                      <td className="py-4 px-5">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor(p.status)}`}>{statusLabel(p.status)}</span>
-                      </td>
-                      <td className="py-4 px-5 text-sm text-gray-600 whitespace-nowrap">{fmt(p.createdAt)}</td>
-                      <td className="py-4 px-5">
-                        <button onClick={() => setSelected(p)} className="text-green-600 hover:text-green-700 text-sm font-medium">View</button>
-                      </td>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              {loading ? (
+                <div className="p-8 text-center text-gray-500">Loading prescriptions...</div>
+              ) : prescriptions.length === 0 ? (
+                <div className="p-12 text-center">
+                  <div className="w-14 h-14 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400 mb-3">
+                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                  </div>
+                  <p className="text-gray-500 font-medium">No prescriptions found</p>
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-100 bg-gray-50/70">
+                      {['ID', 'Patient', 'Phone', 'Prescription', 'Delivery Address', 'Quotes', 'Status', 'Date', 'Actions'].map(h => (
+                        <th key={h} className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                  </thead>
+                  <tbody>
+                    {prescriptions.map(p => (
+                      <tr key={p._id} className="border-b border-gray-50 hover:bg-primary-50/30 transition-colors">
+                        <td className="py-4 px-6 text-sm text-gray-500 font-mono">{p._id.slice(-6).toUpperCase()}</td>
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-sm flex-shrink-0">
+                              {p.patientName.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="font-medium text-gray-800 whitespace-nowrap">{p.patientName}</span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6 text-gray-600 text-sm whitespace-nowrap">{p.patientPhone || '—'}</td>
+                        <td className="py-4 px-6">
+                          {p.imageUrl ? (
+                            <img src={p.imageUrl} alt="Rx" className="w-12 h-12 object-cover rounded-lg border border-gray-200 cursor-pointer hover:ring-2 hover:ring-primary-400 transition-all" onClick={() => setSelected(p)} />
+                          ) : p.medicines.length > 0 ? (
+                            <span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full font-medium">
+                              💊 {p.medicines.length} medicine{p.medicines.length > 1 ? 's' : ''}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-sm">—</span>
+                          )}
+                        </td>
+                        <td className="py-4 px-6 text-sm text-gray-600 max-w-[180px] truncate">{p.deliveryAddress || '—'}</td>
+                        <td className="py-4 px-6">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-sm font-medium text-gray-800">{p.quotesCount} total</span>
+                            {p.acceptedQuotes > 0 && <span className="text-xs text-green-600">✓ {p.acceptedQuotes} accepted</span>}
+                            {p.rejectedQuotes > 0 && <span className="text-xs text-red-500">✗ {p.rejectedQuotes} rejected</span>}
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${statusColor(p.status)}`}>{statusLabel(p.status)}</span>
+                        </td>
+                        <td className="py-4 px-6 text-sm text-gray-500 whitespace-nowrap">{fmt(p.createdAt)}</td>
+                        <td className="py-4 px-6">
+                          <button onClick={() => setSelected(p)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-50 text-primary-600 hover:bg-primary-100 text-xs font-semibold transition-colors">
+                            View
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
             {/* Pagination */}
             <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
               <div className="text-sm text-gray-600">Total: <span className="font-medium">{pagination.total}</span> prescriptions</div>
@@ -289,7 +287,7 @@ export default function PrescriptionsPage() {
               {selected.imageUrl && (
                 <div className="bg-gray-50 rounded-xl p-4">
                   <h3 className="text-sm font-semibold text-gray-500 mb-3">📋 Prescription Image</h3>
-                  <img src={selected.imageUrl} alt="Prescription" className="w-full max-h-72 object-contain rounded-xl border border-gray-200" />
+                  <img src={selected.imageUrl} alt="Prescription" onClick={() => setPreviewImage(selected.imageUrl)} className="w-full max-h-72 object-contain rounded-xl border border-gray-200 cursor-zoom-in hover:ring-2 hover:ring-primary-400 transition-all" />
                 </div>
               )}
 
@@ -422,6 +420,35 @@ export default function PrescriptionsPage() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image preview modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60] p-4"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div className="relative max-w-3xl w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-white font-semibold">Prescription Image</h3>
+              <div className="flex items-center gap-2">
+                <a href={previewImage} target="_blank" rel="noreferrer"
+                  className="px-3 py-1.5 text-xs bg-white/15 text-white rounded-lg hover:bg-white/25 font-medium transition-colors">
+                  Open in new tab
+                </a>
+                <button onClick={() => setPreviewImage(null)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/15 text-white hover:bg-white/25 transition-colors">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+            </div>
+            <img
+              src={previewImage}
+              alt="Prescription"
+              className="w-full max-h-[80vh] object-contain rounded-xl bg-white shadow-2xl"
+            />
           </div>
         </div>
       )}
