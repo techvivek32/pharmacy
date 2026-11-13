@@ -163,37 +163,32 @@ export default function DashboardStats() {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {cards(overview).map((card) => (
-        <div key={card.title} className={`bg-white rounded-xl border border-gray-200 border-l-4 ${card.border} p-5`}>
+        <div
+          key={card.title}
+          className="group bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+        >
           <div className="flex items-start justify-between">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{card.title}</p>
-              <p className="text-2xl font-bold text-gray-900 truncate">{card.value}</p>
-              <div className="flex items-center gap-1.5 mt-1.5">
-                {card.growth !== null ? (
-                  <span className={`text-xs font-semibold flex items-center gap-0.5 ${card.growth >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                    {card.growth >= 0 ? (
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                      </svg>
-                    ) : (
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                      </svg>
-                    )}
-                    {Math.abs(card.growth)}% vs last month
-                  </span>
-                ) : (
-                  <span className="text-xs text-gray-400">{card.sub}</span>
-                )}
-              </div>
-              {card.growth !== null && (
-                <p className="text-xs text-gray-400 mt-0.5">{card.sub}</p>
-              )}
-            </div>
-            <div className={`${card.iconBg} ${card.iconColor} w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ml-3`}>
+            <div className={`${card.iconBg} ${card.iconColor} w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105`}>
               {card.icon}
             </div>
+            {card.growth !== null && (
+              <span className={`text-[11px] font-semibold flex items-center gap-0.5 px-2 py-1 rounded-full ${card.growth >= 0 ? 'text-emerald-700 bg-emerald-50' : 'text-red-600 bg-red-50'}`}>
+                {card.growth >= 0 ? (
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                  </svg>
+                ) : (
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                )}
+                {Math.abs(card.growth)}%
+              </span>
+            )}
           </div>
+          <p className="text-2xl font-bold text-gray-900 truncate mt-4">{card.value}</p>
+          <p className="text-sm font-medium text-gray-600 mt-0.5">{card.title}</p>
+          <p className="text-xs text-gray-400 mt-1 truncate">{card.sub}</p>
         </div>
       ))}
     </div>
