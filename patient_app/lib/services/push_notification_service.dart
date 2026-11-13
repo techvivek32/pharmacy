@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
@@ -188,11 +189,20 @@ class PushNotificationService {
 
   /// Clears the token on the backend (call on logout).
   static Future<void> unregisterToken() async {
+    // Each step is time-limited so a slow network or a stuck FCM/APNs state
+    // can never hang a caller (e.g. logout).
     try {
-      await ApiService.delete('/notifications/token');
-      await FirebaseMessaging.instance.deleteToken();
+      await ApiService.delete('/notifications/token')
+          .timeout(const Duration(seconds: 5));
     } catch (e) {
-      debugPrint('[push] unregisterToken failed: $e');
+      debugPrint('[push] token delete on backend failed: $e');
+    }
+    try {
+      await FirebaseMessaging.instance
+          .deleteToken()
+          .timeout(const Duration(seconds: 5));
+    } catch (e) {
+      debugPrint('[push] FCM deleteToken failed: $e');
     }
   }
 }

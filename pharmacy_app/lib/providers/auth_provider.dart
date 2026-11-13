@@ -157,11 +157,15 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> logout() async {
-    await PushNotificationService.unregisterToken();
+    // Clear the local session first so logout always completes and the UI can
+    // navigate — the push-token cleanup must never block it (deleteToken() can
+    // hang when FCM/APNs isn't ready).
     await AuthService.logout();
     _user = null;
     _error = null;
     notifyListeners();
+    // Fire-and-forget the server/FCM token cleanup in the background.
+    PushNotificationService.unregisterToken();
   }
 
   /// Permanently deletes the pharmacy account on the backend, then clears the
