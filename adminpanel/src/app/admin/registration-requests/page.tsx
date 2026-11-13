@@ -39,6 +39,7 @@ export default function RegistrationRequestsPage() {
   const [selectedPharmacy, setSelectedPharmacy] = useState<PharmacyRequest | null>(null);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [rejectNote, setRejectNote] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -165,8 +166,11 @@ export default function RegistrationRequestsPage() {
                           <td className="py-4 px-6 text-gray-600">{req.licenseNumber}</td>
                           <td className="py-4 px-6">
                             {req.licenseImageUrl ? (
-                              <a href={req.licenseImageUrl} target="_blank" rel="noreferrer"
-                                className="px-3 py-1 text-xs bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100">View Image</a>
+                              <button onClick={() => setPreviewImage(req.licenseImageUrl)}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 font-semibold transition-colors">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                View Image
+                              </button>
                             ) : <span className="text-xs text-gray-400">No image</span>}
                           </td>
                           <td className="py-4 px-6">
@@ -296,6 +300,35 @@ export default function RegistrationRequestsPage() {
                 {actionLoading ? 'Rejecting...' : 'Confirm Reject'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image preview modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60] p-4"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div className="relative max-w-3xl w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-white font-semibold">License Image</h3>
+              <div className="flex items-center gap-2">
+                <a href={previewImage} target="_blank" rel="noreferrer"
+                  className="px-3 py-1.5 text-xs bg-white/15 text-white rounded-lg hover:bg-white/25 font-medium transition-colors">
+                  Open in new tab
+                </a>
+                <button onClick={() => setPreviewImage(null)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/15 text-white hover:bg-white/25 transition-colors">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+            </div>
+            <img
+              src={previewImage}
+              alt="License"
+              className="w-full max-h-[80vh] object-contain rounded-xl bg-white shadow-2xl"
+            />
           </div>
         </div>
       )}
