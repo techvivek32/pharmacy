@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/admin/Sidebar';
+import PageHeader from '@/components/admin/PageHeader';
 
 interface Order {
   _id: string;
@@ -127,20 +128,15 @@ export default function OrdersPage() {
     <div className="flex h-screen bg-gray-50">
       <Sidebar isOpen={sidebarOpen} />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white shadow-sm">
-          <div className="flex items-center px-6 py-4 gap-4">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-500 hover:text-gray-700">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <h1 className="text-2xl font-semibold text-gray-800">Orders Management</h1>
-          </div>
-        </header>
+        <PageHeader
+          title="Orders Management"
+          subtitle={`${pagination.total} orders total`}
+          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        />
 
         <main className="flex-1 overflow-y-auto p-6">
           {/* Filters toolbar */}
-          <div className="mb-6 flex flex-wrap items-center gap-3">
+          <div className="mb-6 flex flex-wrap items-center gap-3 bg-white rounded-2xl border border-gray-100 shadow-sm p-3">
             {/* Status dropdown */}
             <select
               value={selectedStatus}
@@ -183,36 +179,42 @@ export default function OrdersPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="overflow-x-auto">
               {loading ? (
                 <div className="p-8 text-center text-gray-500">Loading orders...</div>
               ) : orders.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">No orders found</div>
+                <div className="p-12 text-center">
+                  <div className="w-14 h-14 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400 mb-3">
+                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                  </div>
+                  <p className="text-gray-500 font-medium">No orders found</p>
+                </div>
               ) : (
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50">
+                    <tr className="border-b border-gray-100 bg-gray-50/70">
                       {['Order ID', 'Patient', 'Pharmacy', 'Rider', 'Amount', 'Status', 'Date', 'Actions'].map(h => (
-                        <th key={h} className="text-left py-4 px-6 text-sm font-semibold text-gray-600">{h}</th>
+                        <th key={h} className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {orders.map(order => (
-                      <tr key={order._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                        <td className="py-4 px-6 font-medium text-gray-800">{order.orderNumber || order._id.slice(-6).toUpperCase()}</td>
+                      <tr key={order._id} className="border-b border-gray-50 hover:bg-primary-50/30 transition-colors">
+                        <td className="py-4 px-6 font-semibold text-gray-800">{order.orderNumber || order._id.slice(-6).toUpperCase()}</td>
                         <td className="py-4 px-6 text-gray-600">{getPatientName(order)}</td>
                         <td className="py-4 px-6 text-gray-600">{order.pharmacyId?.pharmacyName || '—'}</td>
                         <td className="py-4 px-6 text-gray-600">{(order as any).riderName || order.riderId?.fullName || 'Unassigned'}</td>
-                        <td className="py-4 px-6 font-medium text-gray-800">{order.totalAmount} MRU</td>
+                        <td className="py-4 px-6 font-semibold text-gray-800">{order.totalAmount} MRU</td>
                         <td className="py-4 px-6">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor(order.status)}`}>{statusLabel(order.status)}</span>
+                          <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${statusColor(order.status)}`}>{statusLabel(order.status)}</span>
                         </td>
-                        <td className="py-4 px-6 text-sm text-gray-600">{fmtDate(order.createdAt)}</td>
+                        <td className="py-4 px-6 text-sm text-gray-500">{fmtDate(order.createdAt)}</td>
                         <td className="py-4 px-6">
-                          <button onClick={() => fetchOrderDetail(order._id)} className="text-green-600 hover:text-green-700 text-sm font-medium">
-                            View Details
+                          <button onClick={() => fetchOrderDetail(order._id)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-50 text-primary-600 hover:bg-primary-100 text-xs font-semibold transition-colors">
+                            View
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                           </button>
                         </td>
                       </tr>

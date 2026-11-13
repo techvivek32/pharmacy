@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/admin/Sidebar';
+import PageHeader from '@/components/admin/PageHeader';
 
 interface RiderRequest {
   _id: string;
@@ -96,41 +97,39 @@ export default function RegistrationRequestsPage() {
     <div className="flex h-screen bg-gray-50">
       <Sidebar isOpen={sidebarOpen} />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white shadow-sm">
-          <div className="flex items-center px-6 py-4">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-500 hover:text-gray-700">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <h1 className="ml-4 text-2xl font-semibold text-gray-800">Registration Requests</h1>
-          </div>
-        </header>
+        <PageHeader
+          title="Registration Requests"
+          subtitle="Review and approve riders and pharmacies"
+          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        />
 
         <main className="flex-1 overflow-y-auto p-6">
-          {/* Type switcher */}
-          <div className="flex space-x-2 mb-4">
-            <button onClick={() => setType('rider')}
-              className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors ${type === 'rider' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}>
-              🏍️ Riders
-            </button>
-            <button onClick={() => setType('pharmacy')}
-              className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors ${type === 'pharmacy' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}>
-              🏥 Pharmacies
-            </button>
-          </div>
-
-          {/* Status tabs */}
-          <div className="flex space-x-2 mb-6">
-            {(['pending', 'approved', 'rejected'] as const).map(tab => (
-              <button key={tab} onClick={() => setStatusTab(tab)}
-                className={`px-5 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${statusTab === tab ? 'bg-gray-800 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}>
-                {tab}
+          {/* Type switcher + status tabs toolbar */}
+          <div className="flex flex-wrap items-center gap-3 mb-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-3">
+            <div className="inline-flex p-1 bg-gray-100 rounded-xl">
+              <button onClick={() => setType('rider')}
+                className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${type === 'rider' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                🏍️ Riders
               </button>
-            ))}
+              <button onClick={() => setType('pharmacy')}
+                className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${type === 'pharmacy' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                🏥 Pharmacies
+              </button>
+            </div>
+
+            <div className="h-6 w-px bg-gray-200 mx-1" />
+
+            <div className="flex items-center gap-2">
+              {(['pending', 'approved', 'rejected'] as const).map(tab => (
+                <button key={tab} onClick={() => setStatusTab(tab)}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium capitalize transition-colors ${statusTab === tab ? 'bg-primary-600 text-white shadow-sm shadow-primary-600/20' : 'text-gray-500 hover:bg-gray-100'}`}>
+                  {tab}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             {loading ? (
               <div className="p-10 text-center text-gray-500">Loading...</div>
             ) : type === 'rider' ? (
@@ -140,20 +139,20 @@ export default function RegistrationRequestsPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-gray-200 bg-gray-50">
-                        <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Rider</th>
-                        <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Contact</th>
-                        <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Vehicle</th>
-                        <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">License</th>
-                        <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">License Image</th>
-                        <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Status</th>
-                        <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Date</th>
-                        <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Actions</th>
+                      <tr className="border-b border-gray-100 bg-gray-50/70">
+                        <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Rider</th>
+                        <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
+                        <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Vehicle</th>
+                        <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">License</th>
+                        <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">License Image</th>
+                        <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                        <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                        <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {riderRequests.map(req => (
-                        <tr key={req._id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <tr key={req._id} className="border-b border-gray-50 hover:bg-primary-50/30 transition-colors">
                           <td className="py-4 px-6 font-medium text-gray-800">{req.userId?.fullName}</td>
                           <td className="py-4 px-6 text-gray-600">
                             <div>{req.userId?.email}</div>
@@ -197,20 +196,20 @@ export default function RegistrationRequestsPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-gray-200 bg-gray-50">
-                        <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Pharmacy</th>
-                        <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Owner</th>
-                        <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Contact</th>
-                        <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">License</th>
-                        <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Address</th>
-                        <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Status</th>
-                        <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Date</th>
-                        <th className="text-left py-4 px-6 text-sm font-semibold text-gray-600">Actions</th>
+                      <tr className="border-b border-gray-100 bg-gray-50/70">
+                        <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Pharmacy</th>
+                        <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Owner</th>
+                        <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
+                        <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">License</th>
+                        <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Address</th>
+                        <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                        <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                        <th className="text-left py-3.5 px-6 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {pharmacyRequests.map(req => (
-                        <tr key={req._id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <tr key={req._id} className="border-b border-gray-50 hover:bg-primary-50/30 transition-colors">
                           <td className="py-4 px-6 font-medium text-gray-800">{req.pharmacyName}</td>
                           <td className="py-4 px-6 text-gray-600">{req.userId?.fullName}</td>
                           <td className="py-4 px-6 text-gray-600">
