@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
+import { ReactNode, useState } from 'react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -16,12 +16,20 @@ const icon = (d: string): ReactNode => (
 
 export default function Sidebar({ isOpen }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    await fetch('/api/admin/logout', { method: 'POST' });
-    router.push('/login');
-    router.refresh();
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await fetch('/api/admin/logout', { method: 'POST', credentials: 'include' });
+    } catch {
+      // ignore — navigate away regardless
+    }
+    // Hard navigation so the browser makes a fresh request with the cleared
+    // cookie; a client-side router push can be bounced back by middleware
+    // if the cookie clear hasn't been applied yet.
+    window.location.href = '/login';
   };
 
   const menuItems = [

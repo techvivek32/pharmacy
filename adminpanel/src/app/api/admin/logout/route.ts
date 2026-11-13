@@ -4,6 +4,14 @@ export const dynamic = 'force-dynamic';
 
 export async function POST() {
   const response = NextResponse.json({ success: true });
-  response.cookies.set('admin_token', '', { maxAge: 0, path: '/' });
+  // Clear with the same attributes the login cookie was set with, so the
+  // browser reliably removes it (a secure cookie needs a secure clear).
+  response.cookies.set('admin_token', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 0,
+    path: '/',
+  });
   return response;
 }
