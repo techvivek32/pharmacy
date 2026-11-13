@@ -165,6 +165,25 @@ class _QuoteBuilderScreenState extends State<QuoteBuilderScreen> {
           );
         }
       }
+    } else {
+      // New quote: pre-fill the itemized list with the medicines the customer
+      // requested AND the quantities they asked for, so pricing respects the
+      // quantity (total = quantity x unit price). The pharmacy only needs to
+      // enter the unit price. Falls back to Direct Total when the request has
+      // no itemized medicines (e.g. a prescription image only).
+      final requested = widget.prescription is Map
+          ? widget.prescription['medicines']
+          : null;
+      if (requested is List && requested.isNotEmpty) {
+        _isDirectMode = false;
+        for (final m in requested) {
+          final name =
+              (m['name'] ?? m['medicineName'] ?? '').toString();
+          final qty = (m['quantity'] ?? 1).toString();
+          if (name.isEmpty) continue;
+          _addItemWithValues(name: name, qty: qty, price: '0');
+        }
+      }
     }
   }
 
