@@ -9,6 +9,8 @@ import { authenticateRequest } from '@/lib/auth';
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response';
 import { sendNotificationToUser } from '@/services/notification';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const auth = await authenticateRequest(request);

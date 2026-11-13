@@ -6,6 +6,8 @@ import Pharmacy from '@/models/Pharmacy';
 import Rider from '@/models/Rider';
 import { successResponse, errorResponse } from '@/lib/response';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     await connectDB();

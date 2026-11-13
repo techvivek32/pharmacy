@@ -4,6 +4,8 @@ import Rider from '@/models/Rider';
 import User from '@/models/User';
 import { successResponse, errorResponse } from '@/lib/response';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(_: NextRequest, { params }: { params: { id: string } }) {
   try {
     await connectDB();

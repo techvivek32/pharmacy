@@ -4,6 +4,8 @@ import { connectDB } from '@/lib/mongodb';
 import Admin from '@/models/Admin';
 import { generateToken } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();

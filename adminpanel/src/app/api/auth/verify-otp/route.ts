@@ -3,6 +3,8 @@ import { successResponse, errorResponse } from '@/lib/response';
 import { verifyOTP } from '@/lib/otp-store';
 import { verifyOTPSMS } from '@/lib/sms';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const { phone, otp } = await request.json();

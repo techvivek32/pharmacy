@@ -7,6 +7,8 @@ import { successResponse, errorResponse } from '@/lib/response';
 import { generateOTP, storeOTP } from '@/lib/otp-store';
 import { sendOTPSMS } from '@/lib/sms';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     await connectDB();

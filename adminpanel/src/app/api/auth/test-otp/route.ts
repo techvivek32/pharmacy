@@ -2,6 +2,8 @@ import { NextRequest } from 'next/server';
 import { successResponse } from '@/lib/response';
 import { generateOTP, storeOTP, verifyOTP } from '@/lib/otp-store';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   const testEmail = 'test@test.com';
 

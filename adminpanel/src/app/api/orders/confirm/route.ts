@@ -9,6 +9,8 @@ import { authenticateRequest } from '@/lib/auth';
 import { successResponse, errorResponse, unauthorizedResponse } from '@/lib/response';
 import { sendNotificationToUser } from '@/services/notification';
 
+export const dynamic = 'force-dynamic';
+
 // Build a human-friendly order name from the quoted medicine items, e.g.
 // "Paracetamol" or "Paracetamol +2 more". Falls back to "Medicine Order".
 function buildOrderName(items: Array<{ medicineName?: string }> = []): string {

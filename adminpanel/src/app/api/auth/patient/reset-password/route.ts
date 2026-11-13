@@ -6,6 +6,8 @@ import { verifyOTP } from '@/lib/otp-store';
 import { hashPassword } from '@/lib/auth';
 import { verifyOTPSMS } from '@/lib/sms';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     await connectDB();

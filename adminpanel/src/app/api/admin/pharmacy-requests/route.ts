@@ -4,6 +4,8 @@ import Pharmacy from '@/models/Pharmacy';
 import User from '@/models/User';
 import { successResponse, errorResponse } from '@/lib/response';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
